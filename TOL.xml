@@ -39,6 +39,8 @@ wm | wm <name>
       -- Quick where for a mob name or the last mob used with aknx
 cpn <index> | <mob name>
       -- Hunt trick on the given index or mob name
+kcpn 
+      -- turns off hunt script
 TQ - not case sensitive
       -- Start the questing scripts
 xrt1 <area>
@@ -304,6 +306,15 @@ Note:
    sequence="100"
    regexp="y"
    script="cpn_script"
+  >
+  </alias>
+  <alias
+   match="^kcpn$"
+   enabled="y"
+   send_to="12"
+   sequence="100"
+   regexp="y"
+   script="hunt_off"
   >
   </alias>
   <alias
@@ -628,9 +639,9 @@ Note:
    group="Quest" 
    enabled="y"
    regexp="y"
-   match="(.*)(\!|\.) \[QUEST\]$"
+   match="(.*)\[QUEST\]$"
    send_to="12"
-   sequence="100"
+   sequence="1"
    script="quest_color"
   >
   </trigger>
@@ -766,6 +777,10 @@ local qmob
 
 timestart= 0
 timeend= 0
+function hunt_off()
+  Note('Turning off cpn script.')
+  EnableTriggerGroup("HUNTING", false)
+end
 function getmemoryusage()
     collectgarbage('collect')
    return collectgarbage('count')
@@ -1247,7 +1262,7 @@ function not_here_script()
 end
 
 function quest_color()
-  ColourNote ("white","blue","QUEST MOB HERE==================!!!!!!!!!!!!!!!!!!!!!!!=================")
+  ColourNote ("white","blue","==================QUEST MOB HERE!!!!!!!!!!!!!!!!!!!!!!!=================")
 end
 
 function cpn_script (index, line, wildcards)
@@ -1827,9 +1842,9 @@ function buildRoomTable()-- This sends the table to get room_ids
       cp_mobs[i].intable = true
     end--if
   end --for
-  if roomCPCheck == 1 then
-    sortRoomCP()
-  end
+  -- if roomCPCheck == 1 then
+  --   sortRoomCP()
+  -- end
   sortRoomCPByPath()
   
   var.cp_mobs = serialize.save( "cp_mobs", cp_mobs )
@@ -2252,6 +2267,7 @@ local areaName
   --tprint (area_table)
   mob_index= 1
 end
+-- This section is almost a straight rip from Fiendish's aard_GMCP_mapper.xml all credit goes to him
 local bit = require("bit")
 function load_room_from_database (uid)
    local room
@@ -2544,6 +2560,7 @@ function findpath(src, dst, noportals, norecalls)
    end -- while
    return path, found_depth
 end -- function findpath
+-- end section of Fienish's work
 require 'aardmapper'
 
 function sortRoomCPByPath()
@@ -2579,37 +2596,10 @@ function sortRoomCPByPath()
     --print(k,dist_tbl[k][1], dist_tbl[k][2]) 
     table.insert(b, cp_mobs[k])
     table.insert(q, room_num_table[k])
-    --tprint(cp_mobs[k])
-        -- DebugNote("\n Deleting\n")
-        -- DebugNote(cp_mobs[num])
-        -- DebugNote("End Deleting\n")
-    --table.remove(cp_mobs, k) 
   end
   room_num_table = q
   cp_mobs = b
- -- tprint(cp_mobs)
-  --tprint(dist_tbl)
-  -- if not x then
-  --   print(err)
-  -- end--if
-  -- print(x)
-  -- for i,n in pairs(room_num_table) do
-  --   -- print(i)
-  --   -- tprint(n)
-  --   -- print(type(n[1]))
-  --   -- if type(n[1]) == "number" and n[1] ~= -1 then
-  --   --   -- print("fack")
-  --   --   -- print(currentRoom.roomid)
-  --   --   -- print(n[1])
-  --   --   Execute ('mapper findpath '..currentRoom.roomid..' '..n[1]  )
-  --   --   -- print('double fack')
-  --   -- else
-  --   --   print('Try again in a room that is not -1')
-  --   -- end
-
-  -- end
-  -- print(x)
-  -- print(dep)
+  closeDBifForcedOpen()
   
 end
 function sortRoomCP()
