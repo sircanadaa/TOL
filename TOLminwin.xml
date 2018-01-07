@@ -68,6 +68,11 @@ level = nil
 curlevel = nil
 showcpwin = false
 
+function getmemoryusage()
+  collectgarbage('collect')
+  return collectgarbage('count')
+end
+
 function set_show()
   showcpwin = true
 end

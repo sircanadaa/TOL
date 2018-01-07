@@ -126,6 +126,7 @@ Note:
     keep_evaluating="y"   
   >
   <send>
+    Note(getmemoryusage())
     ColourNote("MediumSeaGreen", "", GetPluginInfo (GetPluginID (), 3))
   </send>
   </alias>
@@ -432,6 +433,7 @@ Note:
   <send>
   Send('cp check')
   EnableTrigger('camp_item_start', 1)
+  timeStart()
   </send>
   </trigger>
 <trigger 
@@ -450,7 +452,7 @@ Note:
   <!-- Was (?P<mob>[^0-9]){30,30} (?P<room>.+) -->
   <trigger 
     name="where_mob_trig"
-    match= "^(?P<mob>[^0-9]){30,30} (?P<room>.+)$" 
+    match= "^(?P<mob>[^0-9]{30,30}) (?P<room>.+)$" 
     enabled="n"
     sequence="1"
     keep_evaluating="y"
@@ -762,6 +764,10 @@ local qmob
 
 timestart= 0
 timeend= 0
+function getmemoryusage()
+    collectgarbage('collect')
+   return collectgarbage('count')
+  end
 function timeStart()
 timestart = socket.gettime()
 end
@@ -1091,7 +1097,7 @@ end
 
 function camp_item_start()-- get your campaign items
   clearTable()
-  timeStart()
+  
   EnableTrigger('campaign_item',false)
   EnableTrigger('camp_item_start',0)
   cp_mobs = {}
@@ -2407,6 +2413,7 @@ function hunt_type (num, mob_id)
       mob_next_delete_value= tonumber(num)
       holder= getTable(num)  
       if ((string.find(string.lower(room_num_table[num][1]), currentRoom.areaid))) then
+        print('well this is awkward you are already in the correct area')
       else
         Execute('xrunto1 '..room_num_table[num][1])
       end--if
@@ -2421,6 +2428,7 @@ function hunt_type (num, mob_id)
     mob_next_delete_value= mob_index
     holder= getTable(mob_index)
     if (( string.find(string.lower(room_num_table[mob_index][1]), currentRoom.areaid))) then
+      print('well this is awkward you are in the correct area')
     else
       Execute('xrunto1 '..room_num_table[mob_index][1])
     end--if
@@ -2450,7 +2458,7 @@ function whereMob(name, line, wildcards)
     Execute('where '.. where_mob)
     DoAfterSpecial(1, "EnableTrigger('where_mob_trig', false)", 12)
     where_mob = string.gsub(where_mob,"%d+%.","")
-    mobname = where_mob
+    mobname =  where_mob
   end--if
 end
 
@@ -2468,9 +2476,20 @@ function where_mob_trig(name, line, wildcards)
       return
     end--if
   end--for
+    wildcards[1], x = string.gsub(wildcards[1],"%.","")
+  bool = 0
+  --print(bool)
+  for word in mobname:gmatch("%w+") do
+  if (string.find( string.lower(wildcards[1]), string.lower(word)) ~= nil) then 
+    bool =1
+  end--if
+  print(bool)
+  end -- for
+  if bool == 1 then
     Execute('mapper area '.. '"'..wildcards[2]..'"')
     Execute('mapper next')
     EnableTrigger('where_mob_trig', false)
+  end--if
 end
 
 function killMob()
@@ -2662,9 +2681,9 @@ function reset_cp_flag( )
 end
 
 function collectgarbagenow()
-  DebugNote( collectgarbage("count")*1024)
+ Note( collectgarbage("count")*1024)
   collectgarbage("collect")
-  DebugNote( collectgarbage("count")*1024)
+  Note( collectgarbage("count")*1024)
 end
 
 function DebugNote( msg )
