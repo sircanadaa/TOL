@@ -42,7 +42,9 @@ cpn <index> | <mob name>
 kcpn 
       -- turns off hunt script
 TQ - not case sensitive
-      -- Start the questing scripts
+      -- Runs to the most probable quest room
+NQ - not case sensitive
+      -- Runs to the next quest room
 xrt1 <area>
       -- runs to areas
 tkey "<mob>" "<keywords>"
@@ -102,7 +104,7 @@ Note:
    sequence='100'
    >
  </alias>
-<alias
+ <alias
    match="^printVars$"
    enabled="y"
    send_to="12"
@@ -116,11 +118,27 @@ Note:
    enabled="y"
    send_to="12"
    sequence="100"
-   script="gotoQuest"
+   script="qGoto"
    regexp="y"
   >
   </alias>
-<alias match="^(?:TOL) help$"
+  <alias
+    match="^[n|N][Q|q]$"
+    enabled="y"
+    send_to="12"
+    sequence="100"
+    script="qNext"
+    regexp="y"
+  >
+  </alias>
+  <alias
+    enabled="y"
+    match="^qTest$"
+    script="qTest"
+    regexp="y"
+    sequence='100'>
+  </alias>
+  <alias match="^(?:TOL) help$"
     enabled="y"
     sequence="100"
     send_to="12"
@@ -653,23 +671,11 @@ Note:
    send_to="12"
    sequence="120"
    script="questMob"
-  >
-  
+  > 
   </trigger>
   
   
-  <trigger
-   group="Quest"
-   name="questTest"
-   enabled="n"
-   match="^You are in area \: (.+)"
-   regexp="y"
-   send_to="12"
-   sequence="100"
-   script="QWhereret"
-  >
-  </trigger>
-              <!-- Triggers for Global Quests   -->
+  <!-- Triggers for Global Quests   -->
   <trigger
   enabled="y"
   match="^Global Quest: Global quest # (?&lt;num&gt;\d*) for levels (\d*) to (\d*) - (.*) now started\.$"
@@ -973,23 +979,18 @@ function Toggle_Debug(name, line, wildcards)
 end
 
 function QuestInfoHandle(name, line, wildcards)
-  -- print(wildcards[1])
-  qName(wildcards[1])
-  -- print(wildcards[2])
+  qMob(wildcards[1])
   qRoom(wildcards[2])
   mobname = sanitizeName(wildcards[1])
 end
 
 function QuestInfoHandleArea(name, line, wildcards)
-  -- print(wildcards[1])
   qArea(wildcards[1])
 end
 
 function questMob(name, line, wildcards)
-  qName(wildcards[2])
-  -- print(wildcards[2])
- mobname = sanitizeName(wildcards[2])
-
+  qMob(wildcards[2])
+  mobname = sanitizeName(wildcards[2])
 end
 
 function questRoom(name, line, wildcards)
