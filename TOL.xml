@@ -1846,6 +1846,7 @@ function buildRoomTable()-- This sends the table to get room_ids
   -- if roomCPCheck == 1 then
   --   sortRoomCP()
   -- end
+  DebugNote('==============================')
   sortRoomCPByPath()
   
   var.cp_mobs = serialize.save( "cp_mobs", cp_mobs )
@@ -2273,13 +2274,14 @@ local bit = require("bit")
 function load_room_from_database (uid)
    local room
    local u = tostring(uid)
+   DebugNote(u)
    assert (uid, "No UID supplied to load_room_from_database")
 
    -- if not in database, don't look again
-   if room_not_in_database [u] then
-      return nil
-   end -- no point looking
-
+   -- if room_not_in_database [u] then
+   --    return nil
+   -- end -- no point looking
+-- print('here?')
    for row in dbnrowsWRAPPER(string.format ("SELECT * FROM rooms WHERE uid = %s", fixsql (u))) do
       room = {
          name = row.name,
@@ -2301,20 +2303,28 @@ function load_room_from_database (uid)
       for exitrow in dbnrowsWRAPPER(string.format ("SELECT * FROM exits WHERE fromuid = %s", fixsql (u))) do
          room.exits [exitrow.dir] = tostring (exitrow.touid)
          room.exit_locks [exitrow.dir] = tostring(exitrow.level)
+         DebugNote('======== exit row =======')
+         DebugNote(exitrow)
       end -- for each exit
-
+      DebugNote('======= room row ========')
+      DebugNote(row)
+      DebugNote('back to top or escape')
    end   -- finding room
-
+   DebugNote('escape the for loop')
+   DebugNote('======= printing room ======')
+   DebugNote(room)
    if room then
+    DebugNote('in if room')
       if not rooms then
          -- this shouldn't even be possible. what the hell.
+         DebugNote('did this happen?')
          rooms = {}
       end
       rooms [u] = room
       for row in dbnrowsWRAPPER(string.format ("SELECT * FROM bookmarks WHERE uid = %s", fixsql (u))) do
          rooms [u].notes = row.notes
       end   -- finding room
-
+      --tprint(room)
       return room
    end -- if found
 
@@ -2325,8 +2335,17 @@ function load_room_from_database (uid)
 end -- load_room_from_database
 forced_opened = false
 force_nests = 0
+function sanitize_filename(str)
+   str = string.gsub(str, "[^%w%s()_-]", "")
+   return Trim(str)
+end
+worldPath = GetInfo(66)..sanitize_filename(WorldName())
+db = assert (sqlite3.open(worldPath..".db"))
+db:busy_timeout(100)
 function forceOpenDB()
+  DebugNote('====================== start forceOPenDB ======================================')
    force_nests = force_nests+1
+   DebugNote('is db open: '.. tostring(db:isopen()))
    if not db:isopen() then
       forced_opened = true
       -- print("Forcing open")
@@ -2334,24 +2353,32 @@ function forceOpenDB()
    end
 end
 function dbnrowsWRAPPER(query)
+  DebugNote('====================== start dbnrowsWRapper ======================================')
    forceOpenDB()
+   DebugNote (db)
+   DebugNote (query)
    iter,vm,i = db:nrows(query)
    local function itwrap(vm, i)
       retval = iter(vm, i)
       if not retval then
+        DebugNote('not retval '.. tostring(retval))
          closeDBifForcedOpen()
          return nil
       end
       return retval
    end
+   DebugNote('do I ever get here?')
    return itwrap,vm,i
 end
 function closeDBifForcedOpen()
+  DebugNote('====================== start forceOPenDB ======================================')
    force_nests = force_nests-1
+   DebugNote(forced_opened)
+   DebugNote(force_nests)
    if forced_opened and (force_nests <= 0) then
       force_nests = 0
       forced_opened = false
-      -- print("Forcing closed")
+      DebugNote("Forcing closed")
       db:close()
    end
 end
@@ -2413,19 +2440,27 @@ function findNearestJumpRoom(src, dst, target_type)
    return destination, path_type, found_depth
 end
 function findpath(src, dst, noportals, norecalls)
-  -- print(src)
-  -- print(dst)
+  local rooms = {}
+   DebugNote('source room is : '..src)
+   DebugNote('destination room is : '..dst)
+   -- ok there is an issue here where the rooms I get don't have the exits, lets fix this.... in the startup script I will need to run exits lookup
    if not rooms[src] then
+      DebugNote('may break updated rooms')
       rooms[src] = load_room_from_database(src)
+     DebugNote(rooms)
    end
    if not rooms[src] then
-    -- print('did I return?')
+    DebugNote('did I return?')
       return
    end
 
    local walk_one = nil
-   -- tprint(rooms[src])
+   -- print('here?')
+   --tprint(rooms[src])
    for dir,touid in pairs(rooms[src].exits) do
+    DebugNote('dir: ' .. dir)
+    DebugNote('touid: '.. touid)
+
       if tostring(touid) == tostring(dst) and tonumber(rooms[src].exit_locks[dir]) <= mylevel and ((walk_one == nil) or (#dir > #walk_one)) then
          walk_one = dir -- if one room away, walk there (don't portal), but prefer a cexit
          -- print('was I one room away?')
@@ -2484,13 +2519,13 @@ function findpath(src, dst, noportals, norecalls)
          end
          visited = visited..table.concat(rooms_list, ",")
       end
-
+      
       -- get all exits to any room in the previous set
       local q = string.format ("select fromuid, touid, dir from exits where touid in (%s) and fromuid not in (%s) and ((fromuid not in ('*','**') and level <= %s) or (fromuid in ('*','**') and level <= %s)) order by length(dir) asc",table.concat(rooms_list,","), visited,mylevel,mylevel+(mytier*10))
       local dcount = 0
       room_sets[depth] = {}
       for row in dbnrowsWRAPPER(q) do
-       
+       -- print('database was open')
          dcount = dcount + 1
          -- ordering by length(dir) ensures that custom exits (always longer than 1 char) get
          -- used preferentially to normal ones (1 char)
@@ -2562,11 +2597,13 @@ function findpath(src, dst, noportals, norecalls)
    return path, found_depth
 end -- function findpath
 -- end section of Fienish's work
-require 'aardmapper'
 
 function sortRoomCPByPath()
   local x
   dist_tbl = {}
+  -- if not db:isopen() then
+  --  db = assert (sqlite3.open(GetInfo (66) .. sanitize_filename(WorldName()) .. ".db"))
+  -- end--if
   -- print(room_num_table[1][1])
   --print(currentRoom.roomid)
   --print(type(currentRoom.roomid))
@@ -2574,12 +2611,14 @@ function sortRoomCPByPath()
     print('if you would like the mobs to be sorted by distance move out of unmappable rooms then type cp check again')
     return
   end
-  --print(currentRoom.roomid)
+  DebugNote('==============================')
+  DebugNote(currentRoom.roomid)
   for i, p in ipairs(room_num_table) do
-    --print(i)
+    DebugNote(i)
+    DebugNote(p)
     
     x, dep = findpath(currentRoom.roomid,p[1])
-    --print (dep)
+    DebugNote (dep)
     if dep ~= nil then
       table.insert(dist_tbl, { i, dep })
     else 
@@ -2590,17 +2629,18 @@ function sortRoomCPByPath()
   local b = {}
   local q = {}
   for k in pairs(dist_tbl) do table.insert(keys, k) end
-  --tprint(keys)
+  DebugNote(keys)
   table.sort(keys, function(a, b) return dist_tbl[a][2] < dist_tbl[b][2] end)
   for _, k in ipairs(keys) do 
-    --print(k)
-    --print(k,dist_tbl[k][1], dist_tbl[k][2]) 
+    DebugNote(k)
+    DebugNote(k,dist_tbl[k][1], dist_tbl[k][2]) 
     table.insert(b, cp_mobs[k])
     table.insert(q, room_num_table[k])
   end
   room_num_table = q
   cp_mobs = b
-  closeDBifForcedOpen()
+  --closeDBifForcedOpen()
+  -- db:close()
   
 end
 function sortRoomCP()
@@ -3028,9 +3068,9 @@ function reset_cp_flag( )
 end
 
 function collectgarbagenow()
- Note( collectgarbage("count")*1024)
+ --Note( collectgarbage("count")*1024)
   collectgarbage("collect")
-  Note( collectgarbage("count")*1024)
+  --Note( collectgarbage("count")*1024)
 end
 
 function DebugNote( msg )
