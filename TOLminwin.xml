@@ -97,11 +97,12 @@ function show_cp_text ()
   -- list of mobs
   for i, v in ipairs (cpmobs) do
     style = {}
+    if v.dist == nil then v.dist = 0 end
     if v.num == nil then v.num = 1 end
     if i<10 then 
-      style.text = string.format(i.." : %-30s %s", v.name, ""..v.num.." : (" .. v.location .. ")")
+      style.text = string.format(i.." : %-30s %s", v.name, ""..v.num.." : (" .. v.location .. ")".. " Dist: ".. v.dist)
     else 
-      style.text = string.format(i..": %-30s %s", v.name, ""..v.num.." : (" .. v.location .. ")")
+      style.text = string.format(i..": %-30s %s", v.name, ""..v.num.." : (" .. v.location .. ")".. " Dist: ".. v.dist)
     end
     if verify_bool(v.mobdead) then
       -- print ("in the if block for v.mobdead")

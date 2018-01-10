@@ -177,6 +177,7 @@ Note:
   >
   <send>
     Note(getmemoryusage())
+    ColourNote("MediumSeaGreen", "", GetPluginInfo (GetPluginID (), 3))
   </send>
   </alias>
   <alias
@@ -636,16 +637,7 @@ Note:
    script="quest_color"
   >
   </trigger>
-  <trigger
-   group="Quest"
-   enabled="y"
-   match="^(.*) tells you \'Since the escape\, * (.*?) has murdered\'$"
-   regexp="y"
-   send_to="12"
-   sequence="120"
-   script="questMob"
-  > 
-  </trigger>
+ 
   
   
   <!-- Triggers for Global Quests   -->
@@ -900,7 +892,7 @@ function QuestInfoHandleArea(name, line, wildcards)
 end
 
 function questMob(name, line, wildcards)
-  qMob(string.lower(wildcards[1]))
+  qMob(wildcards[1])
   mobname = sanitizeName(wildcards[2])
 end
 
@@ -1501,54 +1493,47 @@ local level = 0
 local oldlevel = 0
 
 function OnPluginBroadcast (msg, id, name, text)
-  
-  if (id == '3e7dedbe37e44942dd46d264') then
-      if (text == "room.info") then
-        res, gmcparg = CallPlugin("3e7dedbe37e44942dd46d264","gmcpval","room.info")
-        luastmt = "gmcpdata = " .. gmcparg
-        assert (loadstring (luastmt or "")) ()
-        currentRoom = {
-          name = gmcpdata.name,
-          roomid = gmcpdata.num,
-          areaid = gmcpdata.zone
-        }
-        started = true
-        OnPluginInstall()
-      end
-      if (text == "char.status") then
-        res, gmcparg = CallPlugin("3e7dedbe37e44942dd46d264","gmcpval","char.status")
-        luastmt = "gmcpdatacharstatus = " .. gmcparg
-        assert (loadstring (luastmt or "")) ()
-        char_status = gmcpdatacharstatus
-        mylevel = tonumber(gmcpdatacharstatus.level)
-        started = true
-       OnPluginInstall()
-       if (text == "char.base") then
-         res, gmcparg = CallPlugin("3e7dedbe37e44942dd46d264","gmcpval","char.base")
-         luastmt = "gmcpdata = " .. gmcparg
-         assert (loadstring (luastmt or "")) ()
-         mytier = tonumber(gmcpdata.tier)
-      end
-
-       if level == 0 then
-        level = tonumber(char_status.level) 
-        oldlevel = level
-        -- put in logic for getting the cpmobs table
-        CpMobsAbr(level)
-       end
-
-       if level ~= oldlevel then
-        CpMobsAbr(level)
-        oldlevel = level
-       end
-
-      end
-      if (text == "char.base") then
-        res, gmcparg = CallPlugin("3e7dedbe37e44942dd46d264","gmcpval","char.base")
-        luastmt = "gmcpdatacharstatus = " .. gmcparg
-        assert (loadstring (luastmt or "")) ()
-        char_base= gmcpdatacharstatus
-      end
+    
+    if (id == '3e7dedbe37e44942dd46d264') then
+        if (text == "room.info") then
+            res, gmcparg = CallPlugin("3e7dedbe37e44942dd46d264","gmcpval","room.info")
+            luastmt = "gmcpdata = " .. gmcparg
+            assert (loadstring (luastmt or "")) ()
+            currentRoom = {
+              name = gmcpdata.name,
+              roomid = gmcpdata.num,
+              areaid = gmcpdata.zone
+            }
+            started = true
+            OnPluginInstall()
+        end
+        if (text == "char.status") then
+            res, gmcparg = CallPlugin("3e7dedbe37e44942dd46d264","gmcpval","char.status")
+            luastmt = "gmcpdatacharstatus = " .. gmcparg
+            assert (loadstring (luastmt or "")) ()
+            char_status = gmcpdatacharstatus
+            mylevel = tonumber(gmcpdatacharstatus.level)
+            started = true
+            OnPluginInstall()
+        end
+        if (text == "char.base") then
+            res, gmcparg = CallPlugin("3e7dedbe37e44942dd46d264","gmcpval","char.base")
+            luastmt = "gmcpdata = " .. gmcparg
+            assert (loadstring (luastmt or "")) ()
+            mytier = tonumber(gmcpdata.tier)
+        end
+        if mylevel ~= oldlevel then
+            print('level != oldlevel')
+            CpMobsAbr(level)
+            oldlevel = mylevel
+        end
+        
+        if (text == "char.base") then
+            res, gmcparg = CallPlugin("3e7dedbe37e44942dd46d264","gmcpval","char.base")
+            luastmt = "gmcpdatacharstatus = " .. gmcparg
+            assert (loadstring (luastmt or "")) ()
+            char_base= gmcpdatacharstatus
+        end
     end
 end
 
@@ -1572,10 +1557,10 @@ function CpMobsAbr(str)
     room_id = rows.room_id,
     room_name = rows.room_name,
     area_name = rows.area_name,
-    level = rows.level
+    level = rows.level,
+    timeskilled = rows.timeskilled
   }
   end
-
 end
 
 function tickle_it ()
@@ -1776,12 +1761,7 @@ end
 sublist={1,1}
 --TODO: Evaluate if this needs to be here at all.
 function testtime(name)
-  sublist={}
-  for i, p in pairs(mobktbl) do
-    if p.name == name then 
-      table.insert(sublist, {p.name, p.room_id, p.timeskilled})
-    end
-  end
+ 
 end
 
 function getRoomIdAreaCP(name, tableNum)
@@ -1789,34 +1769,35 @@ function getRoomIdAreaCP(name, tableNum)
     local roomNumber= nil
     local roomTemp= nil
     local loc = cp_mobs[tableNum].location
-    local dbArea = dbA
     local dbKillT = dbkt --dbkt assigner
     local found = false
     local time1 = socket.gettime()
     local thisrooms = rooms
     local thisareas = areas
+    local timeskilled = 0
     local  cpmobquery = string.format("select room_id, area_name, name, COUNT(*) as timeskilled "..
         "from CPMobs "..
         "where name like %s and "..
         "area_name = %s "..
         "group by room_id, name "..
-        "ORDER by timeskilled asc ", fixsql(name), fixsql(loc))
+        "ORDER by timeskilled desc ", fixsql(name), fixsql(loc))
     if CPMobsLevelBound ~= nil then
-      --print("using CPMobsLevelBound first")
-
         for i, p in pairs(CPMobsLevelBound) do
-            if name == p.name and loc == p.area_name then 
-              --print ("found one".. name)
+            if name == p.name and loc == p.area_name and timeskilled<p.timeskilled then 
               nameHolder = name
               roomNumber = p.room_id
+              timeskilled = p.timeskilled
               found = true
             end
         end
     end
     if found == false then
+        DebugNote("in query block")
         for a in dbKillT:nrows(cpmobquery) do
          DebugNote(a)
             if found== false then
+                DebugNote('the one I will use is: ')
+                DebugNote (a)
                 nameHolder = a.name
                 roomNumber = a.room_id
                 found = true
@@ -1825,7 +1806,13 @@ function getRoomIdAreaCP(name, tableNum)
     end
     local count= 0
     if found == false then 
-      testtime(name)-- this gets called every mob in your cp list let me show you the flow
+        testtime(name)-- this gets called every mob in your cp list let me show you the flow
+        sublist={}
+        for i, p in pairs(mobktbl) do
+            if p.name == name then 
+                table.insert(sublist, {p.name, p.room_id, p.timeskilled})
+            end
+        end
       DebugNote("\n In second block ".. name.."\n")
         for i,a in pairs(sublist) do
             count = count+1 
@@ -1845,8 +1832,6 @@ function getRoomIdAreaCP(name, tableNum)
                 end
         end --for
     end --if
-    local time2 = (socket.gettime() - time1) *1000
-    DebugNote("Time to find mob is ".. time2)
     if roomNumber ~= nil and nameHolder ~=nil then
         DebugNote ("check")
         --tprint (cp_mobs)
@@ -1906,7 +1891,7 @@ function getRoomIdRoomCP(name, nameHolder, tableNum)-- TODO some bug here where 
             "where name like %s and "..
             "room_name = %s"..
             "group by room_id, name "..
-            "ORDER by timeskilled desc ", fixsql(name), fixsql(loc))
+            "ORDER by timeskilled asc ", fixsql(name), fixsql(loc))
         
         for rows in databasekt:nrows(cpmobquery) do
             roomNumber = rows.room_id
@@ -1971,7 +1956,6 @@ local bit = require("bit")
 function load_room_from_database (uid)
    local room
    local u = tostring(uid)
-   DebugNote(u)
    assert (uid, "No UID supplied to load_room_from_database")
 
    -- if not in database, don't look again
@@ -2000,21 +1984,11 @@ function load_room_from_database (uid)
       for exitrow in dbnrowsWRAPPER(string.format ("SELECT * FROM exits WHERE fromuid = %s", fixsql (u))) do
          room.exits [exitrow.dir] = tostring (exitrow.touid)
          room.exit_locks [exitrow.dir] = tostring(exitrow.level)
-         DebugNote('======== exit row =======')
-         DebugNote(exitrow)
       end -- for each exit
-      DebugNote('======= room row ========')
-      DebugNote(row)
-      DebugNote('back to top or escape')
    end   -- finding room
-   DebugNote('escape the for loop')
-   DebugNote('======= printing room ======')
-   DebugNote(room)
    if room then
-    DebugNote('in if room')
       if not rooms then
          -- this shouldn't even be possible. what the hell.
-         DebugNote('did this happen?')
          rooms = {}
       end
       rooms [u] = room
@@ -2040,9 +2014,7 @@ worldPath = GetInfo(66)..sanitize_filename(WorldName())
 db = assert (sqlite3.open(worldPath..".db"))
 db:busy_timeout(100)
 function forceOpenDB()
-  DebugNote('====================== start forceOPenDB ======================================')
    force_nests = force_nests+1
-   DebugNote('is db open: '.. tostring(db:isopen()))
    if not db:isopen() then
       forced_opened = true
       -- print("Forcing open")
@@ -2050,32 +2022,23 @@ function forceOpenDB()
    end
 end
 function dbnrowsWRAPPER(query)
-  DebugNote('====================== start dbnrowsWRapper ======================================')
    forceOpenDB()
-   DebugNote (db)
-   DebugNote (query)
    iter,vm,i = db:nrows(query)
    local function itwrap(vm, i)
       retval = iter(vm, i)
       if not retval then
-        DebugNote('not retval '.. tostring(retval))
          closeDBifForcedOpen()
          return nil
       end
       return retval
    end
-   DebugNote('do I ever get here?')
    return itwrap,vm,i
 end
 function closeDBifForcedOpen()
-  DebugNote('====================== start forceOPenDB ======================================')
    force_nests = force_nests-1
-   DebugNote(forced_opened)
-   DebugNote(force_nests)
    if forced_opened and (force_nests <= 0) then
       force_nests = 0
       forced_opened = false
-      DebugNote("Forcing closed")
       db:close()
    end
 end
@@ -2138,15 +2101,12 @@ function findpath(src, dst, noportals, norecalls)
    DebugNote('source room is : '..src)
    DebugNote('destination room is : '..dst)
    if not rooms[src] or src == '-1' then
-      DebugNote('may break updated rooms')
       if src == "-1" then
         src = "nomap_"..currentRoom.name.."_"..currentRoom.areaid
       end
       rooms[src] = load_room_from_database(src)
-     DebugNote(rooms)
    end
    if not rooms[src] then
-    DebugNote('did I return?')
       return
    end
    if tostring(src) == tostring(dst) then
@@ -2154,9 +2114,6 @@ function findpath(src, dst, noportals, norecalls)
     end
    local walk_one = nil
    for dir,touid in pairs(rooms[src].exits) do
-    DebugNote('dir: ' .. dir)
-    DebugNote('touid: '.. touid)
-
       if tostring(touid) == tostring(dst) and tonumber(rooms[src].exit_locks[dir]) <= mylevel and ((walk_one == nil) or (#dir > #walk_one)) then
          walk_one = dir -- if one room away, walk there (don't portal), but prefer a cexit
       end
@@ -2300,6 +2257,7 @@ function sortRoomCPByPath()
     DebugNote(i)
     DebugNote(p)    
     x, dep = findpath(currentRoom.roomid,p[1])
+    DebugNote('Depth:')
     DebugNote (dep)
     if dep ~= nil then
       table.insert(dist_tbl, { i, dep })
@@ -2311,11 +2269,17 @@ function sortRoomCPByPath()
   local b = {}
   local q = {}
   for k in pairs(dist_tbl) do table.insert(keys, k) end
+  DebugNote('keys')
   DebugNote(keys)
   table.sort(keys, function(a, b) return dist_tbl[a][2] < dist_tbl[b][2] end)
   for _, k in ipairs(keys) do 
+    DebugNote('_ then k')
+    DebugNote(_)
     DebugNote(k)
-    DebugNote(k,dist_tbl[k][1], dist_tbl[k][2]) 
+    DebugNote(k) 
+    DebugNote(dist_tbl[k][1])
+    DebugNote(dist_tbl[k][2])
+    cp_mobs[k].dist = dist_tbl[k][2]
     table.insert(b, cp_mobs[k])
     table.insert(q, room_num_table[k])
   end
@@ -2646,8 +2610,6 @@ function StartScript()
     init()
     print ('making table')
   end--if
-   assert (loadstring (GetVariable ("greedy") or "")) ()
-   print (greedy)
   if not IsPluginInstalled("0961770926b613688a1c5458") then
     LoadPlugin(GetPluginInfo (GetPluginID (), 20) .. "cp_mobTableFiller.xml")
   end
@@ -2657,13 +2619,35 @@ function StartScript()
   dbA:close()
 end
 local didonce = false
+
 function OnPluginInstall()
-  if IsConnected() and started == true and didonce == false then
-    StartScript()
-    print("start")
-    didonce = true
-    started = true
-  end
+    if IsConnected() and started == true and didonce == false then
+        res, gmcparg = CallPlugin("3e7dedbe37e44942dd46d264","gmcpval","room.info")
+            luastmt = "gmcpdata = " .. gmcparg
+            assert (loadstring (luastmt or "")) ()
+            currentRoom = {
+              name = gmcpdata.name,
+              roomid = gmcpdata.num,
+              areaid = gmcpdata.zone
+            }
+        res, gmcparg = CallPlugin("3e7dedbe37e44942dd46d264","gmcpval","char.status")
+            luastmt = "gmcpdatacharstatus = " .. gmcparg
+            assert (loadstring (luastmt or "")) ()
+            char_status = gmcpdatacharstatus
+            mylevel = tonumber(gmcpdatacharstatus.level)
+        res, gmcparg = CallPlugin("3e7dedbe37e44942dd46d264","gmcpval","char.base")
+            luastmt = "gmcpdata = " .. gmcparg
+            assert (loadstring (luastmt or "")) ()
+            mytier = tonumber(gmcpdata.tier)
+        res, gmcparg = CallPlugin("3e7dedbe37e44942dd46d264","gmcpval","char.base")
+            luastmt = "gmcpdatacharstatus = " .. gmcparg
+            assert (loadstring (luastmt or "")) ()
+            char_base= gmcpdatacharstatus
+        StartScript()
+        print("start")
+        didonce = true
+        started = true
+    end
 end
 function myHandler(udata, retries)
    DebugNote("BUSY!")

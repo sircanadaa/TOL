@@ -8,9 +8,9 @@ local lastRoomIndex = 0
 -- Triggers
 --------------------------------------
 function qTest()
-    qMob("a monk carrying a tender mutton sandwich")
-    qRoom("A Feast")
-    qArea("Onyx Bazaar")
+    qMob("the Liavango Despot")
+    qRoom("Home of the Despot")
+    qArea("The Darkside of the Fractured Lands")
 end
 
 function qGoto()
