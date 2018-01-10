@@ -563,28 +563,6 @@ Note:
   
   </trigger>
   <trigger
-   group="Quest"
-   match="^(.*) tells you \'Seek * (.*?) out somewhere in the vicinity\'$"
-   regexp="y"
-   send_to="12"
-   sequence="100"
-   script="questMob"
-   enabled="y"
-  >
-  </trigger>
-  <trigger
-   group="Quest"
-   ignore_case="y"
-   match="^(.*) tells you \'of (.*?) which is in the general area\'$"
-   regexp="y"
-   send_to="12"
-   sequence="100"
-   lowercase_wildcard="y"
-   script="questRoom"
-   enabled='y'
-  >
-  </trigger>
-  <trigger
    group="QuestI"
    enabled="y"
    match="^(.*) can be found in the vicinity of (.*) which$"
@@ -592,10 +570,21 @@ Note:
    regexp="y"
    send_to="12"
    sequence="100"
-   script="QuestInfoHandle"
+   script="questRoom"
   >
   </trigger>
   <trigger
+   group="QuestI"
+   enabled="y"
+   match="^You are on a quest to slay (.*)!$"
+   name="QuestMob"
+   regexp="y"
+   send_to="12"
+   sequence="100"
+   script="questMob"
+  >
+  </trigger>
+  <trigger  
    group="QuestI"
    enabled="y"
    match="^is in the general area of (.*).$"
@@ -603,7 +592,7 @@ Note:
    regexp="y"
    send_to="12"
    sequence="100"
-   script="QuestInfoHandleArea"
+   script="questArea"
   >
   </trigger>
   <trigger
@@ -613,7 +602,6 @@ Note:
    regexp="y"
    send_to="12"
    sequence="100"
-   script="questArea"
   >
   <send>
   Send("q i")
@@ -750,6 +738,7 @@ require "socket"
 ThreadHolder= coroutine.running()
 counter = tonumber(1)
 counter1 = tonumber(1)
+
 local Debug = false
 currentRoom = {}
 local char_status
@@ -901,9 +890,9 @@ function Toggle_Debug(name, line, wildcards)
 end
 
 function QuestInfoHandle(name, line, wildcards)
-  qMob(wildcards[1])
+ -- qMob(wildcards[1])
   qRoom(wildcards[2])
-  mobname = sanitizeName(wildcards[1])
+ -- mobname = sanitizeName(wildcards[1])
 end
 
 function QuestInfoHandleArea(name, line, wildcards)
@@ -911,7 +900,7 @@ function QuestInfoHandleArea(name, line, wildcards)
 end
 
 function questMob(name, line, wildcards)
-  qMob(wildcards[2])
+  qMob(string.lower(wildcards[1]))
   mobname = sanitizeName(wildcards[2])
 end
 
@@ -920,7 +909,7 @@ function questRoom(name, line, wildcards)
 end
 
 function questArea(name, line, wildcards)
-    qArea(wildcards[2])
+    qArea(wildcards[1])
 end
 
 function cp_check( name, line, wildcards)
