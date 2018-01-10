@@ -1652,6 +1652,7 @@ local oldlevel = 0
         luastmt = "gmcpdata = " .. gmcparg
         assert (loadstring (luastmt or "")) ()
         currentRoom = {
+          name = gmcpdata.name,
           roomid = gmcpdata.num,
           areaid = gmcpdata.zone
         }
@@ -2481,9 +2482,13 @@ function findpath(src, dst, noportals, norecalls)
   local rooms = {}
    DebugNote('source room is : '..src)
    DebugNote('destination room is : '..dst)
+   
    -- ok there is an issue here where the rooms I get don't have the exits, lets fix this.... in the startup script I will need to run exits lookup
-   if not rooms[src] then
+   if not rooms[src] or src == '-1' then
       DebugNote('may break updated rooms')
+      if src == "-1" then
+        src = "nomap_"..currentRoom.name.."_"..currentRoom.areaid
+      end
       rooms[src] = load_room_from_database(src)
      DebugNote(rooms)
    end
@@ -2491,7 +2496,9 @@ function findpath(src, dst, noportals, norecalls)
     DebugNote('did I return?')
       return
    end
-
+   if tostring(src) == tostring(dst) then
+    return {},0 
+    end
    local walk_one = nil
    -- print('here?')
    --tprint(rooms[src])
@@ -2645,16 +2652,12 @@ function sortRoomCPByPath()
   -- print(room_num_table[1][1])
   --print(currentRoom.roomid)
   --print(type(currentRoom.roomid))
-  if currentRoom.roomid == '-1'   then
-    print('if you would like the mobs to be sorted by distance move out of unmappable rooms then type cp check again')
-    return
-  end
+
   DebugNote('==============================')
   DebugNote(currentRoom.roomid)
   for i, p in ipairs(room_num_table) do
     DebugNote(i)
-    DebugNote(p)
-    
+    DebugNote(p)    
     x, dep = findpath(currentRoom.roomid,p[1])
     DebugNote (dep)
     if dep ~= nil then
