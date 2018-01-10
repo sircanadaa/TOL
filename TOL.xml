@@ -99,14 +99,6 @@ Note:
    sequence='100'
    >
   </alias>
-  <alias
-   enabled="y"
-   match="^TOL workingMode (\d)$"
-   script="workingMode"
-   regexp="y"
-   sequence='100'
-   >
-  </alias>
    <alias
    enabled="y"
    match="^TOL debug off$"
@@ -185,19 +177,9 @@ Note:
   >
   <send>
     Note(getmemoryusage())
-    ColourNote("MediumSeaGreen", "", GetPluginInfo (GetPluginID (), 3))
   </send>
   </alias>
   <alias
-   match="^GreedyFill (.*)$"
-   enabled="y"
-   send_to="12"
-   sequence="100"
-   regexp="y"
-   script = "AutoUpdate"
-  >
-  </alias>
-      <alias
    match="^wm (.*)$"
    enabled="y"
    send_to="12"
@@ -327,15 +309,6 @@ Note:
    regexp="y"
   >
   </alias>
-      <alias
-   match="^aknx (.*?)$"
-   enabled="n"
-   send_to="12"
-   sequence="100"
-   script="gotoIndexMob"
-   regexp="y"
-  >
-  </alias>
   <alias
    match="^(cp|campaign|gq|globalquest) end$"
    enabled="y"
@@ -373,18 +346,6 @@ Note:
    script="hunt_off"
   >
   </alias>
-  <alias
-   match="^rt (.*?)$"
-   enabled="n"
-   send_to="12"
-   regexp="y"
-   sequence="100"
-  >
-  <send>
-    Execute("recall")
-    Execute("runto %1")
-  </send>
-  </alias>
    <alias
    match="^tqs$"
    enabled="y"
@@ -393,20 +354,6 @@ Note:
    script="quickScan"
    regexp="y"
   >
-  </alias>
-  <alias
-  match="^TOL mktcount"
-  enabled="y"
-  send_to="12"
-  regexp="y"
-><send>Note("mktbl count = ".. #mobktbl)</send>
-</alias>
-<alias match="^TOL mktentry ([0-9]+)"
-  enabled="y"
-  send_to="12"
-  regexp="y"
-  >
-  <send>Note("mobktbl[" .. %1 .. "]: " .. mobktbl[%1].name .. " Roomid: " .. mobktbl[%1].room_id .. " TimesKilled: " .. mobktbl[%1].timeskilled)</send>
   </alias>
   <alias
    match="^tlookup (.*)$"
@@ -803,7 +750,6 @@ require "socket"
 ThreadHolder= coroutine.running()
 counter = tonumber(1)
 counter1 = tonumber(1)
---google maps api key  AIzaSyCngIixf6KAv8_LQ9aIjAS6FpmFaM0haEc 
 local Debug = false
 currentRoom = {}
 local char_status
@@ -844,13 +790,7 @@ function lookup(name1, line, wildcards)--Looks up mobs from the CPmobs database 
   local decideQ = 0
   local level = 0
   local modanddata = {}
-  -- for i, p in pairs(modifiers) do 
-    table.insert (modanddata, p)
-  -- end
-
   for i, p in pairs (modifiers) do
-    -- print (string.sub(wildcards[1],string.find(wildcards[1], p), string.find(wildcards[1], ) ))
-    -- print ('On: '.. p)
     local x, a = 0
    a,x = string.find(wildcards[1], p.." ")
     if a ~= nil and x ~= nil then 
@@ -858,60 +798,23 @@ function lookup(name1, line, wildcards)--Looks up mobs from the CPmobs database 
         
         tmp = string.sub (wildcards[1], x)
         ptr = string.len(tmp)
-        -- print (tmp)
-        -- print (ptr)
         for j, k in pairs(modifiers) do
           y, w = string.find(tmp, k.." ")
-          -- print(j)
-          -- print (k)
-          -- print (y)
-          -- print (w)
           if y~= nil and y< ptr then
             -- print (y)
             ptr = y -2
           end
         end
-
-        -- print ('Stuff to save: ' ..string.sub(tmp, 2, ptr))
         modanddata[i] = string.sub(tmp, 2, ptr)
         prt = 1
-        -- print ('a: '.. a)
-        -- print ('junk: '..string.sub(wildcards[1], a, x))
-        -- print ('x:' ..x)
-      
       if x ~= nil and x > ptr then 
         ptr = x 
-        
-        -- if a ~= nil and a > ptrkeep then -- this is the data to save from LAST run of the for loop
-        --  print ('Stuff to save: ' ..string.sub(wildcards[1], ptrkeep+1, a-2)) 
-        -- end
-        -- if i ==1 then 
-        --   decideQ = decideQ + 1
-        -- elseif i == 2 then
-        --   decideQ = decideQ + 3
-        -- elseif i == 3 then
-        --   decideQ = decideQ + 7
-        -- elseif i == 4 then
-        --   decideQ = decideQ + 11
-        -- end
       end
-       -- print (ptr)
-       -- print (name)
-       -- name =string.sub(wildcards[1], ptr+1)
-       -- print (name)
        ptr = 0
-       -- print ("")
     else 
       modanddata [i] = -1
     end
   end
-        --tprint(modanddata)
-
-
-  -- name =string.sub(wildcards[1], ptr+1)
-   -- print (name)
-  -- --tprint(wildcards)
-  -- name = "%"..name.."%"
   -- modanddata will always be in the form 1 = name, 2 = level, 3 = area, 4 = room
   local name =""
   local levela = 0
@@ -967,7 +870,6 @@ function lookup(name1, line, wildcards)--Looks up mobs from the CPmobs database 
     query = string.format("SELECT * from CPMobs where level <= %d and level >= %d and room_name like %s and area_name like %s", levela, levelb,fixsql(room), fixsql(area))
 
   end
-  -- print (query)
   for p in dbkt:nrows(query) do
     table.insert(mobbuff, p )
   end
@@ -986,24 +888,6 @@ function lookup(name1, line, wildcards)--Looks up mobs from the CPmobs database 
 end
 function quickScan()
   Execute("scan " .. mobname)
-end
-function workingMode(name, line, num)
-  local numt = tonumber(num[1])
-  print ("test")
-  print (numt==1)
-  tprint(GetTimerList())
-  if numt == 1 then
-    print("Working mode on")
-    
-    dbkt:close()
-  elseif numt == 0 then
-    print("Working mode off")
-    
-    print (GetPluginInfo (GetPluginID (), 20))
-    dbkt=sqlite3.open(GetPluginInfo (GetPluginID (), 20) .. 'KillTable.db')
-    dbkt:busy_handler(myHandler)
-    
-  end
 end
 
 function Toggle_Debug(name, line, wildcards)
@@ -1032,20 +916,18 @@ function questMob(name, line, wildcards)
 end
 
 function questRoom(name, line, wildcards)
--- print (wildcards[2])
-qRoom(wildcards[2])
+    qRoom(wildcards[2])
 end
 
 function questArea(name, line, wildcards)
-  -- print (wildcards[2])
-qArea(wildcards[2])
+    qArea(wildcards[2])
 end
 
 function cp_check( name, line, wildcards)
   EnableTrigger("campaign_item", true)
-
   mobsleft = {}
 end -- cp_check
+
 function gq_check( name, line, wildcards)
   DebugNote( "gq_check")
   DebugNote(wildcards)
@@ -1055,8 +937,6 @@ function gq_check( name, line, wildcards)
   if wildcards ~= nil and tonumber(GQ_num) == tonumber(wildcards.num) then
     EnableTrigger("campaign_item", true)
     DebugNote("Gquest started")
-    
--- this is sublime text ahh
     GQ_num = tonumber(wildcards[1])
     DebugNote (GQ_num)
     Send("gq ch")
@@ -1072,6 +952,7 @@ function gq_check( name, line, wildcards)
     EnableTrigger('camp_item_start', 0)
   end
 end -- gq_check
+
 function gq_start(name, line, wildcards)
   DebugNote ("gq_start")
   --EnableTrigger("campaign_item", true)
@@ -1081,6 +962,7 @@ function gq_start(name, line, wildcards)
   DebugNote("GQ_flag set to "..tostring(GQ_flag))
   mobsleft = {}
 end
+
 function cpgq_quit(name, line, wildcards)
   DebugNote(name)
   DebugNote(line)
@@ -1190,7 +1072,6 @@ function campaign_item (name, line, wildcards)-- the actual campaign item getter
   
   if not name or not location then
     print("error parsing line: ", line)
-    --tprint(wildcards)
   else
     table.insert(mobsleft, {name=name, location=location, mobdead=mobdead, mobdead=mobdead,false, num = tonumber(num)})
   end
@@ -1231,15 +1112,8 @@ function delete_mob_from_table( )
     room_num_table2 = tmp
     if found == false then
       DebugNote("Begin cp_mobs[mob_next_delete_value] check")
-      
       DebugNote(num)
       DebugNote("End cp_mobs[mob_next_delete_value] check")
-      --tprint (cp_mobs)
-      -- if cp_mobs[mob_next_delete_value][6] >1 then
-      --   cp_mobs[mob_next_delete_value][6] = cp_mobs[mob_next_delete_value][6] -1
-      --   room_num_table[mob_next_delete_value][6] = room_num_table[mob_next_delete_value][6] -1
-      --   return
-      -- end
       table.remove(room_num_table,  mob_next_delete_value)
       table.remove(cp_mobs, mob_next_delete_value)
       DebugNote(GQ_flag)
@@ -1261,7 +1135,6 @@ function delete_mob_from_table( )
 end
 
 function delete_mob_from_table_index(val)
-
   if AutoUpdate_var == false and last_Enemy ~= nil then
   for p,q in pairs (room_num_table2) do
     num = tonumber(q[6]) or 1
@@ -1293,7 +1166,6 @@ function CPFound()
 end
 
 function not_here_script()
-  
   Execute("wm "..mobname)
   Note ("THIS IS NOT THE CORRECT AREA OR THE MOB IS DEAD")
   EnableTriggerGroup("HUNTING", false)
@@ -1313,28 +1185,25 @@ function cpn_script (index, line, wildcards)
   end
   DebugNote (index)
   DebugNote (type(index))
-
-  --DebugNote (type(wildcards[1]))
-  --DebugNote (wildcards)
   DebugNote (numcheck)
-if  index ~= nil and type(index)== 'string'  then
-  if #wildcards < 1 then 
-      index = mob_index
+    if  index ~= nil and type(index)== 'string'  then
+        if #wildcards < 1 then 
+          index = mob_index
 
-    elseif #wildcards <=1 and numcheck == nil then
+        elseif #wildcards <=1 and numcheck == nil then
 
-      EnableTriggerGroup("HUNTING", true)
-      reset_counter()
-      mobname = wildcards[1]
-      Execute ("hunt " .. mobname)
-      --EnableTriggerGroup("HUNTING", false)
-      return
-    end
-  if wildcards[1]== nil and mob_index ~= nil then
-  else
-  index = wildcards[1]
-  end
-end --if
+          EnableTriggerGroup("HUNTING", true)
+          reset_counter()
+          mobname = wildcards[1]
+          Execute ("hunt " .. mobname)
+          --EnableTriggerGroup("HUNTING", false)
+          return
+        end
+      if wildcards[1]== nil and mob_index ~= nil then
+      else
+      index = wildcards[1]
+      end
+    end --if
 index = tonumber(index)
 if room_num_table[index] == nil then
   print ("No cp_mob at that value")
@@ -1355,7 +1224,7 @@ end
 AutoUpdate_var = false
 greedy = false
 FirstRun_cp_var= true
-
+-- This function is just for testing. It should never actually be used.
 function printVars()
   tprint (cp_mobs)
 --   Debug = true
@@ -1449,6 +1318,7 @@ DebugNote(collectgarbage("count")*1024)
  --test
 -- collectgarbage("count")
 end
+-- end testing function
 kill_info = {}
 -- I hate to do it this way and will come up with a better solution... but for now
 damage_verbs = {'misses ',
@@ -1584,12 +1454,7 @@ end
 
 function check_dead ()
   check_diff()
-  --DebugNote(cp_mobs)
-    --DebugNote(room_num_table)
   for p, q in ipairs(room_num_table) do
-   -- print(p)
-    --tprint(q)
-   -- DebugNote (cp_mobs[p])
     if cp_mobs[p].mobdead ~= nil then
       if  q[2] == cp_mobs[p].name and cp_mobs[p].mobdead == true  then --used to be k.name and k.mobdead in case it doesn't work
         room_num_table[p][3] = true
@@ -1599,7 +1464,7 @@ function check_dead ()
     end     
   end--for
 end
-
+-- TODO: Evaluate if this function is actually needed anymore.
 function check_diff()
   if AutoUpdate_var== true then
     return
@@ -1641,10 +1506,12 @@ function check_diff()
   var.cp_mobs = serialize.save( "cp_mobs", cp_mobs )
   phelper:broadcast(1, var.cp_mobs)
 end
+
 myThread= nil
 local level = 0
 local oldlevel = 0
- function OnPluginBroadcast (msg, id, name, text)
+
+function OnPluginBroadcast (msg, id, name, text)
   
   if (id == '3e7dedbe37e44942dd46d264') then
       if (text == "room.info") then
@@ -1695,9 +1562,11 @@ local oldlevel = 0
       end
     end
 end
+
 CPMobsLevelBound = nil
 -- takes a level and makes a CPmobs table that is within 30 level of our current level
 function CpMobsAbr(str)
+  CPMobsLevelBound = nil
   levelAdj= 30
   levmin = tonumber(str)-levelAdj
   levmax = tonumber(str)+levelAdj
@@ -1731,17 +1600,6 @@ function tickle_it ()
   end -- if
 end -- tickle_it 
 
-function AutoUpdate(name, line, wildcards)
-   if wildcards[1] == 'true' or wildcards[1] == 'True'  then
-    greedy = true
-    Note ("Greedy fill changed to: ".. tostring(greedy).. type(greedy))
-   else
-    greedy= false
-    Note ("Greedy fil changed to: ".. tostring(greedy).. type(greedy))
-    end--if
-    SetVariable("greedy","greedy ="..serialize.save_simple(greedy))
-end
-
 room_num_table = {}
 
 function clearTable()
@@ -1761,6 +1619,7 @@ function makeTable2(room_num, name, bool, inTable, area)-- stores all names and 
   
 
 end
+--TODO: Change both prints to actually be something worth looking at.
 function printTable() -- prints the global table for names and room numbers, used for debugging or quick checking
  if room_num_table ~= nil and #room_num_table>0 then
   tprint(room_num_table)
@@ -1791,11 +1650,11 @@ function getTable(index) -- returns the first item in the table of room numbers,
     getName(index, 1)
     return num
 end
-
+-- Questioning why I am passing the num variable here... was this legacy?
 function getName(index, num)
   local s= ''
   if cp_mobs== nil then
-    print ("Use akn before that command please")
+    print ("Use tcp before that command please")
     return
   end--if
   s = room_num_table[tonumber(index)][2] or curMob
@@ -1882,16 +1741,10 @@ function buildRoomTable()-- This sends the table to get room_ids
       cp_mobs[i].intable = true
     end--if
   end --for
-  -- if roomCPCheck == 1 then
-  --   sortRoomCP()
-  -- end
   DebugNote('==============================')
   sortRoomCPByPath()
-  
   var.cp_mobs = serialize.save( "cp_mobs", cp_mobs )
   phelper:broadcast(1, var.cp_mobs)
-  --local time2 = (socket.gettime()*1000) - time1
-  --DebugNote("Time to build table is ".. time2)
 end
 
 local shortaname 
@@ -1918,7 +1771,7 @@ dbA=sqlite3.open(GetInfo (66) ..'Aardwolf.db')
       table.insert(hld, rows)
     end -- for
     for g, rows in pairs(hld) do
-      
+      -- this whole thing needs reworked... its a mess right now..
       if rows.type== 'room' then
         getRoomIdRoomCP(name,name, tableNum)
         dbA:close()
@@ -1932,382 +1785,198 @@ dbA=sqlite3.open(GetInfo (66) ..'Aardwolf.db')
   end--if
 end
 sublist={1,1}
+--TODO: Evaluate if this needs to be here at all.
 function testtime(name)
   sublist={}
-  --time =socket.gettime()
-  --local c = 0
- -- print (#mobktbl)
-for i, p in pairs(mobktbl) do
---c = c+1
---if c == 7077 then print (string.format("This item is %s %s %s"), i, p.room_id, p.timeskilled) end
-  if p.name == name then 
-   -- print ("inserted ".. p.name .. " at ".. p.room_id .. " i= ".. i)
-    table.insert(sublist, {p.name, p.room_id, p.timeskilled})
+  for i, p in pairs(mobktbl) do
+    if p.name == name then 
+      table.insert(sublist, {p.name, p.room_id, p.timeskilled})
+    end
   end
 end
--- so is testtime called repeatedly? and when?
---print (c)
-  --time2 = (socket.gettime()-time)*1000
-  --print ("time to get sub table was ".. time2)
-end
+
 function getRoomIdAreaCP(name, tableNum)
-local nameHolder= nil
-local roomNumber= nil
-local roomTemp= nil
-local loc = cp_mobs[tableNum].location
-local dbArea = dbA
-local dbKillT = dbkt --dbkt assigner
-local found = false
-local time1 = socket.gettime()
-local thisrooms = rooms
-local thisareas = areas
+    local nameHolder= nil
+    local roomNumber= nil
+    local roomTemp= nil
+    local loc = cp_mobs[tableNum].location
+    local dbArea = dbA
+    local dbKillT = dbkt --dbkt assigner
+    local found = false
+    local time1 = socket.gettime()
+    local thisrooms = rooms
+    local thisareas = areas
     local  cpmobquery = string.format("select room_id, area_name, name, COUNT(*) as timeskilled "..
         "from CPMobs "..
         "where name like %s and "..
         "area_name = %s "..
         "group by room_id, name "..
         "ORDER by timeskilled asc ", fixsql(name), fixsql(loc))
-      -- DebugNote(fixsql(name))
-      -- DebugNote(fixsql(loc))
-    -- local  query = string.format("select room_id, name, COUNT(*) as timeskilled "..
-    --     "from mobkills "..
-    --     "where name like %s "..
-    --     "group by room_id, name "..
-     --   "ORDER by timeskilled desc ", fixsql(name))
-      -- rc = dbKillT:exec(cpmobquery)
-      -- DebugNote(rc)
-      -- DebugNote(dbKillT:errmsg())
     if CPMobsLevelBound ~= nil then
       --print("using CPMobsLevelBound first")
 
-      for i, p in pairs(CPMobsLevelBound) do
-        if name == p.name and loc == p.area_name then 
-          --print ("found one".. name)
-          nameHolder = name
-          roomNumber = p.room_id
-          found = true
+        for i, p in pairs(CPMobsLevelBound) do
+            if name == p.name and loc == p.area_name then 
+              --print ("found one".. name)
+              nameHolder = name
+              roomNumber = p.room_id
+              found = true
+            end
         end
-      end
     end
     if found == false then
-      for a in dbKillT:nrows(cpmobquery) do
+        for a in dbKillT:nrows(cpmobquery) do
          DebugNote(a)
-        if found== false then
-          nameHolder = a.name
-          roomNumber = a.room_id
-          found = true
-         -- print ("found in the CPMob table")
-        end
-      end   
-  end
+            if found== false then
+                nameHolder = a.name
+                roomNumber = a.room_id
+                found = true
+            end
+        end   
+    end
     local count= 0
     if found == false then 
       testtime(name)-- this gets called every mob in your cp list let me show you the flow
-      --tprint (sublist)
-     DebugNote("\n In second block ".. name.."\n")
-     
-      --for a in dbKillT:nrows(query) do
-      for i,a in pairs(sublist) do
-      count = count+1 
-      --print (count)
-        DebugNote(a)
-        DebugNote("-----")
-        -- print (tostring(found))
-        nameHolder=a[1]
-        roomTemp= tostring(a[2])
-        -- print (roomTemp)
-          -- query1 = string.format("select rooms.uid, areas.name as areaName "..
-          --   "from rooms, areas "..
-          --   "where areas.uid = rooms.area and rooms.uid = %s and areaName = %s",fixsql(roomTemp), fixsql(loc))
-          --print (tostring(found))
-          if found == false then
-            --for rows in dbA:nrows(query1) do
-            --for i, v in pairs (thisrooms)
-           -- print ("Test")
-           -- tprint (rooms[tostring(roomTemp)])
-           -- print (thisrooms[roomTemp].area)
-           -- print ("test2")
-           --tprint (thisrooms[roomTemp])
-           if thisrooms[roomTemp] ~= nil then  
-             --print (thisareas[thisrooms[roomTemp].area].name)
-             -- print (loc)
-              --print (tostring(found))
-              --tprint(thisareas[thisrooms[roomTemp]])
-              if loc == thisareas[thisrooms[roomTemp].area].name and found == false then
-                DebugNote(a[1])
-                found = true
-                roomNumber = roomTemp
-              end
-                -- count = count+1
-                -- DebugNote(rows)
-                DebugNote("+++++")
-                -- if rows.areaName == cp_mobs[tableNum].location and found == false then
-                --   roomNumber= roomTemp 
-                --   found = true
-                -- end --if
-              --end -- for
-            end
-          end
-          -- if nameHolder ~= nil and roomNumber ~= nil  then
-          --   dbA:interrupt()
-          -- end--if
-      end --for
+      DebugNote("\n In second block ".. name.."\n")
+        for i,a in pairs(sublist) do
+            count = count+1 
+            DebugNote(a)
+            DebugNote("-----")
+            nameHolder=a[1]
+            roomTemp= tostring(a[2])
+                if found == false then
+                    if thisrooms[roomTemp] ~= nil then  
+                        if loc == thisareas[thisrooms[roomTemp].area].name and found == false then
+                            DebugNote(a[1])
+                            found = true
+                            roomNumber = roomTemp
+                        end
+                        DebugNote("+++++")
+                    end
+                end
+        end --for
     end --if
-    --print (count)
     local time2 = (socket.gettime() - time1) *1000
-DebugNote("Time to find mob is ".. time2)
-  if roomNumber ~= nil and nameHolder ~=nil then
-    DebugNote ("check")
-    --tprint (cp_mobs)
-    DebugNote(cp_mobs[tableNum].num)
-    DebugNote ("///check")
-    makeTable(tonumber(roomNumber), nameHolder, cp_mobs[tableNum].mobdead, true, loc, cp_mobs[tableNum].num)
-    mob_index= 1
-  end--if
-  if roomNumber == nil then
-    DebugNote("here")
-    makeTable(loc, cp_mobs[tableNum].name, cp_mobs[tableNum].mobdead, false, loc, cp_mobs[tableNum].num)
-    mob_index= 1
-  end--if
-
+    DebugNote("Time to find mob is ".. time2)
+    if roomNumber ~= nil and nameHolder ~=nil then
+        DebugNote ("check")
+        --tprint (cp_mobs)
+        DebugNote(cp_mobs[tableNum].num)
+        DebugNote ("///check")
+        makeTable(tonumber(roomNumber), nameHolder, cp_mobs[tableNum].mobdead, true, loc, cp_mobs[tableNum].num)
+        mob_index= 1
+    end--if
+    if roomNumber == nil then
+        DebugNote("here")
+        makeTable(loc, cp_mobs[tableNum].name, cp_mobs[tableNum].mobdead, false, loc, cp_mobs[tableNum].num)
+        mob_index= 1
+    end--if
 end
 
 function getRoomIdRoomCP(name, nameHolder, tableNum)-- TODO some bug here where it drops the last 2 things in list
-local loc = cp_mobs[tableNum].location
-local mob_table_name= ''
-local rows_counter= 1
-local rows_counter_check= 0
-local databasetest = dbA
-local databasekt = dbkt --dbkt assigner
-local make1 = makeTable
-local make2 = makeTable2
-local call = CallPlugin
-local DebugNote = DebugNote
-local findmob_table= {}
-local area_table= {}
-local strbld = string.format
-local room_num_table= room_num_table
-local room_num_table2= room_num_table2
-local tableNum = tonumber(tableNum)
-local levelAdj = 11
-local found = 0
-local areaName
--- Note(name.."")
- res, gmcparg = call("3e7dedbe37e44942dd46d264","gmcpval","char") --- We just want the gmcp.char section.
- luastmt = "gmcpdata = " .. gmcparg --- Convert the serialized string back into a lua table.
- assert (loadstring (luastmt or "")) ()
- level = tonumber(gmcpdata.status.level) -- uncomment for live
- if GQ_flag then levelAdj = 22 end
- --level = 70 -- for testing
- min_level = level - levelAdj 
- max_level = level + levelAdj
+    local loc = cp_mobs[tableNum].location
+    local mob_table_name= ''
+    local rows_counter= 1
+    local rows_counter_check= 0
+    local databasetest = dbA
+    local databasekt = dbkt --dbkt assigner
+    local make1 = makeTable
+    local make2 = makeTable2
+    local call = CallPlugin
+    local DebugNote = DebugNote
+    local findmob_table= {}
+    local area_table= {}
+    local strbld = string.format
+    local room_num_table= room_num_table
+    local room_num_table2= room_num_table2
+    local tableNum = tonumber(tableNum)
+    local levelAdj = 11
+    local found = 0
+    local areaName
 
- if (min_level<0)then min_level=0 end
- --print (min_level.." ".. max_level)   
---  findmob = string.format("select room_id, COUNT(*) as timeskilled,"..
---           " name from mobkills "..
---           "where name = %s "..
---           "ORDER by timeskilled DESC ", fixsql(name))
--- for rows in databasekt:nrows(findmob) do
---   print (i)
---   tprint(rows)
---   findmob_table[i]= rows
---   i = i+1
--- end--for
---  tprint (findmob_table)
--- for ind, val in ipairs(findmob_table) do
+    res, gmcparg = call("3e7dedbe37e44942dd46d264","gmcpval","char") --- We just want the gmcp.char section.
+    luastmt = "gmcpdata = " .. gmcparg --- Convert the serialized string back into a lua table.
+    assert (loadstring (luastmt or "")) ()
+    level = tonumber(gmcpdata.status.level) -- uncomment for live
+    if GQ_flag then levelAdj = 22 end
+    --level = 70 -- for testing
+    min_level = level - levelAdj 
+    max_level = level + levelAdj
 
--- end--for
-    local queryCount = strbld("select COUNT(*) as counter"..
-      " from rooms, areas"..
-      " where areas.uid = rooms.area and rooms.name = %s",fixsql(cp_mobs[tableNum].location))
-    local query1 = strbld("select rooms.uid as roomuid,"..
-      " areas.name as areaName,"..
-      " rooms.name as roomName"..
-      " from rooms rooms, areas"..
-      " where areas.uid = rooms.area and rooms.name = %s",fixsql(cp_mobs[tableNum].location))
-    local  cpmobquery = string.format("select room_id, area_name, name, COUNT(*) as timeskilled "..
-        "from CPMobs "..
-        "where name like %s and "..
-        "room_name = %s"..
-        "group by room_id, name "..
-        "ORDER by timeskilled desc ", fixsql(name), fixsql(loc))
-    
-    for rows in databasekt:nrows(cpmobquery) do
-      roomNumber = rows.room_id
-      areaName = rows.area_name
-      found = 1
-    end
-    if found == 1 then 
-      found = 0
-      DebugNote("found it in the cp_mobs table 001")
-      make1(roomNumber, cp_mobs[tableNum].name, cp_mobs[tableNum].mobdead, true, areaName, cp_mobs[tableNum].num)
-      return
-    end
-    
-    for rows in databasetest:nrows(queryCount) do
-      rows_counter = rows.counter
-    end--for
-   -- print ("")
-    -- print ("rows_counter = "..rows_counter)
-    for rows in databasetest:nrows(query1) do
-                --print ("")
-
-               
-      rows_counter_check = rows_counter_check+1
-      --print ("rows_counter_check = " ..rows_counter_check)
-     -- tprint(rows)
-      area_table[rows_counter_check] = rows
-
-      end--for
-
---DebugNote(area_table)
-    local area_table_size = #area_table
-    --tprint(area_table)
-    for z=1, area_table_size do
-      -- print ("")
-      -- print("val")
-     --DebugNote(area_table)
-      -- print("")
---         query = strbld("select room_id, COUNT(*) as timeskilled,"..
---           " name from mobkills "..
---           "where room_id = %s "..
---           "and name = %s "..
---           "group by room_id, name "..
---           "ORDER by timeskilled ASC ", fixsql(area_table[z].uid), fixsql(name))
---         for a in databasekt:nrows(query) do   
--- --print(dbkt:errmsg())
---         -- print("")
---         -- print("a from mobkills")
---          tprint (a)   
---         -- print("") 
---           roomTemp= a.room_id
---           --if string.lower(a.name) == string.lower(name) then--or cp_mobs[tableNum].location == rows.roomName not sure if this one was needed
---             roomNumber= roomTemp
---             mob_table_name = a.name
---             --print(rows.roomName)
---             --print(a.name.. " got here....................................... breaking")
---             -- break       
---           --end --if
-
---         end--for
-      roomNumber= tonumber(area_table[z].roomuid)
-
-      --print ("checking timming")
-      --for a, v in ipairs(areaLevel) do
-       -- print (rows.name)
-        --if rows.areaName == v.name then
-          --if v.minLevel ~=nil and v.maxLevel ~=nil then
-          -- print ("area_table[z].areaName "..area_table[z].areaName)
-          -- print ("areaLevel[area_table[z].areaName].minLevel "..areaLevel[area_table[z].areaName].minLevel)
-          -- print ("max_level "..max_level)
-          -- print("areaLevel[area_table[z].areaName].maxLevel "..areaLevel[area_table[z].areaName].maxLevel)
-          -- print("min_level "..min_level)
-          
+    if (min_level<0)then min_level=0 end
+        local queryCount = strbld("select COUNT(*) as counter"..
+          " from rooms, areas"..
+          " where areas.uid = rooms.area and rooms.name = %s",fixsql(cp_mobs[tableNum].location))
+        local query1 = strbld("select rooms.uid as roomuid,"..
+          " areas.name as areaName,"..
+          " rooms.name as roomName"..
+          " from rooms rooms, areas"..
+          " where areas.uid = rooms.area and rooms.name = %s",fixsql(cp_mobs[tableNum].location))
+        local  cpmobquery = string.format("select room_id, area_name, name, COUNT(*) as timeskilled "..
+            "from CPMobs "..
+            "where name like %s and "..
+            "room_name = %s"..
+            "group by room_id, name "..
+            "ORDER by timeskilled desc ", fixsql(name), fixsql(loc))
+        
+        for rows in databasekt:nrows(cpmobquery) do
+            roomNumber = rows.room_id
+            areaName = rows.area_name
+            found = 1
+        end
+        if found == 1 then 
+            found = 0
+            DebugNote("found it in the cp_mobs table 001")
+            make1(roomNumber, cp_mobs[tableNum].name, cp_mobs[tableNum].mobdead, true, areaName, cp_mobs[tableNum].num)
+            return
+        end
+        for rows in databasetest:nrows(queryCount) do
+            rows_counter = rows.counter
+        end--for
+        for rows in databasetest:nrows(query1) do        
+            rows_counter_check = rows_counter_check+1
+            area_table[rows_counter_check] = rows
+        end--for
+        local area_table_size = #area_table
+        for z=1, area_table_size do  
+            roomNumber= tonumber(area_table[z].roomuid)
             if areaLevel[area_table[z].areaName].minLevel > max_level or areaLevel[area_table[z].areaName].maxLevel<min_level then -------- testing with and was or
-              -- print ("rejected")
-              -- print ("")
-              -- print (area_table[z].areaName)
-              --Note("area out of level range")
-              rows_counter= rows_counter-1
-              rows_counter_check = rows_counter_check-1
-              --break
+                rows_counter= rows_counter-1
+                rows_counter_check = rows_counter_check-1
             else
-              -- print ("accepted")
-              -- print ("")
-              local foundone_room_table2 = false
-              local foundone_room_table = false
-               -- print ("tableNumHolder = "..tostring(tableNumHolder)..' '.. type(tableNumHolder))
-               --    print ("tableNum = "..tostring(tableNum)..' '.. type(tableNum))
-              if room_num_table ~= nil and #room_num_table >0 then
-                for p= 1, #room_num_table do
-                  if (string.lower(room_num_table[p][2]) == string.lower(nameHolder) or room_num_table[p][1]== area_table[z].uid)
-                    and tableNum== tableNumHolder then foundone_room_table= true  end--if-- cp_mobs[tableNum].name
-                end--for
-              end--if
-              if #room_num_table2 > 0 and room_num_table2 ~= nil then
-                -- print ("test")
-                --tprint (area_table)
-                for i= 1, #room_num_table2 do
-                          -- print (area_table[z].areaName) print(  room_num_table2[i][5])
-                          -- print (room_num_table2[i][1]) print( area_table[z].roomuid)
-                          -- print (room_num_table2[i][2]) print( cp_mobs[tableNum].name)
-                  if area_table[z].areaName == room_num_table2[i][5] or room_num_table2[i][1]== area_table[z].roomuid  then-- see if the first condition needs and tableNum == tableNumHolder
+                local foundone_room_table2 = false
+                local foundone_room_table = false
+                if room_num_table ~= nil and #room_num_table >0 then
+                   for p= 1, #room_num_table do
+                       if (string.lower(room_num_table[p][2]) == string.lower(nameHolder) or room_num_table[p][1]== area_table[z].uid)
+                        and tableNum== tableNumHolder then foundone_room_table= true  end--if-- cp_mobs[tableNum].name
+                    end--for
+                end--if
+                if #room_num_table2 > 0 and room_num_table2 ~= nil then
+                    for i= 1, #room_num_table2 do
+                        if area_table[z].areaName == room_num_table2[i][5] or room_num_table2[i][1]== area_table[z].roomuid  then-- see if the first condition needs and tableNum == tableNumHolder
                  
-                    foundone_room_table2 = true
-                    break
-                  else
-                    foundone_room_table2 = false
-                  end--if
-                end--for
-              end--if
-            
-              if not foundone_room_table then
-                -- print ("added table 1 ".. area_table[z].areaName .. " " .. cp_mobs[tableNum].name)
-                make1(roomNumber, cp_mobs[tableNum].name, cp_mobs[tableNum].mobdead, true, area_table[z].areaName, cp_mobs[tableNum].num)
-                tableNumHolder= tonumber(tableNum)
-                mob_index= 1
-              elseif not foundone_room_table2 then
-                -- print ("added table 2 ".. area_table[z].areaName .. " " .. cp_mobs[tableNum].name)
-                make2(roomNumber, cp_mobs[tableNum].name, cp_mobs[tableNum].mobdead, true, area_table[z].areaName, cp_mobs[tableNum].num)
-                mob_index= 1
-              end--if
-
-              -- if room_num_table ~= nil and #room_num_table > 0 then
-                -- for i=1, #room_num_table do
-                --   --print ((string.lower(room_num_table[i][2]) == string.lower(nameHolder) or room_num_table[i][1]== area_table[z].uid))
-                --   if ((string.lower(room_num_table[i][2]) == string.lower(nameHolder) or room_num_table[i][1]== area_table[z].uid)) then-- see if the first condition needs and tableNum == tableNumHolder
-                    
-                --     local foundone = false
-                --     --if room_num_table2 ~= nil and #room_num_table2>0 then
-                --       for i= 1, #room_num_table2 do
-                        
-                --         if (area_table[z].areaName == room_num_table2[i][5] or room_num_table2[i][1]== area_table[z].uid) then-- see if the first condition needs and tableNum == tableNumHolder
-                --         --print ("tableNumHolder = "..tableNumHolder)
-                --         --print ("tableNum = "..tableNum)
-                --         foundone = true
-                        
-                --         end--if
-                --       end--for
-                --     --end--if
-                --     if foundone == false or room_num_table2 == nil then
-                --       make2(tonumber(area_table[z].uid), cp_mobs[tableNum].name, cp_mobs[tableNum].mobdead,false, area_table[z].areaName)
-                --       mob_index= 1
-                --     end
-                --     found = false
-                --       break
-                --   end--if
-                --     -- print ("added ".. area_table[z].areaName)
-                --     -- make1(roomNumber, cp_mobs[tableNum].name, cp_mobs[tableNum].mobdead, true, area_table[z].areaName)
-                --     -- mob_index= 1
-                --     -- break
-                -- end--for
-              -- end--if
-            end--if
-                 -- if mob_table_name~= '' then
-                 -- print ("added ".. area_table[z].areaName)
-                 --  make1(roomNumber, cp_mobs[tableNum].name, cp_mobs[tableNum].mobdead, true, area_table[z].areaName)
-                 --  mob_index= 1
-                 --  break
-                -- end--if for the commented section below
-            --print ("what")
-          --end--if
-          --print ("the")
-       -- end--if
-      --end--for
-       --Note("Not found or not open, trying something else")
-    end--for
-  -- DebugNote ("rows_counter end = "..rows_counter)   
-   --DebugNote ("rows_counter_check = " .. rows_counter_check)
-  -- if rows_counter_check == rows_counter then
-  --   make1(-1, cp_mobs[tableNum].name, cp_mobs[tableNum].mobdead, false)
-  --   --print ('-1 becuase check = counter')
-  -- end--if
-  -- print ("------------------------------------Next Check done")
-  tableNumHolder= tonumber(tableNum)
-  --tprint (area_table)
-  mob_index= 1
+                            foundone_room_table2 = true
+                            break
+                        else
+                            foundone_room_table2 = false
+                        end--if
+                    end--for
+                end--if
+                if not foundone_room_table then
+                    make1(roomNumber, cp_mobs[tableNum].name, cp_mobs[tableNum].mobdead, true, area_table[z].areaName, cp_mobs[tableNum].num)
+                    tableNumHolder= tonumber(tableNum)
+                    mob_index= 1
+                elseif not foundone_room_table2 then
+                    make2(roomNumber, cp_mobs[tableNum].name, cp_mobs[tableNum].mobdead, true, area_table[z].areaName, cp_mobs[tableNum].num)
+                    mob_index= 1
+                end--if
+        end--for
+    end--if
+    tableNumHolder= tonumber(tableNum)
+    mob_index= 1
 end
+room_not_in_database = {}
 -- This section is almost a straight rip from Fiendish's aard_GMCP_mapper.xml all credit goes to him
 local bit = require("bit")
 function load_room_from_database (uid)
@@ -2317,9 +1986,9 @@ function load_room_from_database (uid)
    assert (uid, "No UID supplied to load_room_from_database")
 
    -- if not in database, don't look again
-   -- if room_not_in_database [u] then
-   --    return nil
-   -- end -- no point looking
+   if room_not_in_database [u] then
+      return nil
+   end -- no point looking
 -- print('here?')
    for row in dbnrowsWRAPPER(string.format ("SELECT * FROM rooms WHERE uid = %s", fixsql (u))) do
       room = {
@@ -2434,10 +2103,7 @@ function findNearestJumpRoom(src, dst, target_type)
    local path_type = ""
 
    table.insert(rooms_list, fixsql(src))
-   --local main_status = GetInfo(53)
    while not found and depth < max_depth do
-      --SetStatus(main_status.." (searching jump depth "..depth..")")
-     -- BroadcastPlugin (999, "repaint")
       depth = depth + 1
 
       -- prune the search space
@@ -2482,8 +2148,6 @@ function findpath(src, dst, noportals, norecalls)
   local rooms = {}
    DebugNote('source room is : '..src)
    DebugNote('destination room is : '..dst)
-   
-   -- ok there is an issue here where the rooms I get don't have the exits, lets fix this.... in the startup script I will need to run exits lookup
    if not rooms[src] or src == '-1' then
       DebugNote('may break updated rooms')
       if src == "-1" then
@@ -2500,15 +2164,12 @@ function findpath(src, dst, noportals, norecalls)
     return {},0 
     end
    local walk_one = nil
-   -- print('here?')
-   --tprint(rooms[src])
    for dir,touid in pairs(rooms[src].exits) do
     DebugNote('dir: ' .. dir)
     DebugNote('touid: '.. touid)
 
       if tostring(touid) == tostring(dst) and tonumber(rooms[src].exit_locks[dir]) <= mylevel and ((walk_one == nil) or (#dir > #walk_one)) then
          walk_one = dir -- if one room away, walk there (don't portal), but prefer a cexit
-         -- print('was I one room away?')
       end
    end
       if walk_one ~= nil then
@@ -2539,10 +2200,7 @@ function findpath(src, dst, noportals, norecalls)
    table.insert(rooms_list, fixsql(dst))
 
    local visited = ""
-   --local main_status = GetInfo(53)
    while not found and depth < max_depth do
-      --SetStatus(main_status.." (searching depth "..depth..")")
-      --BroadcastPlugin (999, "repaint")
       depth = depth + 1
       if depth > 1 then
          ftd = room_sets[depth-1] or {}
@@ -2645,14 +2303,8 @@ end -- function findpath
 
 function sortRoomCPByPath()
   local x
+  local room = -1
   dist_tbl = {}
-  -- if not db:isopen() then
-  --  db = assert (sqlite3.open(GetInfo (66) .. sanitize_filename(WorldName()) .. ".db"))
-  -- end--if
-  -- print(room_num_table[1][1])
-  --print(currentRoom.roomid)
-  --print(type(currentRoom.roomid))
-
   DebugNote('==============================')
   DebugNote(currentRoom.roomid)
   for i, p in ipairs(room_num_table) do
@@ -2680,55 +2332,9 @@ function sortRoomCPByPath()
   end
   room_num_table = q
   cp_mobs = b
-  --closeDBifForcedOpen()
-  -- db:close()
   
 end
-function sortRoomCP()
-  cnt = 0
-  --tprint(room_num_table)
-  local sort_func = function( a,b ) return a[5] < b[5] end
-  --local sort_func1 = function( a,b ) return a.name == room_num_table[2] end
-  -- DebugNote("\nBEGIN ROOMNUM CHECN")
-  -- DebugNote(room_num_table)
-  -- DebugNote("\n")
-  table.sort( room_num_table, sort_func )
-  -- DebugNote(room_num_table)
-  -- DebugNote("END ROOMNUM CHECN\n")
-  
-  local function findi (t, a)
-    -- DebugNote(a)
-    for i, n in ipairs(t) do
 
-      if string.lower(n.name) == string.lower(a) then 
-        -- DebugNote(n.name) 
-        cnt = cnt+1
-      -- DebugNote(a)
-       return cnt, i end
-    end
-  end
-  b = {}
-  for i, n in pairs(room_num_table) do 
-        -- DebugNote(n)
-        -- DebugNote("\nNew entery")
-        -- DebugNote(room_num_table[i][2])
-    local cnt,  num = findi(cp_mobs, room_num_table[i][2])
-    -- DebugNote("count " .. cnt)
-    -- DebugNote(num)
-    if num == nil then tprint (cp_mobs) end
-        -- DebugNote(num)
-        -- DebugNote(cp_mobs[num])
-    table.insert(b, cp_mobs[num])
-        -- DebugNote("\n Deleting\n")
-        -- DebugNote(cp_mobs[num])
-        -- DebugNote("End Deleting\n")
-    table.remove(cp_mobs, num) 
-        -- DebugNote(i.." left in the table ".. #cp_mobs)
-  end
-  -- DebugNote(cp_mobs)
-  -- DebugNote(b)
-  cp_mobs = b
-end
 mob_index= tonumber(1)
 mob_next_delete_value= nil
 
@@ -2806,6 +2412,7 @@ function gotoIndexMob(name, line, wildcards)-- This will goto the next mob, use 
     Execute('xmapper1 move '..  getTable(tonumber(wildcards[1])))
     Send("sca ".. mobname)
 end
+
 function tcpohandler(name, line, wildcards)
   if wildcards[1] ~= nil then
     if room_num_table2 == nil or tonumber(wildcards[1])>#room_num_table2 then
@@ -2896,17 +2503,13 @@ local where_black_list = {"Your magic is blessed with",
 "You feel gills growing on your",
 "You now detect the presence of"}
 function where_mob_trig(name, line, wildcards)
-   -- SetVariable("test","test ="..serialize.save_simple(where_black_list))
-   -- assert (loadstring (GetVariable ("test") or "")) ()
   for i,p in ipairs(where_black_list) do
     if (string.find( wildcards[0], p) ~= nil) then
-     -- print ("true")
       return
     end--if
   end--for
     wildcards[1], x = string.gsub(wildcards[1],"%.","")
   bool = 0
-  --print(bool)
   for word in mobname:gmatch("%w+") do
   if (string.find( string.lower(wildcards[1]), string.lower(word)) ~= nil) then 
     bool =1
@@ -3008,8 +2611,6 @@ function StartScript()
   print (GetPluginInfo (GetPluginID (), 20))
   dbkt=sqlite3.open(GetPluginInfo (GetPluginID (), 20) .. 'KillTable.db')
   dbkt:busy_handler(myHandler)
-  --testtable = {}
-  --time =socket.gettime()
   qry= "select * from rooms where uid not like '*' and uid not like '**' order by uid"
   qry2 = "select * from areas"
   qry3 = "select *, count(*) as timeskilled from mobkills group by room_id order by name, timeskilled desc"
@@ -3042,31 +2643,15 @@ function StartScript()
  -- c = 0
   for row in dbkt:nrows(qry3) do
    c = c+1
-    --DebugNote("Inserting " .. row.name .. " Room ".. row.room_id .. " TimesKilled " .. row.timeskilled)
     mobktbl[c] = {
       name = row.name,
       room_id =row.room_id,
       timeskilled = row.timeskilled
   }
-  --DebugNote("Data: " .. mobktbl[c].name .. " Room: " .. mobktbl[c].room_id .. " TimesKilled: " .. mobktbl[c].timeskilled)
   end -- end of for loop? lol, whoops ok  lets do it
-
-  --tprint(areas['deathtrap'])
-  --print (c)
-  --time2 = (socket.gettime()- time)*1000
-  --print (time2)
-  -- time = socket.gettime()
-  -- rooms = {}
-  --     time2 = socket.gettime() *1000
-      --print (time2)
-      --tprint (rooms['30786'])
-     -- c = 0
-      
       for i,v in pairs(rooms) do
         c =c +1
       end
-      --print (c)
-      --tprint(testtable[c-1])
   rc =dbkt:exec([[SELECT name, room_id FROM mobkills ]])
   if rc~= 0 then
     init()
@@ -3074,9 +2659,6 @@ function StartScript()
   end--if
    assert (loadstring (GetVariable ("greedy") or "")) ()
    print (greedy)
-   --LoadPlugin()
-   --Note(tostring(IsPluginInstalled("0961770926b613688a1c5458")).. " cp_mobTableFiller")
-   --Note(tostring(IsPluginInstalled("eee3a98a021c1bee534ef09f")).. " minwin")
   if not IsPluginInstalled("0961770926b613688a1c5458") then
     LoadPlugin(GetPluginInfo (GetPluginID (), 20) .. "cp_mobTableFiller.xml")
   end
@@ -3214,59 +2796,8 @@ local xrun_to_sql1 =
   end
 
   function goto_roomid(roomid)
-
-    --local dest_in_vidblain = is_vidblain_area(roomid)
-    --tprint(currentRoom)
-   -- local both_in_vidblain = dest_in_vidblain and is_vidblain_area(currentRoom.roomid)
-
-
-    -- if (dest_in_vidblain == true and both_in_vidblain == false) then
-    --   Execute("xmapper1 move 11910")
-    --   Execute("enter hole")
-
-    --   local func = function() Execute("xmapper1 move " ..  roomid) end
-    --   execute_in_area("vidblain_hack", "vidblain", func)
-
-    -- else
-
-    --print ('skipped the vidblain stuff')
       Execute("xmapper1 move " .. roomid)
-    --end
   end
-
-  -- local is_vidblain_area_sql =  
-  --   "SELECT area " ..
-  --   "FROM rooms " ..
-  --   "WHERE uid = %s "
-
-  -- function is_vidblain_area(roomid)
-
-  --   if (USER_check_vidblain == "false") then
-  --     return false
-  --   end
-
-  --   local worldPath = GetInfo(66)..Trim(sanitize_filename(WorldName()))
-  --   local db = assert(sqlite3.open(worldPath .. ".db"))
-
-  --   local select = string.format (is_vidblain_area_sql, fixsql(roomid))
-  --   for row in db:nrows(select) do
-  --     --Note(row.area)
-  --     local areaid = row.area
-  --     if (areaid == "vidblain" or
-  --       areaid == "imperial" or
-  --       areaid == "darklight" or
-  --       areaid == "sendhian" or
-  --       areaid == "omentor") then
-        
-        
-  --       return true
-  --     end
-  --   end   
-    
-
-  --   return false
-
-  -- end
   local execute_in_area_array = {}
 
   function execute_in_area(id, areaId, functionPointer)
@@ -3279,37 +2810,25 @@ local xrun_to_sql1 =
       lastState = 3, -- standing
       standIndex = 0 -- count of stands in a row
       }
-    --tprint(execute_in_area_array)
     EnableTimer("execute_in_area_timer", true)
 
   end
 
   function execute_in_area_tick(name, line, wildcards)
-
     local localRoom = currentRoom
     local localState
-
-
-    -- thread safety
     if (localRoom == nil) then
-    --  DebugNote("Unknown Room")
       return
     end
     
     if (char_status == nill) then
-   --   DebugNote("Unknown char status")
       return
     else
       localState = tonumber(char_status.state)
     end
 
     local isActive = false
-    
-    --tprint(execute_in_area_array)
-
     for index, value in pairs(execute_in_area_array) do
-      --tprint(execute_in_area_array)
-     -- DebugNote("loop - " .. index)
       if (value.active == true) then
     
         value.index = value.index + 1
@@ -3320,7 +2839,6 @@ local xrun_to_sql1 =
           
         else
 
-         -- DebugNote("state:" .. localState .. ",:" .. value.areaId .. "==" .. localRoom.areaid)
 
           if ((localState == 3 and value.lastState == 3) 
             and value.areaId == localRoom.areaid) then
@@ -3329,9 +2847,7 @@ local xrun_to_sql1 =
             value.index = value.index + 1
             value.standIndex = value.standIndex + 1
             if (value.standIndex < 2) then
-             -- DebugNote("skip - index:" .. value.index)
             else
-             -- DebugNote("executing - index:" .. value.index)
               value.func()
               value.active = false            
             end
@@ -3378,20 +2894,6 @@ local xrun_to_sql1 =
       Execute("mapper goto " .. roomid)
     end
   end
-  -- function set_check_vidblain(name, line, wildcards)
-
-  --   if (USER_check_vidblain == "true") then
-  --   USER_check_vidblain = "false"
-  --   else
-  --   USER_check_vidblain = "true"
-  --   end
-
-  --   local msg = "off"
-  --   if (USER_check_vidblain == "true") then
-  --   msg = "on"
-  --   end
-  --   ColourNote ("darkorange", "", "No-portal vidblain assistance: " .. msg)
-  -- end
   function sanitize_filename(str)
     str = string.gsub(str, "[^%w%s()_-]", "")
     return str
