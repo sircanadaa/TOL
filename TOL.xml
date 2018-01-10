@@ -20,8 +20,9 @@
 
 <description trim="n">
 <![CDATA[
-Commands:
-
+-----------------------------------------------
+-- Campaign specific commands
+-----------------------------------------------
 tcp | tcp <index>
       -- Without argument it goes to the first mob in the table, with it goes to that number
       -- Note this will also decide if it needs to be hunted or not all by its self
@@ -41,10 +42,20 @@ cpn <index> | <mob name>
       -- Hunt trick on the given index or mob name
 kcpn 
       -- turns off hunt script
-TQ - not case sensitive
-      -- Runs to the most probable quest room
-NQ - not case sensitive
+
+-----------------------------------------------
+-- Quest specific commands
+-----------------------------------------------
+tq | tq <index> - not case sensitive
+      -- Without argument it goes to the most probable quest room, with it goes to that room
+nq - not case sensitive
       -- Runs to the next quest room
+rq | rq all
+      -- Without argument it shows most likely rooms, with it it shows all possible rooms
+      
+-----------------------------------------------
+-- Other commands
+-----------------------------------------------
 xrt1 <area>
       -- runs to areas
 tkey "<mob>" "<keywords>"
@@ -123,7 +134,16 @@ Note:
   >
   </alias>
   <alias
-    match="^[n|N][Q|q]$"
+     match="^[t|T][q|Q] (\d*)$"
+     enabled="y"
+     send_to="12"
+     sequence="100"
+     script="qGotoIndex"
+     regexp="y"
+  >
+  </alias>
+  <alias
+    match="^[n|N][q|Q]$"
     enabled="y"
     send_to="12"
     sequence="100"
@@ -131,6 +151,24 @@ Note:
     regexp="y"
   >
   </alias>
+  <alias
+    match="^[r|R][q|Q]$"
+    enabled="y"
+    send_to="12"
+    sequence="100"
+    script="qRooms"
+    regexp="y"
+  >
+  </alias>  
+  <alias
+    match="^[r|R][q|Q] all$"
+    enabled="y"
+    send_to="12"
+    sequence="100"
+    script="qRoomsAll"
+    regexp="y"
+  >
+  </alias>    
   <alias
     enabled="y"
     match="^qTest$"
@@ -767,7 +805,7 @@ counter = tonumber(1)
 counter1 = tonumber(1)
 --google maps api key  AIzaSyCngIixf6KAv8_LQ9aIjAS6FpmFaM0haEc 
 local Debug = false
-local currentRoom
+currentRoom = {}
 local char_status
 local currentState
 local tableNumHolder
