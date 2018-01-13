@@ -1003,15 +1003,18 @@ end
 
 function check_CPMobs_Table()
   local count = 0
-  checktable = "SELECT Count(name) as count FROM sqlite_master WHERE type='table' AND name='CPMobs';"
-  for a in dbkt:nrows(checktable) do
-    count = a.count
-  end
-  if count <1 then 
-      
-      return 0
-  end
-  return 1
+  if dbkt:isopen() then
+    checktable = "SELECT Count(name) as count FROM sqlite_master WHERE type='table' AND name='CPMobs';"
+    for a in dbkt:nrows(checktable) do
+      count = a.count
+    end
+    if count <1 then 
+        
+        return 0
+    end
+    return 1
+  else
+    print('You either have not moved rooms or have not installed the CPMobs plugin. Try one of those first.')
 end
 
 function camp_item_start()-- get your campaign items
@@ -1514,7 +1517,7 @@ function OnPluginBroadcast (msg, id, name, text)
             char_status = gmcpdatacharstatus
             mylevel = tonumber(gmcpdatacharstatus.level)
             started = true
-            OnPluginInstall()
+            
         end
         if (text == "char.base") then
             res, gmcparg = CallPlugin("3e7dedbe37e44942dd46d264","gmcpval","char.base")
@@ -1522,7 +1525,7 @@ function OnPluginBroadcast (msg, id, name, text)
             assert (loadstring (luastmt or "")) ()
             mytier = tonumber(gmcpdata.tier)
         end
-        if mylevel ~= oldlevel then
+        if mylevel ~= oldlevel and didonce == true then
             print('level != oldlevel')
             CpMobsAbr(level)
             oldlevel = mylevel
@@ -1540,6 +1543,7 @@ end
 CPMobsLevelBound = nil
 -- takes a level and makes a CPmobs table that is within 30 level of our current level
 function CpMobsAbr(str)
+    print('building CPMobsLevelBound')
   CPMobsLevelBound = nil
   levelAdj= 30
   levmin = tonumber(str)-levelAdj
@@ -1561,6 +1565,7 @@ function CpMobsAbr(str)
     timeskilled = rows.timeskilled
   }
   end
+print('Finished building CPMobsLevelBound')
 end
 
 function tickle_it ()
@@ -1596,7 +1601,12 @@ end
 --TODO: Change both prints to actually be something worth looking at.
 function printTable() -- prints the global table for names and room numbers, used for debugging or quick checking
  if room_num_table ~= nil and #room_num_table>0 then
-  tprint(room_num_table)
+    ColourNote("Gray", "", "NUM  Mob name                             Dist   RoomId        Area")
+    ColourNote("Gray", "", "------------------------------------------------------------------------");
+    for i, row in pairs(cp_mobs) do
+      print(string.format("%3d  %-35s  %-3s %-10s (%s) ", i, row.name,row.dist,room_num_table[i][1]  ,row.location))
+    end
+    ColourNote("Gray", "", "------------------------------------------------------------------------");
   DebugNote(cp_mobs)
   else
     print ("Nothing to print")
@@ -2467,7 +2477,7 @@ function where_mob_trig(name, line, wildcards)
   if (string.find( string.lower(wildcards[1]), string.lower(word)) ~= nil) then 
     bool =1
   end--if
-  print(bool)
+
   end -- for
   if bool == 1 then
     Execute('mapper area '.. '"'..wildcards[2]..'"')
@@ -2568,6 +2578,7 @@ function StartScript()
   qry2 = "select * from areas"
   qry3 = "select *, count(*) as timeskilled from mobkills group by room_id order by name, timeskilled desc"
   c= 0
+  CpMobsAbr(mylevel)
   rooms = {}
   
   for row in dbA:nrows(qry) do
@@ -2623,12 +2634,13 @@ local didonce = false
 function OnPluginInstall()
     if IsConnected() and started == true and didonce == false then
         res, gmcparg = CallPlugin("3e7dedbe37e44942dd46d264","gmcpval","room.info")
-            luastmt = "gmcpdata = " .. gmcparg
+            luastmt = "gmcpdata1 = " .. gmcparg
+            
             assert (loadstring (luastmt or "")) ()
             currentRoom = {
-              name = gmcpdata.name,
-              roomid = gmcpdata.num,
-              areaid = gmcpdata.zone
+              name = gmcpdata1.name,
+              roomid = gmcpdata1.num,
+              areaid = gmcpdata1.zone
             }
         res, gmcparg = CallPlugin("3e7dedbe37e44942dd46d264","gmcpval","char.status")
             luastmt = "gmcpdatacharstatus = " .. gmcparg
@@ -2643,6 +2655,7 @@ function OnPluginInstall()
             luastmt = "gmcpdatacharstatus = " .. gmcparg
             assert (loadstring (luastmt or "")) ()
             char_base= gmcpdatacharstatus
+
         StartScript()
         print("start")
         didonce = true

@@ -181,7 +181,7 @@ end
 function calcQuestRoomsDistance()
     local currRoomId = currentRoom.roomid
 
-    if currRoomId == nil or currRoomId == '-1' then
+    if currRoomId == nil  then
         currRoomId = "32418" -- Recall
     end
 
