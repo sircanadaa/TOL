@@ -1015,6 +1015,7 @@ function check_CPMobs_Table()
     return 1
   else
     print('You either have not moved rooms or have not installed the CPMobs plugin. Try one of those first.')
+  end
 end
 
 function camp_item_start()-- get your campaign items
@@ -2668,7 +2669,7 @@ function myHandler(udata, retries)
 end
 function OnPluginClose ()
     --dbA:close()
-    dbkt:close()
+    if dbkt:isopen() then dbkt:close() end
 end
 
 function reset_cp_flag( )
