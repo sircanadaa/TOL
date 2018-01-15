@@ -1494,7 +1494,13 @@ end
 
 myThread= nil
 local level = 0
+local mylevel = 0
 local oldlevel = 0
+-- testing - Kobus
+got_room = false
+got_char = false
+didonce = false
+-- end of test
 
 function OnPluginBroadcast (msg, id, name, text)
     
@@ -1508,8 +1514,9 @@ function OnPluginBroadcast (msg, id, name, text)
               roomid = gmcpdata.num,
               areaid = gmcpdata.zone
             }
-            started = true
-            OnPluginInstall()
+            --started = true -- testing - Kobus
+            --OnPluginInstall() -- testing - Kobus
+						got_room = true -- testing - Kobus
         end
         if (text == "char.status") then
             res, gmcparg = CallPlugin("3e7dedbe37e44942dd46d264","gmcpval","char.status")
@@ -1517,19 +1524,19 @@ function OnPluginBroadcast (msg, id, name, text)
             assert (loadstring (luastmt or "")) ()
             char_status = gmcpdatacharstatus
             mylevel = tonumber(gmcpdatacharstatus.level)
-            started = true
-            
+            --started = true -- testing - Kobus
         end
         if (text == "char.base") then
             res, gmcparg = CallPlugin("3e7dedbe37e44942dd46d264","gmcpval","char.base")
             luastmt = "gmcpdata = " .. gmcparg
             assert (loadstring (luastmt or "")) ()
             mytier = tonumber(gmcpdata.tier)
+            got_char = true -- testing - Kobus
         end
         if mylevel ~= oldlevel and didonce == true then
             print('level != oldlevel')
-            CpMobsAbr(level)
-            oldlevel = mylevel
+            CpMobsAbr(mylevel) -- mylevel??? was->level (0) - testing - Kobus
+            oldlevel = mylevel -- redundant now...
         end
         
         if (text == "char.base") then
@@ -1538,6 +1545,7 @@ function OnPluginBroadcast (msg, id, name, text)
             assert (loadstring (luastmt or "")) ()
             char_base= gmcpdatacharstatus
         end
+				if got_room and got_char and not didonce then didonce = true print("start") StartScript() end -- testing - Kobus
     end
 end
 
@@ -1567,6 +1575,7 @@ function CpMobsAbr(str)
   }
   end
 print('Finished building CPMobsLevelBound')
+	oldlevel = mylevel -- testing - Kobus
 end
 
 function tickle_it ()
@@ -2630,39 +2639,41 @@ function StartScript()
   end
   dbA:close()
 end
-local didonce = false
+--local didonce = false -- testing - Kobus
 
-function OnPluginInstall()
-    if IsConnected() and started == true and didonce == false then
-        res, gmcparg = CallPlugin("3e7dedbe37e44942dd46d264","gmcpval","room.info")
-            luastmt = "gmcpdata1 = " .. gmcparg
-            
-            assert (loadstring (luastmt or ""))
-						if gmcpdata1 ~= nil then -- fix attempt - Kobus
-						currentRoom = {
-							name = gmcpdata1.name,
-							roomid = gmcpdata1.num,
-							areaid = gmcpdata1.zone
-            }
-        res, gmcparg = CallPlugin("3e7dedbe37e44942dd46d264","gmcpval","char.status")
-            luastmt = "gmcpdatacharstatus = " .. gmcparg
-            assert (loadstring (luastmt or ""))
-            char_status = gmcpdatacharstatus
-            mylevel = tonumber(gmcpdatacharstatus.level)
-        res, gmcparg = CallPlugin("3e7dedbe37e44942dd46d264","gmcpval","char.base")
-            luastmt = "gmcpdata = " .. gmcparg
-            assert (loadstring (luastmt or ""))
-            mytier = tonumber(gmcpdata.tier)
-        res, gmcparg = CallPlugin("3e7dedbe37e44942dd46d264","gmcpval","char.base")
-            luastmt = "gmcpdatacharstatus = " .. gmcparg
-            assert (loadstring (luastmt or ""))
-            char_base= gmcpdatacharstatus
-				end -- fix attempt - Kobus
-        StartScript()
-        print("start")
-        didonce = true
-        started = true
-    end
+function OnPluginInstall() -- testing - Kobus >>>
+	if IsConnected() and GetPluginInfo("3e7dedbe37e44942dd46d264",17) and not didonce then
+		Execute("sendgmcp request room")
+		Execute("sendgmcp request char")
+	end
+--    if IsConnected() and started == true and didonce == false then
+--        res, gmcparg = CallPlugin("3e7dedbe37e44942dd46d264","gmcpval","room.info")
+--            luastmt = "gmcpdata1 = " .. gmcparg
+--            
+--            assert (loadstring (luastmt or "")) ()
+--						currentRoom = {
+--							name = gmcpdata1.name,
+--							roomid = gmcpdata1.num,
+--							areaid = gmcpdata1.zone
+--            }
+--        res, gmcparg = CallPlugin("3e7dedbe37e44942dd46d264","gmcpval","char.status")
+--            luastmt = "gmcpdatacharstatus = " .. gmcparg
+--            assert (loadstring (luastmt or "")) ()
+--            char_status = gmcpdatacharstatus
+--            mylevel = tonumber(gmcpdatacharstatus.level)
+--        res, gmcparg = CallPlugin("3e7dedbe37e44942dd46d264","gmcpval","char.base")
+--            luastmt = "gmcpdata = " .. gmcparg
+--            assert (loadstring (luastmt or "")) ()
+--            mytier = tonumber(gmcpdata.tier)
+--        res, gmcparg = CallPlugin("3e7dedbe37e44942dd46d264","gmcpval","char.base")
+--            luastmt = "gmcpdatacharstatus = " .. gmcparg
+--            assert (loadstring (luastmt or "")) ()
+--            char_base= gmcpdatacharstatus
+--        StartScript()
+--        print("start")
+--        didonce = true
+--        started = true
+--    end -- end of testing - Kobus <<<
 end
 function myHandler(udata, retries)
    DebugNote("BUSY!")
