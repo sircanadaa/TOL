@@ -2637,26 +2637,27 @@ function OnPluginInstall()
         res, gmcparg = CallPlugin("3e7dedbe37e44942dd46d264","gmcpval","room.info")
             luastmt = "gmcpdata1 = " .. gmcparg
             
-            assert (loadstring (luastmt or "")) ()
-            currentRoom = {
-              name = gmcpdata1.name,
-              roomid = gmcpdata1.num,
-              areaid = gmcpdata1.zone
+            assert (loadstring (luastmt or ""))
+						if gmcpdata1 ~= nil then -- fix attempt - Kobus
+						currentRoom = {
+							name = gmcpdata1.name,
+							roomid = gmcpdata1.num,
+							areaid = gmcpdata1.zone
             }
         res, gmcparg = CallPlugin("3e7dedbe37e44942dd46d264","gmcpval","char.status")
             luastmt = "gmcpdatacharstatus = " .. gmcparg
-            assert (loadstring (luastmt or "")) ()
+            assert (loadstring (luastmt or ""))
             char_status = gmcpdatacharstatus
             mylevel = tonumber(gmcpdatacharstatus.level)
         res, gmcparg = CallPlugin("3e7dedbe37e44942dd46d264","gmcpval","char.base")
             luastmt = "gmcpdata = " .. gmcparg
-            assert (loadstring (luastmt or "")) ()
+            assert (loadstring (luastmt or ""))
             mytier = tonumber(gmcpdata.tier)
         res, gmcparg = CallPlugin("3e7dedbe37e44942dd46d264","gmcpval","char.base")
             luastmt = "gmcpdatacharstatus = " .. gmcparg
-            assert (loadstring (luastmt or "")) ()
+            assert (loadstring (luastmt or ""))
             char_base= gmcpdatacharstatus
-
+				end -- fix attempt - Kobus
         StartScript()
         print("start")
         didonce = true
@@ -2669,7 +2670,7 @@ function myHandler(udata, retries)
 end
 function OnPluginClose ()
     --dbA:close()
-    if dbkt:isopen() then dbkt:close() end
+    if dbkt ~= nil and dbkt:isopen() then dbkt:close() end
 end
 
 function reset_cp_flag( )
