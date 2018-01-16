@@ -8,9 +8,9 @@ local lastRoomIndex = 0
 -- Triggers
 --------------------------------------
 function qTest()
-    qMob("A flaming monkey")
-    qRoom("More Smoke")
-    qArea("Nanjiki Ruins")
+    qMob("the Liavango Despot")
+    qRoom("Home of the Despot")
+    qArea("The Darkside of the Fractured Lands")
 end
 
 function qGoto()
@@ -85,6 +85,7 @@ function getQuestRooms()
     local killRooms = getKillRooms()
 
     questRooms = {}
+    DebugNote(areaRooms)
     for i = 1, #areaRooms do
         local areaRoomId = areaRooms[i].roomId
         local questRoom = { id = areaRoomId, kills = 0 }
@@ -154,8 +155,15 @@ function getKillRooms()
             "      , count(*) as kills  " ..
             "   from mobkills           " ..
             "  where name = %s          " ..
-            "  group by room_id         ",
-            fixsql(questMob))
+            "  group by room_id         " ..
+            "  union                    " ..
+            " select room_id  as roomId " ..
+            "      , count(*) as kills  " ..
+            "   from cpmobs             " ..
+            "  where name = %s          " ..
+            "  group by room_id         " .. 
+            "  order by kills           ",
+            fixsql(questMob), fixsql(questMob))
 
         c = 0
         for killRoom in dbKill:nrows(qryKill) do
@@ -163,7 +171,7 @@ function getKillRooms()
             DebugNote("Kill room: " .. killRoom.roomId .. ", Kills: " .. killRoom.kills)
             killRooms[c] = killRoom
         end
-
+        DebugNote(killRooms)
         dbKill:close()
     end
 
@@ -173,7 +181,7 @@ end
 function calcQuestRoomsDistance()
     local currRoomId = currentRoom.roomid
 
-    if currRoomId == nil or currRoomId == '-1' then
+    if currRoomId == nil  then
         currRoomId = "32418" -- Recall
     end
 
