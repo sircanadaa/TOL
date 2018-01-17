@@ -3,7 +3,8 @@
 3 Write utilities? (We're becoming our own POWER company)
 4 Comment code where necessary (Because that's just good practice) (Kobus)
 5 Simplify methodology of complex code calls (Kobus)
-6 Migrate to a remote database
-7 MAKE SURE EVERYTHING WORKS AS INTENDED!
+6 Update DB schema, split DBs as needed and make into libraries (Sandora)
+7 Migrate to a remote database (Maybe?)
+8 MAKE SURE EVERYTHING WORKS AS INTENDED!
 
 Other stuff. Obviously. Duh?
