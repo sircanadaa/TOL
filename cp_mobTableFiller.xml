@@ -209,17 +209,18 @@ dbkt:busy_handler(myHandler)
         "room_id = %s "..
         "group by  name "..
         "ORDER by timeskilled desc", fixsql(name), fixsql(area), tonumber(roomid))
+  --print (rc)
   local tblCountC
   for i in dbkt:nrows(tblCount) do
     tblCountC = i.timeskilled
   end
   if tblCountC == nil or tblCountC < 25 then
     --print ("adding mob")
-    dbExecute(stmt)
+    -- dbExecute(stmt) -- testing - Kobus
+		rc = dbkt:exec(stmt) -- testing - Kobus
   else
     print ("You have the limit of that type of creature for this room. Tell Tol about this message")
   end
-  --print (rc)
   if rc ~= 0 then
   Note ( DatabaseError('dbkt'))
     print (query)
@@ -247,6 +248,7 @@ function dbExecute(query)
   local llthreads = require"llthreads"
   --print (package.cpath)
 
+	Note("dbexecute: " .. query)
   local thread_code = [[
   local db = pcall(require,"lsqlite3")
   temp= ''
