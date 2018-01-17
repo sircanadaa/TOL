@@ -1,4 +1,4 @@
-1 Rewrite borrowed code
+1 Rewrite borrowed code (Tol)
 2 Split code into separate libraries and .lua files
 3 Write utilities? (We're becoming our own POWER company)
 4 Comment code where necessary (Because that's just good practice) (Kobus)
