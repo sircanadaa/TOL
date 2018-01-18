@@ -1506,7 +1506,7 @@ function OnPluginBroadcast (msg, id, name, text)
             got_char = true -- Got the char data - Kobus
         end
         if mylevel ~= oldlevel and didonce == true then -- We leveled?, rebuild CPMobs table
-            print('level != oldlevel')
+            DebugNote("Rebuilding cpmobs table...")
             CpMobsAbr(mylevel) -- Rebuild the CPMobs table - Kobus
         end
 
@@ -1523,7 +1523,6 @@ end
 CPMobsLevelBound = nil
 -- takes a level and makes a CPmobs table that is within 30 level of our current level
 function CpMobsAbr(str)
-    print('building CPMobsLevelBound')
   CPMobsLevelBound = nil
   levelAdj= 30
   levmin = tonumber(str)-levelAdj
@@ -1545,7 +1544,6 @@ function CpMobsAbr(str)
     timeskilled = rows.timeskilled
   }
   end
-print('Finished building CPMobsLevelBound')
 	oldlevel = mylevel -- Won't rebuild until we level again - Kobus
 end
 
