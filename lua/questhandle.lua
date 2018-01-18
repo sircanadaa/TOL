@@ -1,90 +1,144 @@
-local questArea
-local questRoom
-local questMob
-local questRooms = {}
-local lastRoomIndex = 0
+--------------------------------------
+-- Declaration
+--------------------------------------
+
+-- Class
+local CQuestHandler = {}
+CQuestHandler.__index = CQuestHandler
+
+-- Private functions
+local validateRooms
+local validateIndex
+local getQuestRooms
+local getAreaRooms
+local getKillRooms
+local calcQuestRoomDistances
+local sortQuestRooms
+local printQuestRooms
 
 --------------------------------------
--- Triggers
+-- Public methods
 --------------------------------------
-function qTest()
-    qMob("the Liavango Despot")
-    qRoom("Home of the Despot")
-    qArea("The Darkside of the Fractured Lands")
+
+-- Factory, creates a new quest handler.
+function CQuestHandler.create()
+    local instance = {}
+    setmetatable(instance, CQuestHandler)
+    instance:clear()
+    return instance
 end
 
-function qGoto()
-    lastRoomIndex = 0
-    qNext()
+-- Clears the quest object
+function CQuestHandler:clear()
+    self.area = nil
+    self.room = nil
+    self.mob = nil
+    self.rooms = {}
+    self.lastRoomIndex = 0
 end
 
-function qGotoIndex(name, line, wildcards)
-    local idx = tonumber(wildcards[1])
-    if idx == nil then return end
-
-    if questRooms == nil then
-        print ("No rooms have been found, Try typing 'quest info' to see if it is an update problem.")
-        return
-    end
-
-    if #questRooms >= idx then
-        lastRoomIndex = idx
-        Execute('mapper goto '.. questRooms[lastRoomIndex].id)
-    else
-        print ("No quest room with that index")
-    end
-end
-
-function qNext()
-    mobname = sanitizeName(questMob)
-
-    if questRooms == nil then
-        print ("No rooms have been found, Try typing 'quest info' to see if it is an update problem.")
-        return
-    end
-
-    if #questRooms > lastRoomIndex then
-        lastRoomIndex = lastRoomIndex + 1
-        Execute("xmapper1 move " .. questRooms[lastRoomIndex].id)
-    else
-        print ("No more quest rooms.")
-    end
-end
-
-function qRooms()
-    calcQuestRoomsDistance()
-    printQuestRooms(false)
-end
-
-function qRoomsAll()
-    calcQuestRoomsDistance()
-    printQuestRooms(true)
-end
-
---------------------------------------
--- Functions
---------------------------------------
-function qArea(area)
+-- Set the target area name
+function CQuestHandler:setArea(area)
     DebugNote("Quest area: " .. area)
-    questArea = area
-    getQuestRooms()
+    self.area = area
+    getQuestRooms(self)
 end
 
-function qRoom(room)
+-- Set the target room name
+function CQuestHandler:setRoom(room)
     DebugNote("Quest room: " .. room)
-    questRoom = room
+    self.room = room
 end
 
-function qMob(mob)
+-- Set the target mob
+function CQuestHandler:setMob(mob)
     DebugNote("Quest mob: ".. mob)
-    questMob = mob
+    self.mob = mob
 end
 
-function getQuestRooms()
-    local areaRooms = getAreaRooms()
-    local killRooms = getKillRooms()
+-- Moves to the quest room with the highest score.
+function CQuestHandler:gotoFirst()
+    self.lastRoomIndex = 0
+    self:gotoNext()
+end
 
-    questRooms = {}
+-- Moves to the quest room with a given index
+function CQuestHandler:gotoIndex(idx)
+    if not validateIndex(self.rooms, idx) then return end
+
+    self.lastRoomIndex = idx
+    Execute('mapper goto '.. self.rooms[self.lastRoomIndex].id)
+end
+
+-- Moves to the next quest room.
+function CQuestHandler:gotoNext()
+    if not validateRooms(self.rooms) then return end
+    if not self:hasMoreRooms() then
+        print ("No more quest rooms.")
+        return
+    end
+
+    self.lastRoomIndex = self.lastRoomIndex + 1
+    Execute("xmapper1 move " .. self.rooms[self.lastRoomIndex].id)
+end
+
+-- Returns true if there are more quest rooms to visit and gotoNext should work.
+function CQuestHandler:hasMoreRooms()
+    if self.rooms == nil then return false end
+    if #self.rooms <= self.lastRoomIndex then return false end
+    return true
+end
+
+-- Prints out rooms.
+function CQuestHandler:showRooms(all)
+    calcQuestRoomDistances()
+    printQuestRooms(self, all or false)
+end
+
+-- Function for testing test
+function CQuestHandler:Test()
+    self:setMob("the Liavango Despot")
+    self:setRoom("Home of the Despot")
+    self:setArea("The Darkside of the Fractured Lands")
+end
+
+--------------------------------------
+-- Local (Private) Functions
+--------------------------------------
+function validateRooms(rooms)
+    if #rooms == 0 then
+        print("No rooms have been found, Try typing 'quest info' to see if it is an update problem.")
+        return false
+    end
+
+    return true
+end
+
+function validateIndex(rooms, idx)
+    if not validateRooms(rooms) then return false end
+
+    if idx == nil then
+        print("And index must be provided")
+        return false
+    end
+
+    if idx > #rooms then
+        print ("No quest room with that index")
+        return false
+    end
+
+    return true
+end
+
+function getQuestRooms(qHandler)
+    local areaRooms = getAreaRooms(qHandler)
+    local killRooms = getKillRooms(qHandler)
+
+    qHandler.rooms = {}
+    qHandler.lastRoomIndex = 0
+
+    local questRooms = qHandler.rooms
+
     DebugNote(areaRooms)
     for i = 1, #areaRooms do
         local areaRoomId = areaRooms[i].roomId
@@ -98,12 +152,9 @@ function getQuestRooms()
         questRooms[i] = questRoom
     end
 
-    calcQuestRoomsDistance()
-    sortQuestRooms();
-
-    lastRoomIndex = 0
-
-    printQuestRooms(false)
+    calcQuestRoomDistances(questRooms)
+    sortQuestRooms(questRooms);
+    printQuestRooms(qHandler, false)
 
     if #questRooms == 0 then
         print("The specified room cannot be found and is probably not mapped.")
@@ -113,7 +164,7 @@ function getQuestRooms()
 end
 
 -- Gets all know rooms from the map database based on area and room name.
-function getAreaRooms()
+function getAreaRooms(qHandler)
     areaRooms = {}
 
     dbArea = sqlite3.open(GetInfo (66) ..'Aardwolf.db')
@@ -127,7 +178,7 @@ function getAreaRooms()
             "     on a.uid = r.area     " ..
             "  where a.name = %s        " ..
             "    and r.name = %s        ",
-            fixsql(questArea), fixsql(questRoom))
+            fixsql(qHandler.area), fixsql(qHandler.room))
 
         c = 0
         for areaRoom in dbArea:nrows(qryArea) do
@@ -143,7 +194,7 @@ function getAreaRooms()
 end
 
 -- Gets all rooms from the kill database that the specific mob has been killed in.
-function getKillRooms()
+function getKillRooms(qHandler)
     killRooms = {}
 
     local dbKill = sqlite3.open(GetPluginInfo (GetPluginID (), 20) .. 'KillTable.db')
@@ -161,9 +212,9 @@ function getKillRooms()
             "      , count(*) as kills  " ..
             "   from cpmobs             " ..
             "  where name = %s          " ..
-            "  group by room_id         " .. 
+            "  group by room_id         " ..
             "  order by kills           ",
-            fixsql(questMob), fixsql(questMob))
+            fixsql(qHandler.mob), fixsql(qHandler.mob))
 
         c = 0
         for killRoom in dbKill:nrows(qryKill) do
@@ -178,23 +229,19 @@ function getKillRooms()
     return killRooms
 end
 
-function calcQuestRoomsDistance()
-    local currRoomId = currentRoom.roomid
+function calcQuestRoomDistances(questRooms)
+    local currRoomId = currentRoom.roomid or "32418" -- Recall
 
-    if currRoomId == nil  then
-        currRoomId = "32418" -- Recall
-    end
-
-    for i = 1, #questRooms do
-        local path, distance = findpath(currRoomId, questRooms[i].id)
+    for i, questRoom in pairs(questRooms) do
+        local path, distance = findpath(currRoomId, questRoom.id)
 
         if (distance ~= nil) then
-            questRooms[i].distance = tonumber(distance)
+            questRoom.distance = tonumber(distance)
         end
     end
 end
 
-function sortQuestRooms()
+function sortQuestRooms(questRooms)
     table.sort(questRooms,
         function(left, right)
             if left.distance == nil and right.distance == nil then
@@ -211,34 +258,36 @@ function sortQuestRooms()
         end)
 end
 
-function printQuestRooms(all)
+function printQuestRooms(qHandler, all)
     ColourNote("Gray", "", "NUM  Room name                              UID   Kills  Dist  SpeedWalk")
     ColourNote("Gray", "", "------------------------------------------------------------------------");
 
-    local maxLines = #questRooms
+    local maxLines = #qHandler.rooms
     if not all and maxLines > 7 then maxLines = 5 end
 
-    for i = 1, maxLines do
-        local room = questRooms[i]
+    for i=1, maxLines do
+        room = qHandler.rooms[i]
 
         if room.distance ~= nil then
-            local line = string.format("%3d  %-35s  (%5d) %5d  %4d", i, questRoom, room.id, room.kills, room.distance)
+            local line = string.format("%3d  %-35s  (%5d) %5d  %4d", i, qHandler.room, room.id, room.kills, room.distance)
 
             Hyperlink("tq " .. i, line, "Goto room (" .. room.id .. ")", "darkorange", "black", 0)
             Hyperlink("mapper where " .. room.id, "   to room", "Show SpeedWalk", "lightgreen", "black", 0)
         else
-            local line = string.format("%3d  %-35s  (%5s) %5d", i, questRoom, room.id, room.kills)
-            Hyperlink("tq " .. i, line, "Goto area (" .. questArea .. ")", "moccasin", "black", 0)
+            local line = string.format("%3d  %-35s  (%5s) %5d", i, qHandler.room, room.id, room.kills)
+            Hyperlink("tq " .. i, line, "Goto area (" .. qHandler.area .. ")", "moccasin", "black", 0)
         end
 
         print("")
     end
 
-    if #questRooms > maxLines then
-        Hyperlink("rq all", "     To show all " .. #questRooms .. " rooms, type 'rq all'", "", "cornflowerblue", "black", 0)
+    if #qHandler.rooms > maxLines then
+        Hyperlink("rq all", "     To show all " .. #qHandler.rooms .. " rooms, type 'rq all'", "", "cornflowerblue", "black", 0)
         print("")
     end
 
     ColourNote("Gray", "", "------------------------------------------------------------------------");
     Send("")
 end
+
+return CQuestHandler
