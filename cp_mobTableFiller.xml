@@ -126,29 +126,21 @@ local added_check = true
 -- print("test")
 -- print(GetPluginInfo (GetPluginID (), 20))
 function last_kill()
-  do_Execute_no_echo("lastkill 1")
   EnableTriggerGroup("gag_lastkill",true)
+  SendNoEcho("lastkill 1")
 end
 
-function do_Execute_no_echo(command)
-  local original_echo_setting = GetOption("display_my_input")
-  SetOption("display_my_input", 0)
-  Execute(command)
-  SetOption("display_my_input", original_echo_setting)
-end
 function myHandler(udata, retries)
    DebugNote("BUSY!")
    return true
 end
 function Add_To_Table(name, line, wildcards)
   local name = wildcards[1]
- -- print (name)
   local Level
   local area
   local roomid
   local roomName
   local key = "%s%s+"
- -- tprint (currentRoom)
 dbA=sqlite3.open(GetInfo (66) ..'Aardwolf.db')
 dbkt=sqlite3.open(GetPluginInfo (GetPluginID (), 20) .. 'KillTable.db')
 dbkt:busy_handler(myHandler)
@@ -157,15 +149,12 @@ dbkt:busy_handler(myHandler)
   if char_status == nil or added_check == true then
     name = string.sub(name, 1, i-1) 
   else
-  --  print (char_status  == nil)
     name =char_status.enemy
     added_check = false
   end--if
- -- print (name.. " after if block selecting name")
   area = gmcpval("zone")
   query = string.format("SELECT name from areas where uid = %s", fixsql(area))
   for rows in dbA:nrows(query) do
-      -- print (rows.name)
       area= rows.name
   end --for
   if rc ~= 0 then
@@ -191,36 +180,11 @@ dbkt:busy_handler(myHandler)
           areaid = gmcpdata.zone
         }
   end
-  -- print (string.gsub(currentRoom.roomname, "%@([a-z])", ""))
-  -- print(string.gsub(currentRoom.roomname,"@([a-zA-Z])",""))
   roomName= string.gsub(currentRoom.roomname, "%@([a-zA-Z])", "")
-    -- print (roomName)
-  -- roomName= string.gsub(currentRoom.roomname, "%@([A-Z])", "")
-  --   print (string.gsub(currentRoom.roomname, "%@([A-Z])", ""))
-  -- print (roomName)
   roomid = currentRoom.roomid
   stmt="INSERT INTO CPMobs(name, room_id, room_name, area_name, level) VALUES(%s,%s,%s,%s,%s);"
   stmt = string.format(stmt, fixsql(name), tonumber(roomid), fixsql(roomName), fixsql(area), tonumber(level))
-  -- rc= dbkt:exec(stmt)
-  tblCount = string.format("select room_id, area_name, name, COUNT(*) as timeskilled "..
-        "from CPMobs "..
-        "where name like %s and  "..
-        "area_name = %s and "..
-        "room_id = %s "..
-        "group by  name "..
-        "ORDER by timeskilled desc", fixsql(name), fixsql(area), tonumber(roomid))
-  --print (rc)
-  local tblCountC
-  for i in dbkt:nrows(tblCount) do
-    tblCountC = i.timeskilled
-  end
-  if tblCountC == nil or tblCountC < 25 then
-    --print ("adding mob")
-    -- dbExecute(stmt) -- testing - Kobus
-		rc = dbkt:exec(stmt) -- testing - Kobus
-  else
-    print ("You have the limit of that type of creature for this room. Tell Tol about this message")
-  end
+  rc = dbkt:exec(stmt)
   if rc ~= 0 then
   Note ( DatabaseError('dbkt'))
     print (query)
@@ -240,54 +204,6 @@ dbkt:busy_handler(myHandler)
   level = nil
   dbA:close()
   dbkt:close()
-end
-
-
-
-function dbExecute(query)
-  local llthreads = require"llthreads"
-  --print (package.cpath)
-
-	Note("dbexecute: " .. query)
-  local thread_code = [[
-  local db = pcall(require,"lsqlite3")
-  temp= ''
-  local function dbcheck (code, dbkt)
-    if code ~= sqlite3.OK and    -- no error
-    code ~= sqlite3.ROW and   -- completed OK with another row of data
-    code ~= sqlite3.DONE then -- completed OK, no more rows
-    -- print ("cp mob table filler ".. code)
-    local err = dbkt:errmsg ()  -- the rollback will change the error message
-    dbkt:exec ("ROLLBACK")      -- rollback any transaction to unlock the database
-    error (err, 2)            -- show error in caller's context
-    end -- if
-    if code == sqlite3.OK then print ("added")  return true end
-    return false
-  end -- dbcheck 
-  local tst=sqlite3.open(']]..prepairPath(GetPluginInfo (GetPluginID (), 20) ).. [[KillTable.db')
-  local code = tst:exec(...)
-  added_check= dbcheck(code, tst)
-  
-  -- querycheck = "Select count(name) as count from CPMobs "
-  -- for a in tst:nrows(querycheck) do 
-  --   temp =a.count 
-  -- end
-  tst:close()
-  --   --   -- return all thread's parameters back to the parent thread.
-      return added_check
-  ]]
-  -- create child thread.
-  -- print (query)
-  local thread = llthreads.new(thread_code, query)
-  -- start joinable child thread.
-  assert(thread:start(true))
-  --assert(thread:start())
-  --added_check= (thread:join())
-added_check = true
-end
-
-function prepairPath(s)
-  return string.gsub(s, "\\", "\\\\")
 end
 
 function fixsql (s)
@@ -366,7 +282,7 @@ function OnPluginInstall()
   dbkt=sqlite3.open(GetPluginInfo (GetPluginID (), 20) .. 'KillTable.db')
   rc =dbkt:exec([[SELECT name FROM CPMobs ]])
   if rc~= 0 then
-    print ('making table')
+    DebugNote("cp_mobTableFiller Initializing...")
     init()
   end--if
   --dbA=sqlite3.open(GetInfo (66) ..'Aardwolf.db')
