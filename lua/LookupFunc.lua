@@ -22,7 +22,7 @@ function lookup(name1, line, wildcards)--Looks up mobs from the CPmobs database 
           end
         end
         modanddata[i] = string.sub(tmp, 2, ptr)
-        prt = 1
+        ptr = 1
       if x ~= nil and x > ptr then 
         ptr = x 
       end
