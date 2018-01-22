@@ -58,10 +58,17 @@ function lookup(name1, line, wildcards)--Looks up mobs from the CPmobs database 
     end
   end
   
-  DebugNote("query: " .. query)
+  DebugNote("tlookup query: " .. query)
   
   for p in dbkt:nrows(query) do
     table.insert(mobbuff, p)
+  end
+  if #mobbuff<1 and modanddata[1] ~= nil then
+    DebugNote("No mobs found! Checking mobkills table..."
+    q = "SELECT * FROM mobkills where name like " .. fixsql(modanddata[1]) .. " group by room_id"
+    for p in dbkt:nrows(q) do
+      table.insert(mobbuff, p)
+    end
   end
   if #mobbuff<1 then
     Note("OKYDOKY BOSS NOTHING TO SEE HERE")
