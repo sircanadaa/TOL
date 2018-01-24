@@ -900,14 +900,11 @@ function camp_item_start()-- get your campaign items
   EnableTrigger('camp_item_start',0)
   cp_mobs = {}
   cp_mobs= mobsleft
-  if myThread== nil  or coroutine.status (myThread) == "dead" then
 
-        myThread = coroutine.create(buildRoomTable)
-        AddTimer ("tickler", 0, 0, .1, "",
-               timer_flag.Enabled + timer_flag.Replace,
-               "tickle_it")
+    -- This is the first call to buildToomTable()
+    buildRoomTable()
 
-  end--if
+
     FirstRun_cp_var= false
     check_dead()
     DebugNote(collectgarbage("count")*1024)
@@ -1037,8 +1034,6 @@ function quest_color()
 end
 
 function cpn_script (index, line, wildcards)
-  -- print (index)
-  -- print (line)
   local numcheck
   if wildcards ~= nil then
     numcheck = tonumber(wildcards[1])
@@ -1086,97 +1081,7 @@ greedy = false
 FirstRun_cp_var= true
 -- This function is just for testing. It should never actually be used.
 function printVars()
-  tprint (cp_mobs)
---   Debug = true
---   DebugNote({1, 2})
---   Debug = false
---   --Clean_Kill_Table()
--- cp_mobs[1]={location= 'Stairwell'
--- ,mobdead= 'false',
--- name= 'King Breolerc',
--- clean = 'King Breolerc'}
--- cp_mobs[2]={location= 'The Conservatory'
--- ,mobdead= 'false',
--- name= 'a rabbit foot fern',
--- clean = 'a rabbit foot fern'}
--- cp_mobs[3]={location= 'North West Market Square'
--- ,mobdead= 'false',
--- name= 'Mino the Crazy',
--- clean = 'mino the crazy'}
--- cp_mobs[4]={location= 'High priest quarters'
--- ,mobdead= 'false',
--- name= 'an ancient ghost',
--- clean = 'an ancient ghost'}
-local llthreads = require"llthreads"
-print (package.cpath)
-local thread_code = [[
-temp= ''
--- local socket = require"socket"
---     -- print thread's parameter.
---     --dofile ("E:\\Users\\Jeremy\\Desktop\\r1802\\MUSHclient\\worlds\\plugins\\TOL\\luapath.lua")
--- -- temp = (package.cpath)
-   local status, socket = pcall(require,"socket")
-    local db = pcall(require,"lsqlite3")
---     -- if temp ~='' then
---     -- temp = (package.cpath) end
---     return status, socket
---   --   print("CHILD: received params:", ...)
-    local tst=sqlite3.open('E:\\Users\\Jeremy\\Desktop\\r1802\\MUSHclient\\worlds\\plugins\\TOL\\KillTable.db')
---   --   local temp
-    querycheck = "Select count(name) as count from CPMobs "
-  for a in tst:nrows(querycheck) do
-    temp =a.count
-  end
---   --   -- print(tst)
---   --   -- return all thread's parameters back to the parent thread.
-    return temp
-]]
-
-
--- create detached child thread.
--- local thread = llthreads.new(thread_code, "number:", 12345, "nil:", nil, "bool:", true)
--- start non-joinable detached child thread.
--- assert(thread:start(true))
--- Use a detatched child thread when you don't care when the child finishes.
-local function print_thread(...)
-  local thread = llthreads.new([[ print("print_thread:", ...); ]], ...)
-  -- start joinable thread
-  assert(thread:start())
-  return thread
-end
-
-local thread2 = print_thread("number:", 1234, "nil:", nil, "bool:", true)
-print("thread2:join: results # = ", select('#', thread2:join()))
--- create child thread.
-local thread = llthreads.new(thread_code, "test:", 1111)
--- start joinable child thread.
-assert(thread:start())
--- Warning: If you don't call thread:join() on a joinable child thread, it will be called
--- by the garbage collector, which may cause random pauses/freeze of the parent thread.
--- luastmt = "gmcpdata = " .. thread:join()
---         assert (loadstring (luastmt or "")) ()
--- print(gmcpdata)
---print("thread:join: results # = ", select('3', thread:join()))
-print("PARENT: child returned: ", thread:join())
---tprint (select('3', thread:join())
--- local socket = require"socket"
--- socket.sleep(2) -- give detached thread some time to run.
-if myThread== nil  or coroutine.status (myThread) == "dead" then
-
-        myThread = coroutine.create(buildRoomTable)
-        AddTimer ("tickler", 0, 0, .1, "",
-               timer_flag.Enabled + timer_flag.Replace,
-               "tickle_it")
-      end--if
- tprint(cp_mobs)
- tprint(room_num_table)
-
-DebugNote(collectgarbage("count")*1024)
-DebugNote("Mem Usage " .. collectgarbage("count"))
-DebugNote(collectgarbage("count")*1024)
- phelper:broadcast(4)
- --test
--- collectgarbage("count")
+  print('hi')
 end
 -- end testing function
 kill_info = {}
@@ -1342,24 +1247,17 @@ function check_diff()
        DebugNote ("If you see this message this was the function causing the stack overflow")
        elseif string.lower(q[2])~= string.lower(cp_mobs[p].name) and #room_num_table < #cp_mobs then
       DebugNote('room <cp_mobs and names dont match')
-        if myThread== nil  or coroutine.status (myThread) == "dead" then
-          myThread = coroutine.create(buildRoomTable)
-          AddTimer ("tickler", 0, 0, .1, "",
-             timer_flag.Enabled + timer_flag.Replace,
-             "tickle_it")
-        end--if
+       buildRoomTable()
         return
       end--if
       if string.lower(q[2])~= string.lower(cp_mobs[p].name) and #room_num_table == #cp_mobs then
        DebugNote('room ==cp_mobs and names dont match')
        DebugNote(q[2].. " ".. cp_mobs[p].name)
-        if myThread== nil  or coroutine.status (myThread) == "dead" then
-          myThread = coroutine.create(buildRoomTable)
-          AddTimer ("tickler", 0, 0, .1, "",
-             timer_flag.Enabled + timer_flag.Replace,
-             "tickle_it")
+        
+          buildRoomTable()
+         
 
-        end--if
+        
       end--if
     end--for
   mob_index= 1
@@ -1425,10 +1323,11 @@ function CpMobsAbr(str)
   CPMobsLevelBound = nil
   levelAdj= 30
   levmin = tonumber(str)-levelAdj
+  if levmin<0 then levmin=0 end
   levmax = tonumber(str)+levelAdj
   query = string.format("select *, count(*) as timeskilled from CPMobs "..
-    " where level < %s and level > %s "..
-    " group by room_id order by  name, timeskilled desc", levmax, levmin)
+    " where level between %s and %s "..
+    " group by name, room_id order by  name, timeskilled desc", levmin,levmax)
 
   c = 0
   CPMobsLevelBound = {}
@@ -1445,17 +1344,6 @@ function CpMobsAbr(str)
   end
 	oldlevel = mylevel -- Won't rebuild until we level again - Kobus
 end
-
-function tickle_it ()
-
-  -- if background task exists, and is suspended, resume it
-  if myThread ~= nil and
-     coroutine.status (myThread) == "suspended" then
-    coroutine.resume (myThread)
-  else
-    EnableTimer ("tickler", false)  -- don't need timer now
-  end -- if
-end -- tickle_it
 
 room_num_table = {}
 
@@ -1591,12 +1479,9 @@ function buildRoomTable()-- This sends the table to get room_ids
   clearTable()
   local roomCPCheck = 0
   for i,v in ipairs (cp_mobs) do
-    roomCPCheck = getRoomId(cp_mobs[i].name, i )
-    -- if (i%3== 0)then
-    --   coroutine.yield(myThread)
-    -- end--if
+    getRoomId(cp_mobs[i].name, i )
   end
-    coroutine.yield(myThread)
+    
   for i,v in ipairs(room_num_table) do
     if (room_num_table[i][4]== false) then
       cp_mobs[i].intable = false
@@ -1644,20 +1529,17 @@ dbA=sqlite3.open(GetInfo (66) ..'Aardwolf.db')
         -- print(name)
         getRoomIdRoomCP(name,name, tableNum)
         dbA:close()
-        return 1
+        return
       else
         getRoomIdAreaCP(name, tableNum)
         dbA:close()
-        return 0
+      return
       end--if
     end
   end--if
 end
 sublist={1,1}
---TODO: Evaluate if this needs to be here at all.
-function testtime(name)
 
-end
 
 function getRoomIdAreaCP(name, tableNum)
     local nameHolder= nil
@@ -1679,12 +1561,16 @@ function getRoomIdAreaCP(name, tableNum)
     if CPMobsLevelBound ~= nil then
         for i, p in pairs(CPMobsLevelBound) do
             if name == p.name and loc == p.area_name and timeskilled<p.timeskilled then
+              DebugNote(p)
               nameHolder = name
               roomNumber = p.room_id
               timeskilled = p.timeskilled
               found = true
             end
         end
+        -- if found then 
+        --   return
+        -- end
     end
     if found == false then
         DebugNote("in query block")
@@ -1701,7 +1587,6 @@ function getRoomIdAreaCP(name, tableNum)
     end
     local count= 0
     if found == false then
-        testtime(name)-- this gets called every mob in your cp list let me show you the flow
         sublist={}
         for i, p in pairs(mobktbl) do
             if p.name == name then
@@ -1729,7 +1614,6 @@ function getRoomIdAreaCP(name, tableNum)
     end --if
     if roomNumber ~= nil and nameHolder ~=nil then
         DebugNote ("check")
-        --tprint (cp_mobs)
         DebugNote(cp_mobs[tableNum].num)
         DebugNote ("///check")
         makeTable(tonumber(roomNumber), nameHolder, cp_mobs[tableNum].mobdead, true, loc, cp_mobs[tableNum].num)
@@ -1762,7 +1646,8 @@ function getRoomIdRoomCP(name, nameHolder, tableNum)-- TODO some bug here where 
     local levelAdj = 11
     local found = 0
     local areaName
-    -- print(name)
+    local timeskilled = 0
+    local roomNumber
     res, gmcparg = call("3e7dedbe37e44942dd46d264","gmcpval","char") --- We just want the gmcp.char section.
     luastmt = "gmcpdata = " .. gmcparg --- Convert the serialized string back into a lua table.
     assert (loadstring (luastmt or "")) ()
@@ -1773,15 +1658,15 @@ function getRoomIdRoomCP(name, nameHolder, tableNum)-- TODO some bug here where 
     max_level = level + levelAdj
     if CPMobsLevelBound ~= nil then
         for i, p in pairs(CPMobsLevelBound) do
-
-            if name == p.name and loc == p.room_name then
-                -- print(tostring(loc == p.room_name))
-                -- print(name)
-                -- print(loc)
-                -- tprint(p)
-                make1(p.room_id, name, cp_mobs[tableNum].mobdead, true, p.area_name, cp_mobs[tableNum].num)
-                return
+            if name == p.name and loc == p.room_name and timeskilled<p.timeskilled then
+                roomNumber = p.room_id
+                areaName = p.area_name 
+                timeskilled = p.timeskilled
             end
+        end
+        if roomNumber ~= nil and areaName ~= nil then
+            make1(roomNumber, name, cp_mobs[tableNum].mobdead, true, area_name, cp_mobs[tableNum].num) 
+            return
         end
     end
     if (min_level<0)then min_level=0 end
@@ -1801,8 +1686,6 @@ function getRoomIdRoomCP(name, nameHolder, tableNum)-- TODO some bug here where 
             "ORDER by timeskilled asc ", fixsql(name), fixsql(loc))
 
         for rows in databasekt:nrows(cpmobquery) do
-            -- print("found in cpmobsquery")
-           -- tprint(rows)
             roomNumber = rows.room_id
             areaName = rows.area_name
             found = 1
@@ -1858,8 +1741,6 @@ function getRoomIdRoomCP(name, nameHolder, tableNum)-- TODO some bug here where 
     end--if
     tableNumHolder= tonumber(tableNum)
     mob_index= 1
-    -- print(name)
-    -- print('nothing')
 end
 room_not_in_database = {}
 
@@ -2149,7 +2030,6 @@ rooms = {1, 1}
 areas = {}
 mobktbl = {}
 function StartScript()
-  print("here")
   do_Execute_no_echo('map')
 
   do_Execute_no_echo("cp check")
@@ -2183,7 +2063,7 @@ function StartScript()
   dbkt:busy_handler(myHandler)
   qry= "select * from rooms where uid not like '*' and uid not like '**' order by uid"
   qry2 = "select * from areas"
-  qry3 = "select *, count(*) as timeskilled from mobkills group by room_id order by name, timeskilled desc"
+  qry3 = "select *, count(*) as timeskilled from mobkills group by name,room_id order by name, timeskilled desc"
   c= 0
   CpMobsAbr(mylevel)
   rooms = {}
@@ -2220,14 +2100,6 @@ function StartScript()
       timeskilled = row.timeskilled
   }
   end -- end of for loop? lol, whoops ok  lets do it
-      for i,v in pairs(rooms) do
-        c =c +1
-      end
-  rc =dbkt:exec([[SELECT name, room_id FROM mobkills ]])
-  if rc~= 0 then
-    init()
-    print ('making table')
-  end--if
   if not IsPluginInstalled("0961770926b613688a1c5458") then
     LoadPlugin(GetPluginInfo (GetPluginID (), 20) .. "cp_mobTableFiller.xml")
   end
