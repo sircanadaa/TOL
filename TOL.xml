@@ -725,7 +725,9 @@ require "KillTable"
 require "pluginhelper"
 require "serialize"
 require "socket"
-
+require "DistCalc"
+require "MovementFuncs"
+require "LookupFunc"
 ThreadHolder= coroutine.running()
 counter = tonumber(1)
 counter1 = tonumber(1)
@@ -762,110 +764,7 @@ function timeEnd()
   timeend = socket.gettime()
   print ((timeend-timestart)/60)
 end
-function lookup(name1, line, wildcards)--Looks up mobs from the CPmobs database based off of name, level, area, or room
-  local modifiers = {'name', 'level', 'area', 'room'}
-  local ptr = 0
-  local ptrkeep = 1
-  local mobbuff ={}
-  local decideQ = 0
-  local level = 0
-  local modanddata = {}
-  for i, p in pairs (modifiers) do
-    local x, a = 0
-   a,x = string.find(wildcards[1], p.." ")
-    if a ~= nil and x ~= nil then
 
-
-        tmp = string.sub (wildcards[1], x)
-        ptr = string.len(tmp)
-        for j, k in pairs(modifiers) do
-          y, w = string.find(tmp, k.." ")
-          if y~= nil and y< ptr then
-            -- print (y)
-            ptr = y -2
-          end
-        end
-        modanddata[i] = string.sub(tmp, 2, ptr)
-        prt = 1
-      if x ~= nil and x > ptr then
-        ptr = x
-      end
-       ptr = 0
-    else
-      modanddata [i] = -1
-    end
-  end
-  -- modanddata will always be in the form 1 = name, 2 = level, 3 = area, 4 = room
-  local name =""
-  local levela = 0
-  local levelb = 0
-  local room = ""
-  local area = ""
-  if modanddata[1] ~= -1 then --name
-   name = modanddata[1]
-   decideQ = decideQ +1
-  end
-  if modanddata[2] ~= -1  then --level
-    if tonumber(modanddata[2]) == nil then
-      print ("Level needs to be a number")
-      return
-    end
-   levela = tonumber(modanddata[2]) +11
-   levelb = tonumber(modanddata[2]) -11
-   decideQ = decideQ + 9
-  end
-  if modanddata[3] ~= -1  then area = modanddata[3] decideQ = decideQ +12 end -- area
-  if modanddata[4] ~= -1  then room = modanddata[4] decideQ = decideQ +15 end -- room
-  --print (decideQ)
-  if decideQ == 0 then print('Nothing found try something else or check your usage') return end
-  if decideQ == 1 then -- name or default
-    query = string.format("SELECT * from CPMobs where name like %s", fixsql(name))
-  elseif decideQ == 9 then-- level only
-    query = string.format("SELECT * from CPMobs where level <= %d and level >= %d", levela, levelb)
-  elseif decideQ == 12 then -- area only
-    query = string.format("SELECT * from CPMobs where area_name like %s", fixsql(area))
-  elseif decideQ == 15 then -- room only
-    query = string.format("SELECT * from CPMobs where room_name like %s", fixsql(room))
-  elseif decideQ == 10 then -- name and level
-    query = string.format("SELECT * from CPMobs where name like %s and level <= %d and level >= %d", fixsql(name), levela, levelb)
-  elseif decideQ == 13 then -- name and area
-    query = string.format("SELECT * from CPMobs where name like %s and area_name like %s", fixsql(name), fixsql(area))
-  elseif decideQ == 16 then -- name and room
-    query = string.format("SELECT * from CPMobs where name like %s and room_name like %s", fixsql(name), fixsql(room))
-  elseif decideQ == 21 then -- level and area
-    query = string.format("SELECT * from CPMobs where level <= %d and level >= %d and area_name like %s",levela, levelb, fixsql(area))
-  elseif decideQ == 24 then -- level and room
-    query = string.format("SELECT * from CPMobs where level <= %d and level >= %d and room_name like %s", levela, levelb, fixsql(room))
-  elseif decideQ == 27 then -- area and room this shouldn't really happen but fuck it, its an option now
-    query = string.format("SELECT * from CPMobs where area_name like %s and room_name like %s", fixsql(area), fixsql(room))
-  elseif decideQ == 25 then -- name, level, room
-    query = string.format("SELECT * from CPMobs where name like %s and level <= %d and level >= %d and room_name like %s", fixsql(name), levela, levelb, fixsql(room))
-  elseif decideQ == 37 then -- name, level, room, area
-    query = string.format("SELECT * from CPMobs where name like %s and level <= %d and level >= %d and room_name like %s and area_name like %s", fixsql(name), levela, levelb,fixsql(room), fixsql(area))
-  elseif decideQ == 28 then -- name, room, area
-    query = string.format("SELECT * from CPMobs where name like %s and room_name like %s and area_name like %s", fixsql(name), fixsql(room), fixsql(area))
-  elseif decideQ == 22 then -- name, level, area
-    query = string.format("SELECT * from CPMobs where name like %s and level <= %d and level >= %d and area_name like %s", fixsql(name), levela, levelb, fixsql(area))
-  elseif decideQ == 36 then -- level, room, area
-    query = string.format("SELECT * from CPMobs where level <= %d and level >= %d and room_name like %s and area_name like %s", levela, levelb,fixsql(room), fixsql(area))
-
-  end
-  for p in dbkt:nrows(query) do
-    table.insert(mobbuff, p )
-  end
-  tprint (mobbuff)
-  if decideQ == 1 and #mobbuff <1 then
-    -- print ('test')
-    query = string.format("SELECT * from mobkills where name like %s group by room_id", fixsql(name))
-    for p in dbkt:nrows(query) do
-      table.insert(mobbuff, p)
-    end
-  end
-  if #mobbuff<1 then
-    print ("OKYDOKY BOSS NOTHING TO SEE HERE")
-    print ("seriously though we found nothing")
-  end
-end
 function quickScan()
   Execute("scan " .. mobname)
 end
@@ -1001,14 +900,11 @@ function camp_item_start()-- get your campaign items
   EnableTrigger('camp_item_start',0)
   cp_mobs = {}
   cp_mobs= mobsleft
-  if myThread== nil  or coroutine.status (myThread) == "dead" then
 
-        myThread = coroutine.create(buildRoomTable)
-        AddTimer ("tickler", 0, 0, .1, "",
-               timer_flag.Enabled + timer_flag.Replace,
-               "tickle_it")
+    -- This is the first call to buildToomTable()
+    buildRoomTable()
 
-  end--if
+
     FirstRun_cp_var= false
     check_dead()
     DebugNote(collectgarbage("count")*1024)
@@ -1138,8 +1034,6 @@ function quest_color()
 end
 
 function cpn_script (index, line, wildcards)
-  -- print (index)
-  -- print (line)
   local numcheck
   if wildcards ~= nil then
     numcheck = tonumber(wildcards[1])
@@ -1187,97 +1081,7 @@ greedy = false
 FirstRun_cp_var= true
 -- This function is just for testing. It should never actually be used.
 function printVars()
-  tprint (cp_mobs)
---   Debug = true
---   DebugNote({1, 2})
---   Debug = false
---   --Clean_Kill_Table()
--- cp_mobs[1]={location= 'Stairwell'
--- ,mobdead= 'false',
--- name= 'King Breolerc',
--- clean = 'King Breolerc'}
--- cp_mobs[2]={location= 'The Conservatory'
--- ,mobdead= 'false',
--- name= 'a rabbit foot fern',
--- clean = 'a rabbit foot fern'}
--- cp_mobs[3]={location= 'North West Market Square'
--- ,mobdead= 'false',
--- name= 'Mino the Crazy',
--- clean = 'mino the crazy'}
--- cp_mobs[4]={location= 'High priest quarters'
--- ,mobdead= 'false',
--- name= 'an ancient ghost',
--- clean = 'an ancient ghost'}
-local llthreads = require"llthreads"
-print (package.cpath)
-local thread_code = [[
-temp= ''
--- local socket = require"socket"
---     -- print thread's parameter.
---     --dofile ("E:\\Users\\Jeremy\\Desktop\\r1802\\MUSHclient\\worlds\\plugins\\TOL\\luapath.lua")
--- -- temp = (package.cpath)
-   local status, socket = pcall(require,"socket")
-    local db = pcall(require,"lsqlite3")
---     -- if temp ~='' then
---     -- temp = (package.cpath) end
---     return status, socket
---   --   print("CHILD: received params:", ...)
-    local tst=sqlite3.open('E:\\Users\\Jeremy\\Desktop\\r1802\\MUSHclient\\worlds\\plugins\\TOL\\KillTable.db')
---   --   local temp
-    querycheck = "Select count(name) as count from CPMobs "
-  for a in tst:nrows(querycheck) do
-    temp =a.count
-  end
---   --   -- print(tst)
---   --   -- return all thread's parameters back to the parent thread.
-    return temp
-]]
-
-
--- create detached child thread.
--- local thread = llthreads.new(thread_code, "number:", 12345, "nil:", nil, "bool:", true)
--- start non-joinable detached child thread.
--- assert(thread:start(true))
--- Use a detatched child thread when you don't care when the child finishes.
-local function print_thread(...)
-  local thread = llthreads.new([[ print("print_thread:", ...); ]], ...)
-  -- start joinable thread
-  assert(thread:start())
-  return thread
-end
-
-local thread2 = print_thread("number:", 1234, "nil:", nil, "bool:", true)
-print("thread2:join: results # = ", select('#', thread2:join()))
--- create child thread.
-local thread = llthreads.new(thread_code, "test:", 1111)
--- start joinable child thread.
-assert(thread:start())
--- Warning: If you don't call thread:join() on a joinable child thread, it will be called
--- by the garbage collector, which may cause random pauses/freeze of the parent thread.
--- luastmt = "gmcpdata = " .. thread:join()
---         assert (loadstring (luastmt or "")) ()
--- print(gmcpdata)
---print("thread:join: results # = ", select('3', thread:join()))
-print("PARENT: child returned: ", thread:join())
---tprint (select('3', thread:join())
--- local socket = require"socket"
--- socket.sleep(2) -- give detached thread some time to run.
-if myThread== nil  or coroutine.status (myThread) == "dead" then
-
-        myThread = coroutine.create(buildRoomTable)
-        AddTimer ("tickler", 0, 0, .1, "",
-               timer_flag.Enabled + timer_flag.Replace,
-               "tickle_it")
-      end--if
- tprint(cp_mobs)
- tprint(room_num_table)
-
-DebugNote(collectgarbage("count")*1024)
-DebugNote("Mem Usage " .. collectgarbage("count"))
-DebugNote(collectgarbage("count")*1024)
- phelper:broadcast(4)
- --test
--- collectgarbage("count")
+  print('hi')
 end
 -- end testing function
 kill_info = {}
@@ -1443,24 +1247,17 @@ function check_diff()
        DebugNote ("If you see this message this was the function causing the stack overflow")
        elseif string.lower(q[2])~= string.lower(cp_mobs[p].name) and #room_num_table < #cp_mobs then
       DebugNote('room <cp_mobs and names dont match')
-        if myThread== nil  or coroutine.status (myThread) == "dead" then
-          myThread = coroutine.create(buildRoomTable)
-          AddTimer ("tickler", 0, 0, .1, "",
-             timer_flag.Enabled + timer_flag.Replace,
-             "tickle_it")
-        end--if
+       buildRoomTable()
         return
       end--if
       if string.lower(q[2])~= string.lower(cp_mobs[p].name) and #room_num_table == #cp_mobs then
        DebugNote('room ==cp_mobs and names dont match')
        DebugNote(q[2].. " ".. cp_mobs[p].name)
-        if myThread== nil  or coroutine.status (myThread) == "dead" then
-          myThread = coroutine.create(buildRoomTable)
-          AddTimer ("tickler", 0, 0, .1, "",
-             timer_flag.Enabled + timer_flag.Replace,
-             "tickle_it")
+        
+          buildRoomTable()
+         
 
-        end--if
+        
       end--if
     end--for
   mob_index= 1
@@ -1506,7 +1303,7 @@ function OnPluginBroadcast (msg, id, name, text)
             got_char = true -- Got the char data - Kobus
         end
         if mylevel ~= oldlevel and didonce == true then -- We leveled?, rebuild CPMobs table
-            print('level != oldlevel')
+            DebugNote("Rebuilding cpmobs table...")
             CpMobsAbr(mylevel) -- Rebuild the CPMobs table - Kobus
         end
 
@@ -1523,14 +1320,14 @@ end
 CPMobsLevelBound = nil
 -- takes a level and makes a CPmobs table that is within 30 level of our current level
 function CpMobsAbr(str)
-    print('building CPMobsLevelBound')
   CPMobsLevelBound = nil
   levelAdj= 30
   levmin = tonumber(str)-levelAdj
+  if levmin<0 then levmin=0 end
   levmax = tonumber(str)+levelAdj
   query = string.format("select *, count(*) as timeskilled from CPMobs "..
-    " where level < %s and level > %s "..
-    " group by room_id order by  name, timeskilled desc", levmax, levmin)
+    " where level between %s and %s "..
+    " group by name, room_id order by  name, timeskilled desc", levmin,levmax)
 
   c = 0
   CPMobsLevelBound = {}
@@ -1545,20 +1342,8 @@ function CpMobsAbr(str)
     timeskilled = rows.timeskilled
   }
   end
-print('Finished building CPMobsLevelBound')
 	oldlevel = mylevel -- Won't rebuild until we level again - Kobus
 end
-
-function tickle_it ()
-
-  -- if background task exists, and is suspended, resume it
-  if myThread ~= nil and
-     coroutine.status (myThread) == "suspended" then
-    coroutine.resume (myThread)
-  else
-    EnableTimer ("tickler", false)  -- don't need timer now
-  end -- if
-end -- tickle_it
 
 room_num_table = {}
 
@@ -1570,7 +1355,8 @@ end
 function makeTable(room_num, name, bool, isInTable, area, num)-- stores all names and room numbers into a global table
   room_num_table[counter]= {room_num, name, bool, isInTable, area, tonumber(num)}
   counter= counter + 1
-
+-- tprint(room_num_table)
+-- print(counter)
 
 end
 function makeTable2(room_num, name, bool, inTable, area)-- stores all names and room numbers into a global table
@@ -1693,12 +1479,9 @@ function buildRoomTable()-- This sends the table to get room_ids
   clearTable()
   local roomCPCheck = 0
   for i,v in ipairs (cp_mobs) do
-    roomCPCheck = getRoomId(cp_mobs[i].name, i )
-    -- if (i%3== 0)then
-    --   coroutine.yield(myThread)
-    -- end--if
+    getRoomId(cp_mobs[i].name, i )
   end
-    coroutine.yield(myThread)
+    
   for i,v in ipairs(room_num_table) do
     if (room_num_table[i][4]== false) then
       cp_mobs[i].intable = false
@@ -1729,31 +1512,34 @@ dbA=sqlite3.open(GetInfo (66) ..'Aardwolf.db')
         "rooms.area = areas.uid "..
         " ORDER BY type ASC "
     sql_now= string.format(query1, fixsql(loc), fixsql(loc) )
+    -- print(sql_now)
     local count_check= 0
     local hld = {}
     for rows in dbA:nrows(sql_now) do
-
+    -- tprint(rows)
       table.insert(hld, rows)
     end -- for
+    -- tprint(hld)
+    if #hld == 0 then
+        print('this cp will be weird because of unmapped rooms.. all entries are subject TOL has broken')
+    end
     for g, rows in pairs(hld) do
       -- this whole thing needs reworked... its a mess right now..
       if rows.type== 'room' then
+        -- print(name)
         getRoomIdRoomCP(name,name, tableNum)
         dbA:close()
-        return 1
+        return
       else
         getRoomIdAreaCP(name, tableNum)
         dbA:close()
-        return 0
+      return
       end--if
     end
   end--if
 end
 sublist={1,1}
---TODO: Evaluate if this needs to be here at all.
-function testtime(name)
 
-end
 
 function getRoomIdAreaCP(name, tableNum)
     local nameHolder= nil
@@ -1775,12 +1561,16 @@ function getRoomIdAreaCP(name, tableNum)
     if CPMobsLevelBound ~= nil then
         for i, p in pairs(CPMobsLevelBound) do
             if name == p.name and loc == p.area_name and timeskilled<p.timeskilled then
+              DebugNote(p)
               nameHolder = name
               roomNumber = p.room_id
               timeskilled = p.timeskilled
               found = true
             end
         end
+        -- if found then 
+        --   return
+        -- end
     end
     if found == false then
         DebugNote("in query block")
@@ -1797,7 +1587,6 @@ function getRoomIdAreaCP(name, tableNum)
     end
     local count= 0
     if found == false then
-        testtime(name)-- this gets called every mob in your cp list let me show you the flow
         sublist={}
         for i, p in pairs(mobktbl) do
             if p.name == name then
@@ -1825,7 +1614,6 @@ function getRoomIdAreaCP(name, tableNum)
     end --if
     if roomNumber ~= nil and nameHolder ~=nil then
         DebugNote ("check")
-        --tprint (cp_mobs)
         DebugNote(cp_mobs[tableNum].num)
         DebugNote ("///check")
         makeTable(tonumber(roomNumber), nameHolder, cp_mobs[tableNum].mobdead, true, loc, cp_mobs[tableNum].num)
@@ -1858,7 +1646,8 @@ function getRoomIdRoomCP(name, nameHolder, tableNum)-- TODO some bug here where 
     local levelAdj = 11
     local found = 0
     local areaName
-
+    local timeskilled = 0
+    local roomNumber
     res, gmcparg = call("3e7dedbe37e44942dd46d264","gmcpval","char") --- We just want the gmcp.char section.
     luastmt = "gmcpdata = " .. gmcparg --- Convert the serialized string back into a lua table.
     assert (loadstring (luastmt or "")) ()
@@ -1867,7 +1656,19 @@ function getRoomIdRoomCP(name, nameHolder, tableNum)-- TODO some bug here where 
     --level = 70 -- for testing
     min_level = level - levelAdj
     max_level = level + levelAdj
-
+    if CPMobsLevelBound ~= nil then
+        for i, p in pairs(CPMobsLevelBound) do
+            if name == p.name and loc == p.room_name and timeskilled<p.timeskilled then
+                roomNumber = p.room_id
+                areaName = p.area_name 
+                timeskilled = p.timeskilled
+            end
+        end
+        if roomNumber ~= nil and areaName ~= nil then
+            make1(roomNumber, name, cp_mobs[tableNum].mobdead, true, area_name, cp_mobs[tableNum].num) 
+            return
+        end
+    end
     if (min_level<0)then min_level=0 end
         local queryCount = strbld("select COUNT(*) as counter"..
           " from rooms, areas"..
@@ -1942,301 +1743,7 @@ function getRoomIdRoomCP(name, nameHolder, tableNum)-- TODO some bug here where 
     mob_index= 1
 end
 room_not_in_database = {}
--- This section is almost a straight rip from Fiendish's aard_GMCP_mapper.xml all credit goes to him
-local bit = require("bit")
-function load_room_from_database (uid)
-   local room
-   local u = tostring(uid)
-   assert (uid, "No UID supplied to load_room_from_database")
 
-   -- if not in database, don't look again
-   if room_not_in_database [u] then
-      return nil
-   end -- no point looking
--- print('here?')
-   for row in dbnrowsWRAPPER(string.format ("SELECT * FROM rooms WHERE uid = %s", fixsql (u))) do
-      room = {
-         name = row.name,
-         area = row.area,
-         building = row.building,
-         terrain = row.terrain,
-         info = row.info,
-         notes = row.notes,
-         x = row.x or 0,
-         y = row.y or 0,
-         z = row.z or 0,
-         noportal = row.noportal,
-         norecall = row.norecall,
-         exits = {},
-         exit_locks = {},
-         ignore_exits_mismatch = (row.ignore_exits_mismatch == 1)
-      }
-
-      for exitrow in dbnrowsWRAPPER(string.format ("SELECT * FROM exits WHERE fromuid = %s", fixsql (u))) do
-         room.exits [exitrow.dir] = tostring (exitrow.touid)
-         room.exit_locks [exitrow.dir] = tostring(exitrow.level)
-      end -- for each exit
-   end   -- finding room
-   if room then
-      if not rooms then
-         -- this shouldn't even be possible. what the hell.
-         rooms = {}
-      end
-      rooms [u] = room
-      for row in dbnrowsWRAPPER(string.format ("SELECT * FROM bookmarks WHERE uid = %s", fixsql (u))) do
-         rooms [u].notes = row.notes
-      end   -- finding room
-      --tprint(room)
-      return room
-   end -- if found
-
-   -- room not found in database
-   room_not_in_database [u] = true
-   return nil
-
-end -- load_room_from_database
-forced_opened = false
-force_nests = 0
-function sanitize_filename(str)
-   str = string.gsub(str, "[^%w%s()_-]", "")
-   return Trim(str)
-end
-worldPath = GetInfo(66)..sanitize_filename(WorldName())
-db = assert (sqlite3.open(worldPath..".db"))
-db:busy_timeout(100)
-function forceOpenDB()
-   force_nests = force_nests+1
-   if not db:isopen() then
-      forced_opened = true
-      -- print("Forcing open")
-      db = assert (sqlite3.open(GetInfo (66) .. sanitize_filename(WorldName()) .. ".db"))
-   end
-end
-function dbnrowsWRAPPER(query)
-   forceOpenDB()
-   iter,vm,i = db:nrows(query)
-   local function itwrap(vm, i)
-      retval = iter(vm, i)
-      if not retval then
-         closeDBifForcedOpen()
-         return nil
-      end
-      return retval
-   end
-   return itwrap,vm,i
-end
-function closeDBifForcedOpen()
-   force_nests = force_nests-1
-   if forced_opened and (force_nests <= 0) then
-      force_nests = 0
-      forced_opened = false
-      db:close()
-   end
-end
-function findNearestJumpRoom(src, dst, target_type)
-   local depth = 0
-   local max_depth = 500
-   local room_sets = {}
-   local rooms_list = {}
-   local found = false
-   local ftd = {}
-   local destination = ""
-   local next_room = 0
-   local visited = ""
-   local path_type = ""
-
-   table.insert(rooms_list, fixsql(src))
-   while not found and depth < max_depth do
-      depth = depth + 1
-
-      -- prune the search space
-      if visited ~= "" then
-         visited = visited..","..table.concat(rooms_list, ",")
-      else
-         visited = table.concat(rooms_list, ",")
-      end
-
-      -- get all exits to any room in the previous set
-      local q = string.format ("select fromuid, touid, dir, norecall, noportal from exits,rooms where rooms.uid = exits.touid and exits.fromuid in (%s) and exits.touid not in (%s) and exits.level <= %s order by length(exits.dir) asc",
-                  table.concat(rooms_list,","), visited, mylevel)
-      local dcount = 0
-      for row in dbnrowsWRAPPER(q) do
-         dcount = dcount + 1
-         table.insert(rooms_list, fixsql(row.touid))
-         -- ordering by length(dir) ensures that custom exits (always longer than 1 char) get
-         -- used preferentially to normal ones (1 char)
-         if ((bounce_portal ~= nil or target_type == "*") and row.noportal ~= 1) or ((bounce_recall ~= nil or target_type == "**") and row.norecall ~= 1) or row.touid == dst then
-            path_type = ((row.touid == dst) and 1) or ( (((row.noportal == 1) and 2) or 0) + (((row.norecall == 1) and 4) or 0) )
-            -- path_type 1 means walking to the destination is closer than bouncing
-            -- path_type 2 means the bounce room allows recalling but not portalling
-            -- path_type 4 means the bounce room allows portalling but not recalling
-            -- path_type 0 means the bounce room allows both portalling and recalling
-            destination = row.touid
-            found = true
-            found_depth = depth
-         end -- if src
-      end -- for select
-
-      if dcount == 0 then
-         return -- there is no path to a portalable or recallable room
-      end -- if dcount
-   end -- while
-
-   if found == false then
-      return
-   end
-   return destination, path_type, found_depth
-end
-function findpath(src, dst, noportals, norecalls)
-  local rooms = {}
-   DebugNote('source room is : '..src)
-   DebugNote('destination room is : '..dst)
-   if not rooms[src] or src == '-1' then
-      if src == "-1" then
-        src = "nomap_"..currentRoom.name.."_"..currentRoom.areaid
-      end
-      rooms[src] = load_room_from_database(src)
-   end
-   if not rooms[src] then
-      return
-   end
-   if tostring(src) == tostring(dst) then
-    return {},0
-    end
-   local walk_one = nil
-   for dir,touid in pairs(rooms[src].exits) do
-      if tostring(touid) == tostring(dst) and tonumber(rooms[src].exit_locks[dir]) <= mylevel and ((walk_one == nil) or (#dir > #walk_one)) then
-         walk_one = dir -- if one room away, walk there (don't portal), but prefer a cexit
-      end
-   end
-      if walk_one ~= nil then
-      return {{dir=walk_one, uid=touid}}, 1
-   end
-   local depth = 0
-   local max_depth = 500
-   local room_sets = {}
-   local rooms_list = {}
-   local found = false
-   local ftd = {}
-   local f = ""
-   local next_room = 0
-   if type(src) ~= "number" then
-      src = string.match(src, "^(nomap_.+)$") or tonumber(src)
-   end
-   if type(dst) ~= "number" then
-      dst = string.match(dst, "^(nomap_.+)$") or tonumber(dst)
-   end
-
-   if src == dst or src == nil or dst == nil then
-      return {}
-   end
-
-   src = tostring(src)
-   dst = tostring(dst)
-
-   table.insert(rooms_list, fixsql(dst))
-
-   local visited = ""
-   while not found and depth < max_depth do
-      depth = depth + 1
-      if depth > 1 then
-         ftd = room_sets[depth-1] or {}
-         rooms_list = {}
-         for k,v in pairs(ftd) do
-            table.insert(rooms_list, fixsql(v.fromuid))
-         end -- for from, to, dir
-      end -- if depth
-
-      -- prune the search space
-      if visited ~= "" then
-         visited = visited..","..table.concat(rooms_list, ",")
-      else
-         if noportals then
-            visited = visited..fixsql("*")..","
-         end
-         if norecalls then
-            visited = visited..fixsql("**")..","
-         end
-         visited = visited..table.concat(rooms_list, ",")
-      end
-
-      -- get all exits to any room in the previous set
-      local q = string.format ("select fromuid, touid, dir from exits where touid in (%s) and fromuid not in (%s) and ((fromuid not in ('*','**') and level <= %s) or (fromuid in ('*','**') and level <= %s)) order by length(dir) asc",table.concat(rooms_list,","), visited,mylevel,mylevel+(mytier*10))
-      local dcount = 0
-      room_sets[depth] = {}
-      for row in dbnrowsWRAPPER(q) do
-       -- print('database was open')
-         dcount = dcount + 1
-         -- ordering by length(dir) ensures that custom exits (always longer than 1 char) get
-         -- used preferentially to normal ones (1 char)
-         room_sets[depth][row.fromuid] = {fromuid=row.fromuid, touid=row.touid, dir=row.dir}
-         if row.fromuid == "*" or (row.fromuid == "**" and f ~= "*" and f ~= src) or row.fromuid == src then
-            f = row.fromuid
-            found = true
-            found_depth = depth
-         end -- if src
-      end -- for select
-
-      if dcount == 0 then
-         return -- there is no path from here to there
-      end -- if dcount
-   end -- while
-
-   if found == false then
-      return
-   end
-
-   -- We've gotten back to the starting room from our destination. Now reconstruct the path.
-   local path = {}
-   -- set ftd to the first from,to,dir set where from was either our start room or * or **
-   ftd = room_sets[found_depth][f]
-
-   if (f == "*" and rooms[src].noportal == 1) or (f == "**" and rooms[src].norecall == 1) then
-      if rooms[src].norecall ~= 1 and bounce_recall ~= nil then
-         table.insert(path, bounce_recall)
-         if dst == bounce_recall.uid then
-            return path, found_depth
-         end
-      elseif rooms[src].noportal ~= 1 and bounce_portal ~= nil then
-         table.insert(path, bounce_portal)
-         if dst == bounce_portal.uid then
-            return path, found_depth
-         end
-      else
-         local jump_room, path_type = findNearestJumpRoom(src, dst, f)
-         if not jump_room then
-            return
-         end
-         local path, first_depth = findpath(src,jump_room, true, true) -- this could be optimized away by building the path in findNearestJumpRoom, but the gain would be negligible
-         if bit.band(path_type, 1) ~= 0 then
-            -- path_type 1 means just walk to the destination
-            return path, first_depth
-         else
-            local second_path, second_depth = findpath(jump_room, dst)
-            for i,v in ipairs(second_path) do
-               table.insert(path, v) -- bug on this line if path is nil?
-            end
-            return path, first_depth+second_depth
-         end
-      end
-   end
-
-   table.insert(path, {dir=ftd.dir, uid=ftd.touid})
-
-   next_room = ftd.touid
-   while depth > 1 do
-      depth = depth - 1
-      ftd = room_sets[depth][next_room]
-      next_room = ftd.touid
--- this caching is probably not noticeably useful, so disable it for now
---      if not rooms[ftd.touid] then -- if not in memory yet, get it
---         rooms[ftd.touid] = load_room_from_database (ftd.touid)
---      end
-      table.insert(path, {dir=ftd.dir, uid=ftd.touid})
-   end -- while
-   return path, found_depth
-end -- function findpath
--- end section of Fienish's work
 
 function sortRoomCPByPath()
   local x
@@ -2264,12 +1771,12 @@ function sortRoomCPByPath()
   DebugNote(keys)
   table.sort(keys, function(a, b) return dist_tbl[a][2] < dist_tbl[b][2] end)
   for _, k in ipairs(keys) do
-    DebugNote('_ then k')
-    DebugNote(_)
-    DebugNote(k)
-    DebugNote(k)
-    DebugNote(dist_tbl[k][1])
-    DebugNote(dist_tbl[k][2])
+    -- DebugNote('_ then k')
+    -- DebugNote(_)
+    -- DebugNote(k)
+    -- DebugNote(k)
+    -- DebugNote(dist_tbl[k][1])
+    -- DebugNote(dist_tbl[k][2])
     cp_mobs[k].dist = dist_tbl[k][2]
     table.insert(b, cp_mobs[k])
     table.insert(q, room_num_table[k])
@@ -2523,7 +2030,6 @@ rooms = {1, 1}
 areas = {}
 mobktbl = {}
 function StartScript()
-  print("here")
   do_Execute_no_echo('map')
 
   do_Execute_no_echo("cp check")
@@ -2557,7 +2063,7 @@ function StartScript()
   dbkt:busy_handler(myHandler)
   qry= "select * from rooms where uid not like '*' and uid not like '**' order by uid"
   qry2 = "select * from areas"
-  qry3 = "select *, count(*) as timeskilled from mobkills group by room_id order by name, timeskilled desc"
+  qry3 = "select *, count(*) as timeskilled from mobkills group by name,room_id order by name, timeskilled desc"
   c= 0
   CpMobsAbr(mylevel)
   rooms = {}
@@ -2594,14 +2100,6 @@ function StartScript()
       timeskilled = row.timeskilled
   }
   end -- end of for loop? lol, whoops ok  lets do it
-      for i,v in pairs(rooms) do
-        c =c +1
-      end
-  rc =dbkt:exec([[SELECT name, room_id FROM mobkills ]])
-  if rc~= 0 then
-    init()
-    print ('making table')
-  end--if
   if not IsPluginInstalled("0961770926b613688a1c5458") then
     LoadPlugin(GetPluginInfo (GetPluginID (), 20) .. "cp_mobTableFiller.xml")
   end
@@ -2647,199 +2145,7 @@ function DebugNote( msg )
     end
 
 end
--- This whole block is ripped directly from Winkle's plugin, all credit to him.
----//////////////////////////////////////////////////////////////////////////////////////////////////
---////////////////                                    |\     |          ^
---///////////////                                     | \    |        /   \
---//////////////                                      |  \   |       /     \
---/////////////                                       |   \  |      <       >
---////////////                                        |    \ |       \     /
---///////////                                         |     \|        \   /
---//////////                                          |      |          v
---///////////////////////////////////////////////////////////////////////////////////////////////////
-local xrun_to_sql1 =
-    "SELECT r.uid, r.name as room, a.name as area " ..
-    "FROM rooms r " ..
-    "INNER JOIN areas a ON a.uid = r.area " ..
-    "WHERE a.uid like %s " ..
-    "ORDER BY r.uid "
 
-  local xrun_to_sql2 =
-    "SELECT r.uid, r.name as room, a.name as area " ..
-    "FROM rooms r " ..
-    "INNER JOIN areas a ON a.uid = r.area " ..
-    "WHERE a.uid like %s " ..
-    "OR a.name like %s " ..
-    "ORDER BY r.uid "
-
-    local xrun_to_sql_FR =
-      " SELECT b.uid, b.notes "..
-      " FROM bookmarks b "..
-      " INNER JOIN rooms r on r.uid = b.uid "..
-      " WHERE r.area like %s " ..
-      " AND b.notes = 'Tstart' "
-
-  function xrun_to1(name, line, wildcards)
-    local index1 = 1
-    local worldPath = GetInfo(66)..Trim(sanitize_filename(WorldName()))
-    local db = assert(sqlite3.open(worldPath .. ".db"))
-    db:busy_handler(myHandler)
-
-    -- HACK for ftii
-    if (wildcards[1] == "ft2") then
-      wildcards[1] = "ftii"
-    end
-    local like = fixsql("%" .. wildcards[1] .. "%")
-    -- try exact hit first
-    local select1 = string.format (xrun_to_sql1, fixsql(wildcards[1]))
-    DebugNote("xrun_to (1)- " .. select1)
-    local select2 = string.format (xrun_to_sql_FR, like)
-    DebugNote("xrun_to (1)- " .. select2)
-    for row in db:nrows(select2) do
-      DebugNote(row)
-      goto_roomid(row.uid)
-      index1 = index1 +1
-      db:close()
-      return
-    end
-
-    --Note(string.format (sql, fixsql(wildcards[1])))
-    for row in db:nrows(select1) do
-
-      ColourNote("darkorange", "", "x-runto (" .. row.uid .. ") " .. row.room .. " in " .. row.area)
-      goto_roomid(row.uid)
-
-      index1 = index1 + 1
-      db:close()
-      return
-    end
-
-
-
-    select1 = string.format (xrun_to_sql2, like, like)
-    DebugNote("xrun_to (2)- " .. select1)
-
-    for row in db:nrows(select1) do
-      ColourNote("darkorange", "", "x-runto (" .. row.uid .. ") " .. row.room .. " in " .. row.area)
-      goto_roomid(row.uid)
-
-      index1 = index1 + 1
-      db:close()
-      return
-    end
-
-    if (index1 == 1) then
-
-      ColourNote("darkorange", "", "No matching rooms found. Using aardwolf runto...")
-      Execute("xmapper1 move 32418") -- recall
-      Execute("runto " .. wildcards[1])
-    end
-    db:close()
-  end
-
-  function goto_roomid(roomid)
-      Execute("xmapper1 move " .. roomid)
-  end
-  local execute_in_area_array = {}
-
-  function execute_in_area(id, areaId, functionPointer)
-
-    execute_in_area_array[id] = {
-      areaId = areaId,
-      func = functionPointer,
-      index = 0,
-      active = true,
-      lastState = 3, -- standing
-      standIndex = 0 -- count of stands in a row
-      }
-    EnableTimer("execute_in_area_timer", true)
-
-  end
-
-  function execute_in_area_tick(name, line, wildcards)
-    local localRoom = currentRoom
-    local localState
-    if (localRoom == nil) then
-      return
-    end
-
-    if (char_status == nill) then
-      return
-    else
-      localState = tonumber(char_status.state)
-    end
-
-    local isActive = false
-    for index, value in pairs(execute_in_area_array) do
-      if (value.active == true) then
-
-        value.index = value.index + 1
-
-        if (value.index > 100) then
-          value.active = false
-          print("** aborting quickwhere timer for " .. index1 .. ", took too long to get to destination")
-
-        else
-
-
-          if ((localState == 3 and value.lastState == 3)
-            and value.areaId == localRoom.areaid) then
-
-            -- skip first timer tick
-            value.index = value.index + 1
-            value.standIndex = value.standIndex + 1
-            if (value.standIndex < 2) then
-            else
-              value.func()
-              value.active = false
-            end
-          else
-            -- still moving.. reset index
-            value.standIndex = 0
-          end
-        end
-      end
-
-      value.lastState = localState
-
-      if (value.active == true) then
-        isActive = true
-      end
-
-    end
-
-    -- no timer items active.. disable
-    if (isActive == false) then
-      --DebugNote("disable timer")
-      EnableTimer("execute_in_area_timer", false)
-    end
-  end
-
-  local speed = "run"
-    function move_trigger(name, line, wildcards)
-
-    if (wildcards.roomid ~= "") then
-      move(wildcards.roomid, wildcards.speed)
-    end
-
-  end
-
-  function move(roomid, temp_speed)
-
-    if (temp_speed == nil or temp_speed == "") then
-      temp_speed = speed
-    end
-    if (temp_speed == "walk") then
-      Note("walking to " .. roomid)
-      Execute("mapper walkto " .. roomid)
-    else
-      Execute("mapper goto " .. roomid)
-    end
-  end
-  function sanitize_filename(str)
-    str = string.gsub(str, "[^%w%s()_-]", "")
-    return str
-  end
 
   -----------------------------------------------------------
   -- Questing
