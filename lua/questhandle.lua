@@ -91,7 +91,7 @@ end
 
 -- Prints out rooms.
 function CQuestHandler:showRooms(all)
-    calcQuestRoomDistances()
+    calcQuestRoomDistances(self.rooms)
     printQuestRooms(self, all or false)
 end
 
