@@ -1081,7 +1081,9 @@ greedy = false
 FirstRun_cp_var= true
 -- This function is just for testing. It should never actually be used.
 function printVars()
-  print('hi')
+  print('cleaning up backup kill table')
+  Clean_Kill_Table()
+  print('finished')
 end
 -- end testing function
 kill_info = {}
@@ -1325,9 +1327,9 @@ function CpMobsAbr(str)
   levmin = tonumber(str)-levelAdj
   if levmin<0 then levmin=0 end
   levmax = tonumber(str)+levelAdj
-  query = string.format("select *, count(*) as timeskilled from CPMobs "..
+  query = string.format("select * from CPMobs "..
     " where level between %s and %s "..
-    " group by name, room_id order by  name, timeskilled desc", levmin,levmax)
+    "  order by  name, timeskilled desc", levmin,levmax)
 
   c = 0
   CPMobsLevelBound = {}
@@ -1552,11 +1554,10 @@ function getRoomIdAreaCP(name, tableNum)
     local thisrooms = rooms
     local thisareas = areas
     local timeskilled = 0
-    local  cpmobquery = string.format("select room_id, area_name, name, COUNT(*) as timeskilled "..
+    local  cpmobquery = string.format("select  * "..
         "from CPMobs "..
         "where name like %s and "..
         "area_name = %s "..
-        "group by room_id, name "..
         "ORDER by timeskilled desc ", fixsql(name), fixsql(loc))
     if CPMobsLevelBound ~= nil then
         for i, p in pairs(CPMobsLevelBound) do
@@ -1670,7 +1671,7 @@ function getRoomIdRoomCP(name, nameHolder, tableNum)-- TODO some bug here where 
         end
     end
     if (min_level<0)then min_level=0 end
-        local queryCount = strbld("select COUNT(*) as counter"..
+        local queryCount = strbld("select COUNT(1) as counter"..
           " from rooms, areas"..
           " where areas.uid = rooms.area and rooms.name = %s",fixsql(cp_mobs[tableNum].location))
         local query1 = strbld("select rooms.uid as roomuid,"..
@@ -1678,11 +1679,10 @@ function getRoomIdRoomCP(name, nameHolder, tableNum)-- TODO some bug here where 
           " rooms.name as roomName"..
           " from rooms rooms, areas"..
           " where areas.uid = rooms.area and rooms.name = %s",fixsql(cp_mobs[tableNum].location))
-        local  cpmobquery = string.format("select room_id, area_name, name, COUNT(*) as timeskilled "..
+        local  cpmobquery = string.format("select *"..
             "from CPMobs "..
             "where name like %s and "..
             "room_name = %s"..
-            "group by room_id, name "..
             "ORDER by timeskilled asc ", fixsql(name), fixsql(loc))
 
         for rows in databasekt:nrows(cpmobquery) do
@@ -2031,10 +2031,7 @@ areas = {}
 mobktbl = {}
 function StartScript()
   do_Execute_no_echo('map')
-
   do_Execute_no_echo("cp check")
-
-
   db=sqlite3.open(GetInfo (66) ..'\\logs\\aardinfo.db')
   query= "select keyword, name, afrom, ato, alock from areas"
   rc =db:exec(query)
@@ -2110,6 +2107,8 @@ function StartScript()
 end
 
 function OnPluginInstall()
+   -- print('cleaning the table')
+   Clean_Kill_Table()
 	-- Connected? GMCPHandler Enabled? Not initialized yet? Request the GMCP for initialization -Kobus
 	if IsConnected() and GetPluginInfo("3e7dedbe37e44942dd46d264",17) and not didonce then
 		Execute("sendgmcp request room")

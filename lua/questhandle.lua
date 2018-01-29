@@ -91,7 +91,7 @@ end
 
 -- Prints out rooms.
 function CQuestHandler:showRooms(all)
-    calcQuestRoomDistances()
+    calcQuestRoomDistances(self.rooms)
     printQuestRooms(self, all or false)
 end
 
@@ -202,18 +202,20 @@ function getKillRooms(qHandler)
 
     if dbKill:isopen() then
         qryKill = string.format(
+            " select roomId,            " .. 
+            " sum(kills) as kills from (" ..
             " select room_id  as roomId " ..
-            "      , count(*) as kills  " ..
+            "   , count(*) as kills     " ..
             "   from mobkills           " ..
             "  where name = %s          " ..
             "  group by room_id         " ..
             "  union                    " ..
             " select room_id  as roomId " ..
-            "      , count(*) as kills  " ..
+            "   , timeskilled as kills  " ..
             "   from cpmobs             " ..
-            "  where name = %s          " ..
-            "  group by room_id         " ..
-            "  order by kills           ",
+            "  where name = %s)         " ..
+            "  group by roomId          " ..
+            "  order by kills  desc     ",
             fixsql(qHandler.mob), fixsql(qHandler.mob))
 
         c = 0

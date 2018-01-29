@@ -44,34 +44,73 @@ function Add_Kill_Table( kill_table )
   end--if
 end
 
+function check_column(str, db)
+    local query = 'pragma table_info(cpmobs)'
+    for row in db:nrows(query) do
+        if row.name == str then
+            print('true')
+            return true
+        end
+    end
+    print('false')
+    return false
+end
+
 function Clean_Kill_Table( )
-  local stmt = {
-  --stmt1 = 'select room_id, name , count(*) as count from mobkills group by name, room_id   having count(*) > 10 order by count',
-    "delete from mobkills where name=''",
-    "delete from mobkills where name like 'oes%'",
-    "delete from mobkills where name like 'eteor%'",
-    "delete from mobkills where name like 'unders%'",
-    "delete from mobkills where name like 'xter%'",
-    "delete from mobkills where name like 'unknown%'",
-    "delete from mobkills where name like '%UNBelievable%'",
-    "delete from mobkills where name like '%unthi%'",
-    "delete from mobkills where name like 'up%'",
-    "delete from mobkills where name like'nnih%'",
-    "delete from mobkills where name like'vapor%'",
-    "delete from mobkills where name like'upt%'",
-    "delete from mobkills where name like'hatter%'",
-    "delete from mobkills where name like'laughters%'",
-    "delete from mobkills where name like'vapor%'",
-    "delete from mobkills where name like'astes%'",
-    "delete from mobkills where name like'remat%'"}
-  for i,v in pairs(stmt) do
-    print ('Running: '..v)
-    rc= dbkt:exec(v)
-    --print (rc)
+    local dbktcp = sqlite3.open(GetPluginInfo (GetPluginID (), 20) .. 'KillTable.db')
+    if check_column('timeskilled', dbktcp) ~= false then
+        print('will not update table, already is updated.')
+        return
+    end
+    local query = " select *, count(*) as timeskilled from CPMobs group by name, room_id order by timeskilled desc"
+    local table_holder = {}
+    local counter = 0
+    for v in dbktcp:nrows(query) do
+        counter = counter + 1
+        
+        --tprint(v)
+        table_holder[counter] = {
+            name        = v.name,
+            room_id     = v.room_id,
+            room_name   = v.room_name,
+            area_name   = v.area_name,
+            level       = v.level,
+            keywords    = v.keywords,
+            timeskilled = v.timeskilled
+        }
+    end
+    print(#table_holder)
+    rc = dbktcp:exec("alter table CPMobs add column timeskilled INTEGER")
     if rc ~= 0 then
-      Note ( DatabaseError('dbkt'))
-    end--if
-  end
+            print('alter table error:')
+            Note ( DatabaseError('dbkt'))
+            return
+        end--if
+    rc = dbktcp:exec("delete from CPMobs")
+    if rc ~= 0 then
+            print('delete table error:')
+            Note ( DatabaseError('dbkt'))
+            return
+        end--if
+    rc = dbktcp:exec("commit")
+    dbktcp:exec('begin')
+    for i,v in ipairs(table_holder) do
+        stmt = "INSERT INTO CPMobs (name, room_id, room_name, area_name, level, keywords, timeskilled) VALUES (%s,%s,%s,%s,%s,%s,%s)"
+        ex_stmt = string.format(stmt, fixsql(v.name), fixsql(v.room_id), fixsql(v.room_name), fixsql(v.area_name), fixsql(v.level),
+         fixsql(v.keywords), fixsql(v.timeskilled))
+        rc = dbktcp:exec(ex_stmt)
+        if rc ~= 0 then
+            print(i)
+            print(v)
+            print('insert table error:')
+            Note ( DatabaseError('dbkt'))
+            dbktcp:exec("ROLLBACK")
+            
+            return
+        end--if
+    end 
+    dbktcp:exec('end')
+  dbktcp:close()
 end
 
 function fixsql (s)
