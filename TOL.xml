@@ -1527,7 +1527,7 @@ if check_CPMobs_Table()>0 then-- this needs to be reworked once all versions are
     for _,keys in ipairs(db_query(dbkt,check_Keywords)) do
       DebugNote(keys)
       if keys.keywords ~= nil and keys.keywords ~= '' then
-        return mobname
+        return keys.keywords
       end
     end
 end

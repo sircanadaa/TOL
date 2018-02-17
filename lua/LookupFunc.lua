@@ -76,4 +76,5 @@ function lookup(name1, line, wildcards)--Looks up mobs from the CPmobs database 
     Note("seriously though we found nothing")
     return
   end
+  tprint(mobbuff)
 end
