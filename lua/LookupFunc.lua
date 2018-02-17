@@ -1,8 +1,11 @@
+require "DBUtils"
 function lookup(name1, line, wildcards)--Looks up mobs from the CPmobs database based off of name, level, area, or room
   local modifiers = {'name', 'level', 'area', 'room'}
   local ptr = 0
   local ptrkeep = 1
   local mobbuff ={}
+  local decideQ = 0
+  local level = 0
   local modanddata = {}
   for i, p in pairs (modifiers) do
     local x, a = 0
@@ -59,14 +62,12 @@ function lookup(name1, line, wildcards)--Looks up mobs from the CPmobs database 
   end
   
   DebugNote("tlookup query: " .. query)
-  
-  for p in dbkt:nrows(query) do
-    table.insert(mobbuff, p)
-  end
+
+  mobbuff = db_query(dbkt, query) 
   if #mobbuff<1 and modanddata[1] ~= "" and modanddata[2] == "" and modanddata[3] == "" and modanddata[4] == "" then
     DebugNote("No mobs found! Checking mobkills table...")
     q = "SELECT * FROM mobkills where name like " .. fixsql(modanddata[1]) .. " group by room_id"
-    for p in dbkt:nrows(q) do
+    for _, p in ipairs(db_query(dbkt, q)) do
       table.insert(mobbuff, p)
     end
   end
@@ -75,5 +76,4 @@ function lookup(name1, line, wildcards)--Looks up mobs from the CPmobs database 
     Note("seriously though we found nothing")
     return
   end
-  tprint(mobbuff)
 end

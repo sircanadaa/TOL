@@ -46,14 +46,15 @@ end
 
 function check_column(str, db)
     local query = 'pragma table_info(cpmobs)'
+    local flag = false
     for row in db:nrows(query) do
         if row.name == str then
             print('true')
-            return true
+            flag =  true
         end
     end
     print('false')
-    return false
+    return flag
 end
 
 function Clean_Kill_Table( )

@@ -105,7 +105,7 @@
    regexp="y"
    send_to="12"
    sequence="1"
-    omit_from_output="y"
+   omit_from_output="y"
    script="CurAreaminwin"
   >
   </trigger>
@@ -155,13 +155,14 @@
    match="{end running}"
    send_to="12"
    enabled="y"
-   sequence="1"
+   sequence="1000"
    omit_from_output="n"
    script="allowScript"
    name="endrun"
   >
   
   </trigger>
+
 </triggers>
 <!--  Aliases  -->
 
@@ -175,6 +176,33 @@
    script="startTheScript"
   >
   </alias>
+  <alias
+   name="toggleMap"
+   match="map toggle"
+   enabled="y"
+   send_to="12"
+   sequence="100"
+   script="toggleTimer"
+  >
+  </alias>
+  <alias
+   match="^marks$"
+   enabled="y"
+   group="opk"
+   regexp="y"
+   send_to="12"
+   sequence="100"
+  >
+  <send>require "pluginhelper" 
+  res, gmcparg = CallPlugin("3e7dedbe37e44942dd46d264","gmcpval","char")
+  luastmt = "gmcpdata = " .. gmcparg 
+  assert (loadstring (luastmt or "")) ()
+  level = tonumber(gmcpdata.status.level)
+  Send("swho 12 opk " .. tonumber(level-10).." "..
+
+tonumber(level+10))</send>
+
+  </alias>
 </aliases>
 
 <!--  Timers  -->
@@ -183,10 +211,34 @@
   <timer name="whtime" enabled="n" minute="0" second="15.00" offset_second="0.00"    send_to="12"
 >
   <send>
-
+  --print('timer whtime')
   sendWhere1()
    DebugNote("timer ")
    </send>
+
+  </timer>
+  <timer name="mapSend" enabled="n" minute="0" second="1.00" offset_second="0.00"    send_to="12">
+  <send>
+   
+    res, gmcparg = CallPlugin("3e7dedbe37e44942dd46d264","gmcpval","char") 
+
+    luastmt = "gmcpdata = " .. gmcparg 
+    assert (loadstring (luastmt or "")) ()
+
+    status = gmcpdata.status.state
+
+    if status == '3' or status == '8' then
+     SendNoEcho('map')
+      if status == '3' then
+       SetTimerOption('mapSend', 'second',1)
+
+      end
+      if status == '8' then
+       SetTimerOption('mapSend', 'second', 2.5)
+
+      end
+    end
+  </send>
 
   </timer>
 </timers>
@@ -204,6 +256,15 @@ local curArea= ""
 local stall = false
 local Debug =false
 
+function toggleTimer()
+  if GetTimerOption('mapSend', 'enabled') == 1 then
+    EnableTimer("mapSend", 0)
+    print('disabled')
+  else  
+    EnableTimer("mapSend", 1)
+    print('enabled')
+  end
+end
 function killswho()
   EnableTriggerGroup("swho",false)
   DoAfterSpecial(1,"show_whwin()",12)
@@ -212,9 +273,18 @@ end
 
 swhoTable = {}
 function swhoGrab(name,line,wildcards)
-table.insert(swhoTable, wildcards[0])
+  -- print (wildcards[3])
+  str = string.gsub(wildcards[3], "[%%%]%^%-$().<>*:[*+?]",  "")
+  -- print (str)
+  str = "["..wildcards[1].."] ["..wildcards[2].."] ".. str
+  -- print (str)
+  table.insert(swhoTable, wildcards[0])
 end
 
+function getmemoryusage1()
+    collectgarbage('collect')
+   return collectgarbage('count')
+  end
 
 function sendWhere1()
   local iStatus
@@ -228,7 +298,7 @@ function sendWhere1()
   DebugNote(alflags)
     if alflags ~=0 then 
       do_Execute_no_echo('where1')
-      -- print("--> Pre-Tick <--")
+       print("--> Pre-Tick <--")
     else
       EnableAlias("where1", 1)
     end
@@ -241,8 +311,9 @@ function allowScript()
   --DoAfterSpecial(1,'setStallF()', 12)
   setStallF()
   DebugNote("allow script")
+  --print('timer reset')
   ResetTimer("whtime")
- DoAfterSpecial(1,"sendWhere1()",12)
+  sendWhere1()
 end
 function setStallF()
   stall = false
@@ -305,6 +376,7 @@ function startTheScript(name, line, wildcards)
   stallScript()
   DebugNote(os.date("%c"))
   SendNoEcho('where')
+  --print('where sent from startTheScript')
   EnableTrigger("whereStarter", 1)
   EnableTrigger("CurAreaminwin", 1)
   EnableTimer("whtime", 1)
@@ -336,7 +408,9 @@ whwin:add_setting("mobdead_colour", {help="the colour for when a mob is dead", t
 whwin:add_setting("mobnotfound", {help="the colour for when a mob is not in kill table db", type="colour", default=verify_colour("green"), sortlev=1})
 whwin:add_setting("notlevel_colour", {help="the colour for when this cp is no longer from this level", type="colour", default=verify_colour("cyan"), sortlev=1})
 --whwin:disable()
-
+--fid=whwin:addfont("Dina",8)
+--print (fid)
+--whwin:setdefaultfont()
 cpmobs = {}
 cptimer = {}
 level = nil
@@ -348,6 +422,8 @@ function set_show()
 end
 
 function show_whwin ()
+  background_colour = 0xE7FFFF
+  win = GetPluginID ()
   if #whereTable == 0 or #swhoTable == 0 then return end 
   local texttable = {}
   local header = {}
@@ -357,7 +433,21 @@ function show_whwin ()
   if curArea == nil then 
     print ("cur area == nil")
   end
+  font_id = "fn"
+  
+  font_name = "Dina"    -- the actual font
+  
+  -- make window so I can grab the font info
+  check (WindowCreate (win, 
+                 0, 0, 1, 1,  
+                 1,   -- irrelevant
+                 0, 
+                 background_colour) )
+
+  check (WindowFont (win, font_id, font_name, 8, false, false, false, false, 0, 0))  -- normal  
+  font_height = WindowFontInfo (win, font_id, 1)  -- height
   style.text = string.format("Area: %s", curArea)
+  style.font_name = font_name
   table.insert (header, {style})
 
   --DebugNote(whereTable)
@@ -365,7 +455,7 @@ function show_whwin ()
   for i, v in ipairs (whereTable) do
     DebugNote ('whereTable iteration '..i.." value: ".. v[1])
     style = {}
-
+    style.font_name = font_name
     --style.text = string.format("%-12s   %s", q,   v[2])
       
     
@@ -390,6 +480,8 @@ function show_whwin ()
             style.textcolour = "mobnotfound"
 
           end --if else
+          style.font_name = font_name
+
           table.insert(texttable, {style})
         end-- if
       end-- if
@@ -398,6 +490,7 @@ function show_whwin ()
   for i, p in ipairs(swhoTable) do
     style = {}
     style.text = p
+    style.font_name = font_name
     if string.find(p, "(OPK)") then
             style.textcolour = "mobdead_colour"
 
@@ -515,10 +608,10 @@ function OnPluginDisconnect ()
   phelper:OnPluginDisconnect()
 end -- function OnPluginConnect
 
-function OnPluginSaveState ()
+--function OnPluginSaveState ()
 
-  phelper:OnPluginSaveState()
-end -- function OnPluginSaveState
+  --phelper:OnPluginSaveState()
+--end -- function OnPluginSaveState
 phelper:set_default('cmd', 'mcp')
 phelper:set_default('plugin_colour', 'steelblue')
 

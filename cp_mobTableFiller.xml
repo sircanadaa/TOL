@@ -145,6 +145,7 @@
         end
     end
 
+
     function myHandler(udata, retries)
        DebugNote("BUSY!")
        return true
@@ -213,7 +214,6 @@
         level = nil
         dbA:close()
         dbkt:close()
-        -- print(stmt)
     end
 
     function dbcheck (code, dbkt)
@@ -247,7 +247,7 @@
             return "NULL"
         end -- if
     end -- fixsql
-
+-- TODO: this function needs to be updated..
     function init()
       dbkt=sqlite3.open(GetPluginInfo (GetPluginID (), 20) .. 'KillTable.db')
       rc= dbkt:exec([[

@@ -146,14 +146,14 @@ function findNearestJumpRoom(src, dst, target_type)
 end
 function findpath(src, dst, noportals, norecalls)
   local rooms = {}
-   DebugNote('source room is : '..src)
-   DebugNote('source room type is : '..type(src))
-   DebugNote('destination room is : '..dst)
-   DebugNote('destination room type is : '..type(dst))
+   --DebugNote('source room is : '..src)
+   --DebugNote('source room type is : '..type(src))
+   --DebugNote('destination room is : '..dst)
+   --DebugNote('destination room type is : '..type(dst))
    if not rooms[src] or src == '-1' or stc == -1 then
       if src == "-1" or src == -1 then
         src = strip_colours("nomap_"..currentRoom.name.."_"..currentRoom.areaid)
-        DebugNote(strip_colours(src))
+        --DebugNote(strip_colours(src))
       end
       rooms[src] = load_room_from_database(src)
    end
@@ -223,18 +223,18 @@ function findpath(src, dst, noportals, norecalls)
       -- get all exits to any room in the previous set
       local q = string.format ("select fromuid, touid, dir from exits where touid in (%s) and fromuid not in (%s) and ((fromuid not in ('*','**') and level <= %s) or (fromuid in ('*','**') and level <= %s)) order by length(dir) asc",table.concat(rooms_list,","), visited,mylevel,mylevel+(mytier*10))
       local dcount = 0
-      DebugNote(q)
+      --DebugNote(q)
       room_sets[depth] = {}
       for row in dbnrowsWRAPPER(q) do
        -- print('database was open')
          dcount = dcount + 1
-         DebugNote(row)
-         DebugNote('================'.. tostring(depth))
+         --DebugNote(row)
+         --DebugNote('================'.. tostring(depth))
          -- ordering by length(dir) ensures that custom exits (always longer than 1 char) get
          -- used preferentially to normal ones (1 char)
          room_sets[depth][row.fromuid] = {fromuid=row.fromuid, touid=row.touid, dir=row.dir}
-         DebugNote(row.fromuid)
-         DebugNote(f)
+         --DebugNote(row.fromuid)
+         --DebugNote(f)
 
          if row.fromuid == "*" or (row.fromuid == "**" and f ~= "*" and f ~= src) or row.fromuid == src then
             f = row.fromuid
@@ -242,9 +242,9 @@ function findpath(src, dst, noportals, norecalls)
             found_depth = depth
          end -- if src
       end -- for select
-      DebugNote(rooms_list)
-      DebugNote(room_sets)
-      DebugNote(found_depth)
+      --DebugNote(rooms_list)
+      --DebugNote(room_sets)
+      --DebugNote(found_depth)
       if dcount == 0 then
          return -- there is no path from here to there
       end -- if dcount
@@ -258,7 +258,7 @@ function findpath(src, dst, noportals, norecalls)
    local path = {}
    -- set ftd to the first from,to,dir set where from was either our start room or * or **
    ftd = room_sets[found_depth][f]
-   DebugNote(room_sets[found_depth][f])
+   --DebugNote(room_sets[found_depth][f])
    if (f == "*" and rooms[src].noportal == 1) or (f == "**" and rooms[src].norecall == 1) then
       if rooms[src].norecall ~= 1 and bounce_recall ~= nil then
          table.insert(path, bounce_recall)

@@ -271,7 +271,7 @@ function printQuestRooms(qHandler, all)
         room = qHandler.rooms[i]
 
         if room.distance ~= nil then
-            local line = string.format("%3d  %-35s  (%5d) %5d  %4d", i, qHandler.room, room.id, room.kills, room.distance)
+            local line = string.format("%3d  %-35s  (%5s) %5d  %4d", i, qHandler.room, room.id, room.kills, room.distance)
 
             Hyperlink("tq " .. i, line, "Goto room (" .. room.id .. ")", "darkorange", "black", 0)
             Hyperlink("mapper where " .. room.id, "   to room", "Show SpeedWalk", "lightgreen", "black", 0)
