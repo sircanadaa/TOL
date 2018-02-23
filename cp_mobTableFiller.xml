@@ -97,7 +97,17 @@
       >
       
       </trigger>
-
+      <trigger
+       enabled="Y"
+       keep_evaluating="y"
+       match="^([\[]\d+[\]])?\s?(?=You)(.*) \[(\d+)\]$"
+       script="concat_name"
+       regexp="y"
+       send_to="12"
+       sequence="1"
+       omit_from_output="Y"
+      >
+      </trigger>
     </triggers>
 
     <!--  Aliases  -->
@@ -122,6 +132,7 @@
     local roomid
     local roomname
     local cpmobs
+    local locked_enemy
     -- print("test")
     -- print(GetPluginInfo (GetPluginID (), 20))
     function last_kill()
@@ -143,6 +154,9 @@
         for i, p in pairs(currentRoom) do
             lockedRoom[i] = p
         end
+        if current_enemy_gbl ~= nil then
+          locked_enemy = current_enemy_gbl
+        end
     end
 
 
@@ -163,7 +177,7 @@
         dbkt:busy_timeout(500)
         EnableTriggerGroup("gag_lastkill",false)
         i, p =string.find(name, key)
-        name = string.sub(name, 1, i-1) 
+        name = locked_enemy or string.sub(name, 1, i-1) 
         area = lockedRoom.areaid
         query = string.format("SELECT name from areas where uid = %s", fixsql(area))
         for rows in dbA:nrows(query) do
@@ -207,6 +221,7 @@
                 print (dbkt:errmsg())
             end--if
         end
+        --print(stmt)
         name = nil
         roomid = nil
         roomName = nil
@@ -247,6 +262,87 @@
             return "NULL"
         end -- if
     end -- fixsql
+    function concat_name(name, line, wildcards, styles)
+    local test_table = {}
+    str = ""
+    for i,p in pairs(styles) do
+        --tprint(p)
+        ColourTell(RGBColourToName(p.textcolour), RGBColourToName(p.backcolour),p.text)
+        --str = str .. ","..p.textcolour..","..p.text
+        table.insert(test_table,{
+            p.text,
+            RGBColourToName(p.textcolour),
+            RGBColourToName(p.backcolour)
+        })
+    end
+    found = false
+    current_enemy_gbl = check_cur_mob(test_table)
+    
+
+   -- tprint(test_table)
+end
+
+
+function check_cur_mob(test_table)
+    if not enemy then 
+        enemy = ""
+    end
+    cur_mob = nil
+    --For note, people should use damage output that isn't basic.. this is supposed to be an unused
+    -- section of code.
+    if #test_table == 3 then
+        local line = test_table[1][1]
+        if string.find(line, "%!") ~= nil then
+            temp= string.sub(line, 8, string.find(line, "%!")-1 )
+        elseif string.find(line, "%.") then
+            temp= string.sub(line, 8, string.find(line, "%.")-1 )
+        end--if
+        for i,v in pairs(damage_verbs) do
+            o, p =string.find(temp, v)
+            if p ~= nil then
+                temp = string.sub(temp, p+1, #temp)
+                
+                return temp
+            end--i
+        end--for
+        i = string.find(temp, "%A")
+        while i  do
+            temp= string.sub(temp, i+1, #temp )
+            i=string.find(temp, "[%A][%s]")
+        end -- while
+        temp= string.sub(temp, 2, #temp )
+        return temp
+    end
+    for i, p in pairs(test_table) do
+        --tprint(p)           
+        if i>1 and p[2] == 'green' then
+            cur_mob = string.sub(p[1], 0, -3)
+            if cur_mob ~= enemy and cur_mob ~= 'Someone' then
+                -- tprint(p)
+                -- print(string.find(p[1],enemy))
+                -- print("===========")
+                -- print(p[1])
+                -- print(cur_mob)
+                -- print(enemy)
+                -- print("===========")
+               -- print("I have been set", cur_mob)
+                ret = cur_mob
+            elseif enemy ~= current_enemy_gbl then
+               -- print("I have been reset", enemy)
+                ret = enemy
+            -- else
+            --     Note(current_enemy_gbl)
+            --     Note(enemy)
+            end
+        end
+    end
+
+    if cur_mob == nil and enemy ~= nil then
+        --print('both were nil setting to enemy')
+        ret = enemy
+    end
+    return ret
+end
 -- TODO: this function needs to be updated..
     function init()
       dbkt=sqlite3.open(GetPluginInfo (GetPluginID (), 20) .. 'KillTable.db')
@@ -311,6 +407,104 @@
             dbA:close()
         end
     end
+    --I hate you, yes you. You use a basic output for damage and are forcing me
+-- to use this akward and unmaintainable table..
+damage_verbs = {'misses ',
+' damages ',
+' damage ',
+' tickles ',
+' bruises ',
+' scratches ',
+' grazes ',
+' nicks ',
+' blasts',
+' scars ',
+' hits ',
+' injures ',
+' wounds ',
+' mauls ',
+' maims ',
+' mangles ',
+' mars ',
+' massacres ',
+' dismembers ',
+' devastates ',
+' disembowels ',
+' lacerates ',
+' LACERATES ',
+' DECIMATES ',
+' DEVASTATES ',
+' ERADICATES ',
+' OBLITERATES ',
+' EXTIRPATES ',
+' INCINERATES ',
+' MUTILATES ',
+' DISEMBOWELS ',
+' MASSACRES ',
+' DISMEMBERS ',
+' RENDS ',
+' meteorites ',
+' glaciates ',
+' nukes ',
+' implodes ',
+' asphyxiates ', --
+' liquidates ', --
+' fissures ', --
+' exterminates ', --
+' ravages ', --
+' atomizes ', --
+' sunders ', --
+' tears into ', --
+' destroys ', --
+' pulverizes ', --
+' demolishes ', --
+' mutilates ', --
+' incinerates ', --
+' extirpates ', --
+' obliterates ', --
+' eradicates ', --
+' annihilates ',-- nnih%
+' evaporates ',-- vapor%
+' ruptures ',-- upt%
+' shatters ',-- hatter%
+' slaughters ', -- laughters%
+' vaporizes ',--vapor%
+' wastes ',-- astes%
+' shreds ',
+' cremates ', -- remat%
+' supernovas ',
+' The charge slams into ',
+' does UNSPEAKABLE things to ',
+' does UNTHINKABLE things to ',
+' does UNIMAGINABLE things to ',
+' does UNBELIEVABLE things to ',
+' %- BLASTS %- ',
+' %-= DEMOLISHES =%- ',
+' %*%* SHREDS %*%* ',
+' %*%*%*%* DESTROYS %*%*%*%* ',
+' %*%*%*%*%* PULVERIZES %*%*%*%*%* ',
+' %-=%- VAPORIZES %-=%- ',
+' <%-==%-> ATOMIZES <%-==%-> ',
+' <%-:%-> ASPHYXIATES <%-:%-> ',
+' <%-%*%-> RAVAGES <%-%*%-> ',
+' <>%*<> FISSURES <>%*<> ',
+' <%*><%*> LIQUIDATES <%*><%*> ',
+' <%*><%*><%*> EVAPORATES <%*><%*><%*> ',
+' <%-=%-> SUNDERS <%-=%-> ',
+' <=%-=><=%-=> TEARS INTO <=%-=><=%-=> ',
+' <%->%*<=> WASTES <=>%*<%-> ',
+' <%-%+%-><%-%*%-> CREMATES <%-%*%-><%-%+%-> ',
+' <%*><%*><%*><%*> ANNIHILATES <%*><%*><%*><%*> ',
+' <%-%-%*%-%-><%-%-%*%-%-> IMPLODES <%-%-%*%-%-><%-%-%*%-%-> ',
+' <%-><%-=%-><%-> EXTERMINATES <%-><%-=%-><%-> ',
+' <%-==%-><%-==%-> SHATTERS <%-==%-><%-==%-> ',
+' <%*><%-:%-><%*> SLAUGHTERS <%*><%-:%-><%*> ',
+' <%-%*%-><%-><%-%*%-> RUPTURES <%-%*%-><%-><%-%*%-> ',
+' <%-%*%-><%*><%-%*%-> NUKES <%-%*%-><%*><%-%*%-> ',
+' %-<%[=%-%+%-=%]<:::<>:::> GLACIATES <:::<>:::>%[=%-%+%-=%]>%- ',
+' <%-=%-><%-:%-%*%-:%-><%*%-%-%*> METEORITES <%*%-%-%*><%-:%-%*%-:%-><%-=%-> ',
+' <%-:%-><%-:%-%*%-:%-><%-%*%-> SUPERNOVAS <%-%*%-><%-:%-%*%-:%-><%-:%-> ',
+}
     ]]>
     </script>
 
