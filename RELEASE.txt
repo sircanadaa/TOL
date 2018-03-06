@@ -1,0 +1,12 @@
+pre-XXXX18-62-1
+
+Changes in this release:
+
+- Moved scan highlighter to TOL.xml (Bast's no longer needed)
+- **(Pending) Moved mobtablefiller code to TOL.xml (cpMobtablefiller.xml no longer needed)
+- Relocated various function calls to .lua's
+- Cleaned up various portions of code
+
+Past changes:
+
+- Unknown
