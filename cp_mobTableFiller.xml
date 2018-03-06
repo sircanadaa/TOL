@@ -105,7 +105,7 @@
        regexp="y"
        send_to="12"
        sequence="1"
-       omit_from_output="Y"
+       omit_from_output="n"
       >
       </trigger>
     </triggers>
@@ -267,7 +267,7 @@
     str = ""
     for i,p in pairs(styles) do
         --tprint(p)
-        ColourTell(RGBColourToName(p.textcolour), RGBColourToName(p.backcolour),p.text)
+        --ColourTell(RGBColourToName(p.textcolour), RGBColourToName(p.backcolour),p.text)
         --str = str .. ","..p.textcolour..","..p.text
         table.insert(test_table,{
             p.text,
