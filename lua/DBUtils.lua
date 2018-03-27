@@ -44,9 +44,9 @@ function db_query_rooms(connection_str, sqlt)
     local return_table = {}
     local db = sqlite3.open(connection_str)
     for row in db:nrows(sqlt) do
-        rooms[row.uid]= {}
+        return_table[row.uid]= {}
 
-        rooms[row.uid] = {
+        return_table[row.uid] = {
             name = row.name,
             area = row.area,
             terrain = row.terrain,

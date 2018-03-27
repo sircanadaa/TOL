@@ -365,6 +365,25 @@ Note:
    regexp="y"
   >
   </alias>
+  <!-- auto hunt aliases -->
+  <alias
+   match="^ah (.*?)$"
+   enabled="y"
+   group="auto_hunt"
+   script="auto_hunt_start"
+   regexp="y"
+   send_to="12"
+   sequence="100"
+  >
+  </alias>
+  <alias
+   match="ahoff"
+   enabled="y"
+   group="auto_hunt"
+   sequence="100"
+   script="auto_hunt_stop"
+  >
+  </alias>
 </aliases>
 <triggers>
    <trigger
@@ -461,6 +480,30 @@ Note:
   >
   </trigger>
 
+  <!-- auto hunt triggers -->
+
+  <trigger
+   group="auto_hunt"
+   match="^.+ is here\!|You couldn\'t find a path to .+ from here\.|No one in this area by that name\.|There is no .+ around here\.|Not while you are fighting\!|No one in this area by the name .+\.$"
+   name="kill_auto_hunt"
+   regexp="y"
+   send_to="12"
+   sequence="100"
+   script="auto_hunt_stop"
+  >
+  
+  </trigger>
+  <trigger
+   group="auto_hunt"
+   match="^You are certain that (.+) is (.+) from here\.|You are certain that (.+) is (.+)\.|You are almost certain that (.+) is (.+) from here\.|You are confident that (.+) passed through here, heading (.+)\.|The trail of (.+) is confusing, but you're reasonably sure (.+) headed (.+)\.|There are traces of (.+) having been here. Perhaps they lead (.+)\?|You have no idea what you\'re doing\, but maybe (.+) is (.+)\?$"
+   name="auto_hunt"
+   regexp="y"
+   send_to="12"
+   sequence="100"
+   script="auto_hunt_continue"
+  >
+  </trigger>
+
   <!-- trigers for the hunting scripts -->
   <trigger
    group="HUNTING"
@@ -472,7 +515,6 @@ Note:
    sequence="100"
   >
  </trigger>
-
   <trigger
    expand_variables="y"
    group="HUNTING"
@@ -484,7 +526,6 @@ Note:
    sequence="100"
   >
   </trigger>
-
   <trigger
    group="HUNTING"
    match="^(.*?) is here\!$"
@@ -830,6 +871,50 @@ local qmob
 
 timestart= 0
 timeend= 0
+auto_hunt_mob = ""
+
+function auto_hunt_start(name, line, wildcards)
+    Note("Starting autohunt")
+    EnableTrigger('auto_hunt', 1)
+    EnableTrigger('kill_auto_hunt', 1)
+    auto_hunt_mob = wildcards[1]
+    SendNoEcho('hunt '.. auto_hunt_mob)
+    
+end
+
+function auto_hunt_continue(name, line, wildcards)
+    local move = ""
+    for i,p in pairs(wildcards) do
+        print(p)
+        print(i)
+        if p ~= "" and i > 0 then
+            move = wildcards[i+1]
+            Note(move)
+            break
+        end
+    end
+    if string.find(move, 'through') then
+        if currentRoom ~= nil then
+            query = string.format("select dir from exits where fromuid = %s order by length(dir) desc",
+                currentRoom.roomid)
+            move =db_query(dbA, query)
+            tprint(move)
+            if #move >1 then
+                move = move[1]["dir"]
+            end
+        end
+    end
+    Note(move)
+    SendNoEcho(move)
+    SendNoEcho('hunt '..auto_hunt_mob)
+end
+
+function auto_hunt_stop()
+    Note("Shutting off Auto Hunt")
+    EnableTrigger("auto_hunt",0)
+    EnableTrigger("kill_auto_hunt",0)
+end
+
 function hunt_off()
   Note('Turning off cpn script.')
   EnableTriggerGroup("HUNTING", false)
@@ -843,7 +928,7 @@ timestart = socket.gettime()
 end
 function timeEnd()
   timeend = socket.gettime()
-  print ((timeend-timestart)/60)
+  print ('Time to complete cp: '..tostring((timeend-timestart)/60))
 end
 
 function quickScan()
@@ -1615,6 +1700,7 @@ dbA=GetInfo (66) ..'Aardwolf.db'
     end -- for
     -- tprint(hld)
     if #hld == 0 then
+        print(loc)
         print('this cp will be weird because of unmapped rooms.. all entries are subject TOL has broken')
     end
     for g, rows in pairs(hld) do
@@ -1642,8 +1728,8 @@ function getRoomIdAreaCP(name, tableNum)
     local loc = cp_mobs[tableNum].location
     local found = false
     local time1 = socket.gettime()
-    local thisrooms = rooms
-    local thisareas = areas
+    local thisrooms = rooms_tbl
+    local thisareas = areas_tbl
     local timeskilled = 0
     local  cpmobquery = string.format("select  * "..
         "from CPMobs "..
@@ -1690,18 +1776,20 @@ function getRoomIdAreaCP(name, tableNum)
             count = count+1
             DebugNote(a)
             DebugNote("-----")
+            DebugNote('found is '.. tostring(found))
             nameHolder=a[1]
             roomTemp= tostring(a[2])
-                if found == false then
-                    if thisrooms[roomTemp] ~= nil then
-                        if loc == thisareas[thisrooms[roomTemp].area].name and found == false then
-                            DebugNote(a[1])
-                            found = true
-                            roomNumber = roomTemp
-                        end
-                        DebugNote("+++++")
+            if found == false then
+                DebugNote(thisrooms[roomTemp])
+                if thisrooms[roomTemp] ~= nil then
+                    if loc == thisareas[thisrooms[roomTemp].area].name and found == false then
+                        DebugNote(a[1])
+                        found = true
+                        roomNumber = roomTemp
                     end
+                    DebugNote("+++++")
                 end
+            end
         end --for
     end --if
     if roomNumber ~= nil and nameHolder ~=nil then
@@ -1959,7 +2047,10 @@ function tcpohandler(name, line, wildcards)
      return
     end--if
   end--if
-
+  if room_num_table2 == nil then
+    print('nothing to print')
+    return
+  end
   if #wildcards>=1 then
      mobname = sanitizeName(room_num_table2[tonumber(wildcards[1])][2])
     Execute ('xmapper1 move '.. room_num_table2[tonumber(wildcards[1])][1])
@@ -1987,7 +2078,7 @@ function hunt_type (num, mob_id)
     DebugNote(num)
       mob_next_delete_value= tonumber(num)
       holder= getTable(num)
-      if (string.find(string.lower(room_num_table[num][1]), string.lower(areas[currentRoom.areaid].name))) then
+      if (string.find(string.lower(room_num_table[num][1]), string.lower(areas_tbl[currentRoom.areaid].name))) then
         print('well this is awkward you are already in the correct area')
       else
         Execute('xrunto1 '..room_num_table[num][1])
@@ -2002,7 +2093,7 @@ function hunt_type (num, mob_id)
     DebugNote(mob_index)
     mob_next_delete_value= mob_index
     holder= getTable(mob_index)
-    if ( string.find(string.lower(room_num_table[mob_index][1]), string.lower(areas[currentRoom.areaid].name))) then
+    if ( string.find(string.lower(room_num_table[mob_index][1]), string.lower(areas_tbl[currentRoom.areaid].name))) then
       print('well this is awkward you are in the correct area')
     else
       Execute('xrunto1 '..room_num_table[mob_index][1])
@@ -2109,8 +2200,8 @@ end
 
 dbA= nil
 dbkt= nil
-rooms = {1, 1}
-areas = {}
+rooms_tbl = {1, 1}
+areas_tbl = {}
 mobktbl = {}
 
 
@@ -2121,6 +2212,7 @@ function StartScript()
     do_Execute_no_echo("cp check")
     dbkt=GetPluginInfo (GetPluginID (), 20) .. 'KillTable.db'
     dbA = GetInfo (66) ..'Aardwolf.db'
+
     SendNoEcho('areas')
     EnableTriggerGroup('areas_check_start', 1)
     SendNoEcho('tags scan on')
@@ -2130,9 +2222,9 @@ function StartScript()
     qry2 = "select * from areas"
     qry3 = "select *, count(*) as timeskilled from mobkills group by name,room_id order by name, timeskilled desc"
     CpMobsAbr(mylevel)
-    rooms = {}
-    rooms = db_query_rooms(dbA, qry)
-    areas = db_query_areas(dbA, qry2)
+    rooms_tbl = {}
+    rooms_tbl = db_query_rooms(dbA, qry)
+    areas_tbl = db_query_areas(dbA, qry2)
     mobktbl = db_query(dbkt, qry3)
 
   if not IsPluginInstalled("0961770926b613688a1c5458") then

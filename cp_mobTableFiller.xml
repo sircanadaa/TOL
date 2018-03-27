@@ -30,7 +30,7 @@
     <triggers>
       <trigger
        enabled="y"
-       match="^Congratulations, that was one of your|the (CAMPAIGN|GLOBAL QUEST) mobs!$"
+       match="^Congratulations, that was one of (your|the) (CAMPAIGN|GLOBAL QUEST) mobs!$"
        name="cp_trigger"
        regexp="y"
        send_to="12"
@@ -98,11 +98,12 @@
       
       </trigger>
       <trigger
-       enabled="Y"
+       enabled="n"
        keep_evaluating="y"
        match="^([\[]\d+[\]])?\s?(?=You)(.*) \[(\d+)\]$"
        script="concat_name"
        regexp="y"
+       name="capture_name"
        send_to="12"
        sequence="1"
        omit_from_output="n"
@@ -157,11 +158,11 @@
         if current_enemy_gbl ~= nil then
           locked_enemy = current_enemy_gbl
         end
+      EnableTrigger("capture_name", 1)
     end
 
 
     function myHandler(udata, retries)
-       DebugNote("BUSY!")
        return true
     end
     function Add_To_Table(name, line, wildcards)
@@ -229,6 +230,7 @@
         level = nil
         dbA:close()
         dbkt:close()
+        EnableTrigger("capture_name", 0)
     end
 
     function dbcheck (code, dbkt)
@@ -392,7 +394,7 @@ end
         dbkt=sqlite3.open(GetPluginInfo (GetPluginID (), 20) .. 'KillTable.db')
         rc =dbkt:exec([[SELECT name FROM CPMobs ]])
         if rc~= 0 then
-            DebugNote("cp_mobTableFiller Initializing...")
+            
             init()
         end--if
         --dbA=sqlite3.open(GetInfo (66) ..'Aardwolf.db')
