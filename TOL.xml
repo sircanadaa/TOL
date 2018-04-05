@@ -2016,19 +2016,19 @@ function gotoNextMob()-- This will goto the next mob, use with tcp
 end
 
 function gotoIndexMob(name, line, wildcards)-- This will goto the next mob, use with tcp
-
+  print(wildcards[1])
   wild= tonumber(wildcards[1])
   if wild == nil then return end
-  if cp_mobs == nil then
+  if cp_mobs == nil or #cp_mobs == 0 then
     print("Nothing to goto.")
     return
   end
-  if tonumber(wildcards[1])<0 or tonumber(wildcards[1])> #room_num_table then
-    return
-  end
-  if room_num_table == nil then
+  if room_num_table == nil  or #room_num_table == 0 then
     return
   end--if
+  if tonumber(wildcards[1])<0 or tonumber(wildcards[1])> #room_num_table then
+    wild = #room_num_table
+  end
     if room_num_table[wild][1] == -1 then
     print ("Try tcpo or manually finding this mob.. use pto to check the other table")
     return
@@ -2041,26 +2041,31 @@ function gotoIndexMob(name, line, wildcards)-- This will goto the next mob, use 
     DebugNote("Entry for mob_next_delete_value")
     DebugNote(wild)
     mob_next_delete_value= wild
-    Execute('xmapper1 move '..  getTable(tonumber(wildcards[1])))
+    Execute('xmapper1 move '..  getTable(tonumber(wild)))
     Send("sca ".. mobname)
 end
 
 function tcpohandler(name, line, wildcards)
   if wildcards[1] ~= nil then
-    if room_num_table2 == nil or tonumber(wildcards[1])>#room_num_table2 then
-     return
+    if room_num_table2 == nil or #room_num_table2 == 0 then
+      print("nothing to print")
+      return
     end--if
   end--if
-  if room_num_table2 == nil then
+  wild = tonumber(wildcards[1])
+  if room_num_table2 == nil or #room_num_table2 == 0 then
     print('nothing to print')
     return
   end
+  if tonumber(wildcards[1])>#room_num_table2 then
+    wild = #room_num_table2
+  end
   if #wildcards>=1 then
-     mobname = sanitizeName(room_num_table2[tonumber(wildcards[1])][2])
-    Execute ('xmapper1 move '.. room_num_table2[tonumber(wildcards[1])][1])
+     mobname = sanitizeName(room_num_table2[tonumber(wild)][2])
+    Execute ('xmapper1 move '.. room_num_table2[tonumber(wild)][1])
     DebugNote("Entry for mob_next_delete_value")
-    DebugNote(wildcards[1])
-    mob_next_delete_value= wildcards[1]
+    DebugNote(wild)
+    mob_next_delete_value= wild
     Send("sca ".. mobname)
   else
     mobname = sanitizeName(room_num_table2[1][2])
