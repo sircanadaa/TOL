@@ -66,6 +66,10 @@ tlookup name <name> level <number> room <roomname> area <areaname>
       -- This will look up mobs in the db..
       -- Any order and as little as one of these can be used
       -- Experimental currently
+ah <name>
+      -- Starts the auto hunt(hunt and move) on the name given
+ahoff
+      -- Kills the autohunt program.
 Note:
   Adding a "Tstart" as in "mapper addnote Tstart" will tell TOL that this room is the begining of the area for this area
 ]]>
@@ -93,7 +97,7 @@ Note:
 <aliases>
 <alias
    enabled="y"
-   match="^TOL debug on$"
+   match="^(TOL|tol) debug on$"
    script="Toggle_Debug"
    regexp="y"
    sequence='100'
@@ -101,7 +105,7 @@ Note:
   </alias>
    <alias
    enabled="y"
-   match="^TOL debug off$"
+   match="^(TOL|tol) debug off$"
    script="Toggle_Debug"
    regexp="y"
    sequence='100'
@@ -168,7 +172,7 @@ Note:
     regexp="y"
     sequence='100'>
   </alias>
-  <alias match="^(?:TOL) help$"
+  <alias match="^(TOL)|(tol) help$"
     enabled="y"
     sequence="100"
     send_to="12"
@@ -885,11 +889,11 @@ end
 function auto_hunt_continue(name, line, wildcards)
     local move = ""
     for i,p in pairs(wildcards) do
-        print(p)
-        print(i)
+        DebugNote(p)
+        DebugNote(i)
         if p ~= "" and i > 0 then
             move = wildcards[i+1]
-            Note(move)
+            DebugNote(move)
             break
         end
     end
@@ -898,13 +902,13 @@ function auto_hunt_continue(name, line, wildcards)
             query = string.format("select dir from exits where fromuid = %s order by length(dir) desc",
                 currentRoom.roomid)
             move =db_query(dbA, query)
-            tprint(move)
+            DebugNote(move)
             if #move >1 then
                 move = move[1]["dir"]
             end
         end
     end
-    Note(move)
+    DebugNote(move)
     SendNoEcho(move)
     SendNoEcho('hunt '..auto_hunt_mob)
 end
