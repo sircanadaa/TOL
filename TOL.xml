@@ -867,7 +867,7 @@ Note:
   omit_from_output="y"
   >
   <send>
-    Send("pagesize 0")
+    SendNoEcho("pagesize 0")
     EnableTriggerGroup('areas_check_start', 1)
     SendNoEcho('areas')
   </send>
@@ -883,7 +883,7 @@ Note:
   omit_from_output="y"
   >
   <send>
-    if kill_pagesize == 1 EnableTriggerGroup("page_size",0) end
+    if kill_pagesize == 1 then EnableTriggerGroup("page_size",0) end
   </send>
   </trigger>
 
@@ -897,7 +897,7 @@ Note:
   omit_from_output="y"
   >
   <send>
-    if kill_pagesize == 1 EnableTriggerGroup("page_size",0) end
+    if kill_pagesize == 1 then EnableTriggerGroup("page_size",0) end
   </send>
   </trigger>
 
@@ -964,7 +964,7 @@ function GetPageSize()
 end
 
 function ResetPageSize()
-  if page_size ~= 0
+  if page_size ~= 0 then
     SendNoEcho("pagesize " .. page_size)
   end
 end
