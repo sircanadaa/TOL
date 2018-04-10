@@ -1018,13 +1018,42 @@ end
 function getmemoryusage()
     collectgarbage('collect')
    return collectgarbage('count')
-  end
+end
+-- Converts single digit numbers to have a leading zero (as string)
+function lz(int)
+  num = tostring(int)
+  if #num == 1 then num = "0" .. num end
+  return num
+end
+-- Changes a float to a 2 digit integer (returned as a string) [Expects 0.xxxxxxxx]
+function d2i(dec)
+  return tostring(math.floor(dec*100))
+end
+-- Converts a float (secs.millisecs) to a string of the format: hh:mm:ss.ms
+function timetostr(floattime)
+secs = floattime
+hours = 0
+mins = 0
+dec = 0
+
+if secs >= 3600 then
+hours = math.floor(secs / 3600)
+secs = secs - (hours * 3600)
+end
+if secs >= 60 then
+mins = math.floor(secs / 60)
+secs = secs - (mins * 60)
+end
+dec = d2i(secs - math.floor(secs))
+secs = math.floor(secs)
+return tostring(lz(hours) .. ":" .. lz(mins) .. ":" .. lz(secs) .. "." .. dec)
+end
 function timeStart()
 timestart = socket.gettime()
 end
 function timeEnd()
   timeend = socket.gettime()
-  print ('Time to complete cp: '..tostring((timeend-timestart)/60))
+  print ('Completion Time: '..timetostr(timeend-timestart))
 end
 
 function quickScan()
