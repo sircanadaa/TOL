@@ -812,7 +812,8 @@ Note:
     omit_from_output="y"
     regexp="y"
     sequence="100"
-  ><send>EnableTriggerGroup('areas_check_start', 0)</send>
+  ><send>EnableTriggerGroup('areas_check_start', 0)
+  ResetPageSize()</send>
   </trigger>
   <trigger
     enabled="n"
@@ -825,6 +826,81 @@ Note:
     sequence="100"
   >
   </trigger>
+  
+  <!-- PageSize triggers -->
+  <trigger
+  enabled="n"
+  group="page_size"
+  match="^You currently display ([0-9]+) lines per page\.$"
+  regexp='y'
+  sequence='100'
+  send_to='12'
+  omit_from_output="y"
+  >
+  <send>
+    page_size = tonumber(%1)
+    kill_pagesize = 1
+  </send>
+  </trigger>
+  <trigger
+  enabled="n"
+  group="page_size"
+  match="^You do not page long messages\.$"
+  regexp='y'
+  sequence='100'
+  send_to='12'
+  omit_from_output="y"
+  >
+  <send>
+    page_size = 0
+    kill_pagesize = 1
+  </send>
+  </trigger>
+
+  <trigger
+  enabled="n"
+  group="page_size"
+  match="^Use 'pagesize <lines>' to change, or 'pagesize 0' to disable paging\.$"
+  regexp='y'
+  sequence='100'
+  send_to='12'
+  omit_from_output="y"
+  >
+  <send>
+    SendNoEcho("pagesize 0")
+    EnableTriggerGroup('areas_check_start', 1)
+    SendNoEcho('areas')
+  </send>
+  </trigger>
+
+  <trigger
+  enabled="n"
+  group="page_size"
+  match="^Page size set to [0-9]+ lines\.$"
+  regexp='y'
+  sequence='100'
+  send_to='12'
+  omit_from_output="y"
+  >
+  <send>
+    if kill_pagesize == 1 then EnableTriggerGroup("page_size",0) end
+  </send>
+  </trigger>
+
+  <trigger
+  enabled="n"
+  group="page_size"
+  match="^Paging disabled\.$"
+  regexp='y'
+  sequence='100'
+  send_to='12'
+  omit_from_output="y"
+  >
+  <send>
+    if kill_pagesize == 1 then EnableTriggerGroup("page_size",0) end
+  </send>
+  </trigger>
+
   </triggers>
   <timers>
   <timer name="grbg" enabled="y" minute="59" second="0.00" offset_second="0.00"    send_to="12"
@@ -877,6 +953,22 @@ timestart= 0
 timeend= 0
 auto_hunt_mob = ""
 
+-- PageSize code
+page_size = 0
+kill_pagesize = 0
+
+function GetPageSize()
+  kill_pagesize = 0
+  EnableTriggerGroup("page_size",1)
+  SendNoEcho("pagesize")
+end
+
+function ResetPageSize()
+  if page_size ~= 0 then
+    SendNoEcho("pagesize " .. page_size)
+  end
+end
+
 function auto_hunt_start(name, line, wildcards)
     Note("Starting autohunt")
     EnableTrigger('auto_hunt', 1)
@@ -926,13 +1018,42 @@ end
 function getmemoryusage()
     collectgarbage('collect')
    return collectgarbage('count')
-  end
+end
+-- Converts single digit numbers to have a leading zero (as string)
+function lz(int)
+  num = tostring(int)
+  if #num == 1 then num = "0" .. num end
+  return num
+end
+-- Changes a float to a 2 digit integer (returned as a string) [Expects 0.xxxxxxxx]
+function d2i(dec)
+  return tostring(math.floor(dec*100))
+end
+-- Converts a float (secs.millisecs) to a string of the format: hh:mm:ss.ms
+function timetostr(floattime)
+secs = floattime
+hours = 0
+mins = 0
+dec = 0
+
+if secs >= 3600 then
+hours = math.floor(secs / 3600)
+secs = secs - (hours * 3600)
+end
+if secs >= 60 then
+mins = math.floor(secs / 60)
+secs = secs - (mins * 60)
+end
+dec = d2i(secs - math.floor(secs))
+secs = math.floor(secs)
+return tostring(lz(hours) .. ":" .. lz(mins) .. ":" .. lz(secs) .. "." .. dec)
+end
 function timeStart()
 timestart = socket.gettime()
 end
 function timeEnd()
   timeend = socket.gettime()
-  print ('Time to complete cp: '..tostring((timeend-timestart)/60))
+  print ('Completion Time: '..timetostr(timeend-timestart))
 end
 
 function quickScan()
@@ -2256,8 +2377,7 @@ function StartScript()
     dbkt=GetPluginInfo (GetPluginID (), 20) .. 'KillTable.db'
     dbA = GetInfo (66) ..'Aardwolf.db'
 
-    SendNoEcho('areas')
-    EnableTriggerGroup('areas_check_start', 1)
+    GetPageSize()
     SendNoEcho('tags scan on')
     areaLevel = db_query_area(dbkt, "select keyword, name, afrom, ato, alock from areas")
     print (GetPluginInfo (GetPluginID (), 20))
