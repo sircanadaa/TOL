@@ -172,7 +172,7 @@ Note:
     regexp="y"
     sequence='100'>
   </alias>
-  <alias match="^(TOL)|(tol) help$"
+  <alias match="^(TOL|tol) help$"
     enabled="y"
     sequence="100"
     send_to="12"
@@ -1740,6 +1740,7 @@ function getRoomIdAreaCP(name, tableNum)
         "where name like %s and "..
         "area_name = %s "..
         "ORDER by timeskilled desc ", fixsql(name), fixsql(loc))
+    test_timeskileed = {}
     if CPMobsLevelBound ~= nil then
         for i, p in pairs(CPMobsLevelBound) do
             if name == p.name and loc == p.area_name and timeskilled<p.timeskilled then
@@ -1748,6 +1749,10 @@ function getRoomIdAreaCP(name, tableNum)
               roomNumber = p.room_id
               timeskilled = p.timeskilled
               found = true
+              
+            end
+            if name == p.name and loc == p.area_name then
+              table.insert(test_timeskileed, {p})
             end
         end
         -- if found then 
@@ -1764,6 +1769,7 @@ function getRoomIdAreaCP(name, tableNum)
                 nameHolder = a.name
                 roomNumber = a.room_id
                 found = true
+                table.insert(test_timeskileed, {a})
             end
         end
     end
@@ -1790,6 +1796,7 @@ function getRoomIdAreaCP(name, tableNum)
                         DebugNote(a[1])
                         found = true
                         roomNumber = roomTemp
+                        table.insert(test_timeskileed, {a})
                     end
                     DebugNote("+++++")
                 end
@@ -1808,6 +1815,9 @@ function getRoomIdAreaCP(name, tableNum)
         makeTable(loc, cp_mobs[tableNum].name, cp_mobs[tableNum].mobdead, false, loc, cp_mobs[tableNum].num)
         mob_index= 1
     end--if
+    DebugNote("Times killed table")
+    DebugNote(test_timeskileed)
+    DebugNote("Times killed table === end")
 end
 
 function getRoomIdRoomCP(name, nameHolder, tableNum)-- TODO some bug here where it drops the last 2 things in list
@@ -1830,6 +1840,7 @@ function getRoomIdRoomCP(name, nameHolder, tableNum)-- TODO some bug here where 
     local areaName
     local timeskilled = 0
     local roomNumber
+    test_timeskileed = {}
     res, gmcparg = call("3e7dedbe37e44942dd46d264","gmcpval","char") --- We just want the gmcp.char section.
     luastmt = "gmcpdata = " .. gmcparg --- Convert the serialized string back into a lua table.
     assert (loadstring (luastmt or "")) ()
@@ -1845,9 +1856,17 @@ function getRoomIdRoomCP(name, nameHolder, tableNum)-- TODO some bug here where 
                 areaName = p.area_name 
                 timeskilled = p.timeskilled
             end
+            if name == p.name and loc == p.room_name then
+                table.insert(test_timeskileed, {p})
+            end
         end
         if roomNumber ~= nil and areaName ~= nil then
+            DebugNote("mob is  = "..name)
+            DebugNote("timeskilled = "..timeskilled)
             make1(roomNumber, name, cp_mobs[tableNum].mobdead, true, area_name, cp_mobs[tableNum].num) 
+            DebugNote("Times killed table")
+            DebugNote(test_timeskileed)
+            DebugNote("Times killed table === end")
             return
         end
     end
@@ -1869,12 +1888,19 @@ function getRoomIdRoomCP(name, nameHolder, tableNum)-- TODO some bug here where 
     for _,rows in ipairs(db_query(dbkt, cpmobquery)) do
         roomNumber = rows.room_id
         areaName = rows.area_name
+        timeskilled = rows.timeskilled
         found = 1
+        table.insert(test_timeskileed, {rows})
     end
     if found == 1 then
         found = 0
         DebugNote("found it in the cp_mobs table 001")
+        DebugNote("mob is  = "..cp_mobs[tableNum].name)
+        DebugNote("timeskilled = "..timeskilled)
         make1(roomNumber, cp_mobs[tableNum].name, cp_mobs[tableNum].mobdead, true, areaName, cp_mobs[tableNum].num)
+        DebugNote("Times killed table")
+        DebugNote(test_timeskileed)
+        DebugNote("Times killed table === end")
         return
     end
     for _,rows in ipairs(db_query(dbA, queryCount)) do
@@ -1885,9 +1911,15 @@ function getRoomIdRoomCP(name, nameHolder, tableNum)-- TODO some bug here where 
         area_table[rows_counter_check] = rows
     end--for
     local area_table_size = #area_table
+    if areaLevel == nil then
+        print('area table was nill when checking mobs, rebuilding...')
+        areaLevel = db_query_area(dbkt, "select keyword, name, afrom, ato, alock from areas")
+        print('Done rebuilding, moving forward...')
+    end
     for z=1, area_table_size do
         roomNumber= tonumber(area_table[z].roomuid)
-        if areaLevel[area_table[z].areaName].minLevel > max_level or areaLevel[area_table[z].areaName].maxLevel<min_level then -------- testing with and was or
+        DebugNote(areaLevel[area_table[z].areaName])
+        if areaLevel[area_table[z].areaName].minLevel > max_level or areaLevel[area_table[z].areaName].maxLevel<min_level then 
             rows_counter= rows_counter-1
             rows_counter_check = rows_counter_check-1
         else
@@ -1911,6 +1943,7 @@ function getRoomIdRoomCP(name, nameHolder, tableNum)-- TODO some bug here where 
                 end--for
             end--if
             if not foundone_room_table then
+                table.insert(test_timeskileed, {area_table[z]})
                 make1(roomNumber, cp_mobs[tableNum].name, cp_mobs[tableNum].mobdead, true, area_table[z].areaName, cp_mobs[tableNum].num)
                 tableNumHolder= tonumber(tableNum)
                 mob_index= 1
@@ -1922,6 +1955,9 @@ function getRoomIdRoomCP(name, nameHolder, tableNum)-- TODO some bug here where 
     end--if
     tableNumHolder= tonumber(tableNum)
     mob_index= 1
+    DebugNote("Times killed table")
+    DebugNote(test_timeskileed)
+    DebugNote("Times killed table === end")
 end
 room_not_in_database = {}
 
@@ -1948,8 +1984,6 @@ function sortRoomCPByPath()
   local b = {}
   local q = {}
   for k in pairs(dist_tbl) do table.insert(keys, k) end
-  DebugNote('keys')
-  DebugNote(keys)
   table.sort(keys, function(a, b) return dist_tbl[a][2] < dist_tbl[b][2] end)
   for _, k in ipairs(keys) do
     -- DebugNote('_ then k')

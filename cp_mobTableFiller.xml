@@ -98,7 +98,7 @@
       
       </trigger>
       <trigger
-       enabled="n"
+       enabled="y"
        keep_evaluating="y"
        match="^([\[]\d+[\]])?\s?(?=You)(.*) \[(\d+)\]$"
        script="concat_name"
@@ -158,7 +158,7 @@
         if current_enemy_gbl ~= nil then
           locked_enemy = current_enemy_gbl
         end
-      EnableTrigger("capture_name", 1)
+      --EnableTrigger("capture_name", 0)
     end
 
 
@@ -222,7 +222,7 @@
                 print (dbkt:errmsg())
             end--if
         end
-        --print(stmt)
+        print(stmt)
         name = nil
         roomid = nil
         roomName = nil
@@ -230,7 +230,7 @@
         level = nil
         dbA:close()
         dbkt:close()
-        EnableTrigger("capture_name", 0)
+        --EnableTrigger("capture_name", 1)
     end
 
     function dbcheck (code, dbkt)
