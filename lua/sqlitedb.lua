@@ -1,29 +1,24 @@
 -- $Id$
-
 require 'tprint'
 require 'verify'
 require 'pluginhelper'
 require 'var'
 require 'stringfuncs'
-
 local Object = require 'objectlua.Object'
-
 Sqlitedb = Object:subclass()
-
 function fixsql (s, like)
-   if s then
-      if like then
-        return "'%" .. (string.gsub (s, "'", "''")) .. "%'" -- replace single quotes with two lots of single quotes
-      else
-        return "'" .. (string.gsub (s, "'", "''")) .. "'" -- replace single quotes with two lots of single quotes
-      end
-   else
-      return "NULL"
-   end -- if
+    if s then
+        if like then
+            return "'%" .. (string.gsub (s, "'", "''")) .. "%'" -- replace single quotes with two lots of single quotes
+        else
+            return "'" .. (string.gsub (s, "'", "''")) .. "'" -- replace single quotes with two lots of single quotes
+        end
+    else
+        return "NULL"
+    end -- if
 end -- fixsql
-
 function Sqlitedb:initialize(args)
-  local path, throw = GetInfo(58):gsub("^.\\",GetInfo(56))
+    local path, throw = GetInfo(58):gsub("^.\\",GetInfo(56))
   self.dbloc = GetPluginVariable ("", "dblocation") or path
   self.db = nil
   self.dbname = "\\sqlite.db"
@@ -262,7 +257,7 @@ function Sqlitedb:getcolumnsfromsql(tablename)
   local columns = {}
   local columnsbykeys = {}
   if self.tables[tablename] then
-    local tlist = utils.split(self.tables[tablename]['createsql'], '\n')
+    local tlist = utils.split(self.tables[tablename]['createsql'], '\\n')
     for i,v in ipairs(tlist) do
       v = trim(v)
       if v:find('CREATE') == nil and v:find(')') == nil then
@@ -305,71 +300,67 @@ function Sqlitedb:converttoupdate(tablename, wherekey, nokey)
     for i,v in pairs(columns) do
       if v == wherekey or (nokey and nokey[v]) then
         -- don't put anything into the table
-      else
-        table.insert(sqlstr, v .. ' = :' .. v)
-      end
-    end
-    colstring = strjoin(',', sqlstr)
-    execstr = string.format("UPDATE %s SET %s WHERE %s = :%s;", tablename, colstring, wherekey, wherekey)
-  end
-  return execstr
-end
-
-function Sqlitedb:runselect(selectstmt, keyword)
-  local result = {}
-  if self:open('runselect') then
-    local stmt = self.db:prepare(selectstmt)
-    if stmt then
-      for row in stmt:nrows() do
-        if keyword then
-          result[row[keyword]] = row
-        else
-          table.insert(result, row)
-        end
-      end
     else
-      print('not valid', selectstmt)
+        table.insert(sqlstr, v .. ' = :' .. v)
     end
-    self:close('runselect')
-  end
-  return result
 end
-
+colstring = strjoin(',', sqlstr)
+execstr = string.format("UPDATE %s SET %s WHERE %s = :%s;", tablename, colstring, wherekey, wherekey)
+end
+return execstr
+end
+function Sqlitedb:runselect(selectstmt, keyword)
+    local result = {}
+    if self:open('runselect') then
+        local stmt = self.db:prepare(selectstmt)
+        if stmt then
+            for row in stmt:nrows() do
+                if keyword then
+                    result[row[keyword]] = row
+                else
+                    table.insert(result, row)
+                end
+            end
+        else
+            print('not valid', selectstmt)
+        end
+        self:close('runselect')
+    end
+    return result
+end
 function Sqlitedb:getlastrowid(ttable)
-  local colid = self.tables[ttable].keyfield
-  local lastid = 0
-  if self:open('getlastrow') then
-    if colid then
-      local tstring = 'SELECT MAX(' .. colid .. ') AS MAX FROM ' .. ttable
-      for a in self.db:nrows(tstring) do
-        lastid = a['MAX']
-      end
+    local colid = self.tables[ttable].keyfield
+    local lastid = 0
+    if self:open('getlastrow') then
+        if colid then
+            local tstring = 'SELECT MAX(' .. colid .. ') AS MAX FROM ' .. ttable
+            for a in self.db:nrows(tstring) do
+                lastid = a['MAX']
+            end
+        end
+        self:close('getlastrow')
     end
-    self:close('getlastrow')
-  end
-  if lastid == nil then
-    lastid = 0
-  end
-  return lastid
+    if lastid == nil then
+        lastid = 0
+    end
+    return lastid
 end
-
 function Sqlitedb:getlast(ttable, num, where)
-  local colid = self.tables[ttable].keyfield
-  local tstring = ''
-  if where then
-    tstring = string.format("SELECT * FROM %s WHERE %s ORDER by %s desc limit %d", ttable, where, colid, num)
-  else
-    tstring = string.format("SELECT * FROM %s ORDER by %s desc limit %d", ttable, colid, num)
-  end
-
-  local items = {}
-  if self:open('getlast') then
-    if colid then
-      for a in self.db:nrows(tstring) do
-        items[a[colid]] = a
-      end
+    local colid = self.tables[ttable].keyfield
+    local tstring = ''
+    if where then
+        tstring = string.format("SELECT * FROM %s WHERE %s ORDER by %s desc limit %d", ttable, where, colid, num)
+    else
+        tstring = string.format("SELECT * FROM %s ORDER by %s desc limit %d", ttable, colid, num)
     end
-    self:close('getlast')
-  end
-  return items
+    local items = {}
+    if self:open('getlast') then
+        if colid then
+            for a in self.db:nrows(tstring) do
+                items[a[colid]] = a
+            end
+        end
+        self:close('getlast')
+    end
+    return items
 end
