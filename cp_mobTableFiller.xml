@@ -185,8 +185,17 @@
             area= rows.name
         end --for      
         level = wildcards[3]
-        
-        
+        if name =='' then 
+          print('Something has gone wrong, not inserting anything')
+          name = nil
+          roomid = nil
+          roomName = nil
+          area = nil
+          level = nil
+          dbA:close()
+          dbkt:close()
+          return
+        end
         roomName= string.gsub(lockedRoom.name, "%@([a-zA-Z])", "")
         roomid = lockedRoom.roomid
         if check_mob_exists(name, roomid, dbkt) then
@@ -264,6 +273,8 @@
             return "NULL"
         end -- if
     end -- fixsql
+
+
     function concat_name(name, line, wildcards, styles)
     local test_table = {}
     str = ""
@@ -279,8 +290,6 @@
     end
     found = false
     current_enemy_gbl = check_cur_mob(test_table)
-    
-
    -- tprint(test_table)
 end
 
@@ -313,12 +322,16 @@ function check_cur_mob(test_table)
             i=string.find(temp, "[%A][%s]")
         end -- while
         temp= string.sub(temp, 2, #temp )
+        print('returning temp: '.. temp)
         return temp
     end
     for i, p in pairs(test_table) do
         --tprint(p)           
+        --print(enemy)
         if i>1 and p[2] == 'green' then
             cur_mob = string.sub(p[1], 0, -3)
+            --print(enemy)
+           -- print(cur_mob)
             if cur_mob ~= enemy and cur_mob ~= 'Someone' then
                 -- tprint(p)
                 -- print(string.find(p[1],enemy))
@@ -327,10 +340,10 @@ function check_cur_mob(test_table)
                 -- print(cur_mob)
                 -- print(enemy)
                 -- print("===========")
-               -- print("I have been set", cur_mob)
+               --print("I have been set", cur_mob)
                 ret = cur_mob
             elseif enemy ~= current_enemy_gbl then
-               -- print("I have been reset", enemy)
+               --print("I have been reset", enemy)
                 ret = enemy
             -- else
             --     Note(current_enemy_gbl)
@@ -340,9 +353,10 @@ function check_cur_mob(test_table)
     end
 
     if cur_mob == nil and enemy ~= nil then
-        --print('both were nil setting to enemy')
+        --print('cur_mob was nil setting to enemy')
         ret = enemy
     end
+    --print('returning ret: '.. ret)
     return ret
 end
 -- TODO: this function needs to be updated..
@@ -356,7 +370,9 @@ end
               room_id INTEGER default 0, 
               room_name TEXT default "Unknown",
               area_name TEXT default "Unknown",
-              level INTEGER default 0);"
+              level INTEGER default 0,
+              keywords Text degault "",
+              timeskilled INTEGER;"
           ]])
       if rc ~= 0 then
         Note (DatabaseError('dbkt'))
@@ -366,6 +382,15 @@ end
 
     function OnPluginBroadcast(msg,id,name,text)
         if (id == '3e7dedbe37e44942dd46d264') then
+          if (text == "char.status") then
+            res, gmcparg = CallPlugin("3e7dedbe37e44942dd46d264","gmcpval","char.status")
+            luastmt = "gmcpdata = " .. gmcparg
+            assert (loadstring (luastmt or "")) ()
+            if gmcpdata.state == '8' then
+                -- print(gmcpdata.enemy)
+                enemy = gmcpdata.enemy
+            end
+        end
             if (text == "room.info") then
                 res, gmcparg = CallPlugin("3e7dedbe37e44942dd46d264","gmcpval","room.info")
 
