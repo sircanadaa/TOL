@@ -437,7 +437,7 @@ Note:
    name="mobnamefight"
    keep_evaluating="y"
    script="mob_name"
-   sequence="1"
+   sequence="2"
 
   >
   </trigger>
@@ -739,18 +739,30 @@ Note:
     regexp="y"
     sequence="100"
     send_to="12"
-  ><send>EnableTrigger("scan_output",1)</send>
+  ><send>EnableTriggerGroup("scan_output",1)</send>
   </trigger>
   <trigger
     enabled="y"
-    script=""
+    script="scan_table_handler"
     match="^{/scan}$"
     name="scan_off"
     omit_from_output="y"
     regexp="y"
     sequence="100"
     send_to="12"
-  ><send>EnableTrigger("scan_output",0)</send>
+  ><send>EnableTriggerGroup("scan_output",0)</send>
+  </trigger>
+  <trigger
+    enabled="n"
+    script="istarget"
+    match="^(Nothing interesting in this room besides you\.|Nothing to see around here with that name\.)$"
+    name="scan_nothing"
+    group="scan_output"
+    omit_from_output="y"
+    regexp="y"
+    sequence="100"
+    send_to="12"
+  >
   </trigger>
 
   <trigger
@@ -758,6 +770,7 @@ Note:
     script="istarget"
     match="^     - (?:\([A-Za-z ]+\) ?)*(.+)$"
     name="scan_output"
+    group="scan_output"
     omit_from_output="y"
     regexp="y"
     sequence="100"
@@ -930,6 +943,7 @@ require "MovementFuncs"
 require "LookupFunc"
 require "AreaTableBuilder"
 require "DBUtils"
+require "gmcphelper"
 ThreadHolder= coroutine.running()
 counter = tonumber(1)
 counter1 = tonumber(1)
@@ -943,6 +957,8 @@ local charname
 local GQ_flag = false
 local GQ_num
 local started = false
+local CQuestHandler = require "questhandle"
+local questHandler = CQuestHandler.create()
 mylevel = 0
 mytier = 0
 mobsleft= {}
@@ -1014,6 +1030,7 @@ end
 function hunt_off()
   Note('Turning off cpn script.')
   EnableTriggerGroup("HUNTING", false)
+  kill_scan_run()
 end
 function getmemoryusage()
     collectgarbage('collect')
@@ -1599,48 +1616,7 @@ got_room = false
 got_char = false
 didonce = false
 
-function OnPluginBroadcast (msg, id, name, text)
 
-    if (id == '3e7dedbe37e44942dd46d264') then
-        if (text == "room.info") then
-            res, gmcparg = CallPlugin("3e7dedbe37e44942dd46d264","gmcpval","room.info")
-            luastmt = "gmcpdata = " .. gmcparg
-            assert (loadstring (luastmt or "")) ()
-            currentRoom = {
-              name = gmcpdata.name,
-              roomid = gmcpdata.num,
-              areaid = gmcpdata.zone
-            }
-						got_room = true -- Got the room data - Kobus
-        end
-        if (text == "char.status") then
-            res, gmcparg = CallPlugin("3e7dedbe37e44942dd46d264","gmcpval","char.status")
-            luastmt = "gmcpdatacharstatus = " .. gmcparg
-            assert (loadstring (luastmt or "")) ()
-            char_status = gmcpdatacharstatus
-            mylevel = tonumber(gmcpdatacharstatus.level)
-        end
-        if (text == "char.base") then
-            res, gmcparg = CallPlugin("3e7dedbe37e44942dd46d264","gmcpval","char.base")
-            luastmt = "gmcpdata = " .. gmcparg
-            assert (loadstring (luastmt or "")) ()
-            mytier = tonumber(gmcpdata.tier)
-            got_char = true -- Got the char data - Kobus
-        end
-        if mylevel ~= oldlevel and didonce == true then -- We leveled?, rebuild CPMobs table
-            DebugNote("Rebuilding cpmobs table...")
-            CpMobsAbr(mylevel) -- Rebuild the CPMobs table - Kobus
-        end
-
-        if (text == "char.base") then
-            res, gmcparg = CallPlugin("3e7dedbe37e44942dd46d264","gmcpval","char.base")
-            luastmt = "gmcpdatacharstatus = " .. gmcparg
-            assert (loadstring (luastmt or "")) ()
-            char_base= gmcpdatacharstatus
-        end
-				if got_room and got_char and not didonce then didonce = true print("start") StartScript() end -- Got what we needed from GMCP, initialize the TOL script -- Kobus
-    end
-end
 
 CPMobsLevelBound = nil
 -- takes a level and makes a CPmobs table that is within 30 level of our current level
@@ -2297,13 +2273,18 @@ local where_black_list = {"Your magic is blessed with",
 "You now possess magical powers",
 "You feel gills growing on your",
 "You now detect the presence of"}
+
+where_trig_table = {}
+WHERE_MOB = ''
 function where_mob_trig(name, line, wildcards)
+  dbA = GetInfo (66) ..'Aardwolf.db'
   for i,p in ipairs(where_black_list) do
     if (string.find( wildcards[0], p) ~= nil) then
       return
     end--if
   end--for
     wildcards[1], x = string.gsub(wildcards[1],"%.","")
+    WHERE_MOB = trim(wildcards[1])
   bool = 0
   for word in mobname:gmatch("%w+") do
   if (string.find( string.lower(wildcards[1]), string.lower(word)) ~= nil) then
@@ -2312,8 +2293,38 @@ function where_mob_trig(name, line, wildcards)
 
   end -- for
   if bool == 1 then
-    Execute('mapper area '.. '"'..wildcards[2]..'"')
-    Execute('mapper next')
+    --Execute('mapper area '.. '"'..wildcards[2]..'"')
+    if currentRoom == nil or table.getn(currentRoom) == 0 then
+       res, gmcparg = CallPlugin("3e7dedbe37e44942dd46d264","gmcpval","room.info")
+        luastmt = "gmcpdata = " .. gmcparg
+        assert (loadstring (luastmt or "")) ()
+        currentRoom = {
+          name = gmcpdata.name,
+          roomid = gmcpdata.num,
+          areaid = gmcpdata.zone
+        }
+    end
+    if currentRoom.areaid == nil then return end
+    qryArea = string.format(
+            " select r.uid  as roomId   " ..
+            "   from rooms r            " ..
+            "   join areas a            " ..
+            "     on a.uid = r.area     " ..
+            "  where a.uid = %s        " ..
+            "    and r.name = %s        " ..
+            " order by roomId desc       ",
+            fixsql(currentRoom.areaid), fixsql(wildcards[2]))
+    -- print(qryArea)
+    -- print("printing return val:")
+    where_trig_table = db_query(dbA, qryArea)
+    -- tprint(where_trig_table)
+    -- print("printing return val:END ")
+    -- print(currentRoom.areaid)
+    -- print(wildcards[2])
+    Execute('mapper goto ' .. where_trig_table[1].roomId)
+    SendNoEcho('scan here')
+    table.remove(where_trig_table, 1)
+    --Execute('mapper next')
     EnableTrigger('where_mob_trig', false)
   end--if
 end
@@ -2322,7 +2333,7 @@ function killMob()
   if mobname ~= nil then
     Execute("kill ".. mobname)
   else
-    print ("Need to use aknx or aknx <index> first")
+    print ("Need to use tcp first")
   end --if
 end
 
@@ -2362,8 +2373,8 @@ function hunt_from_link( area)
   Execute ("hunt " .. mobname)
 end
 
-dbA= nil
-dbkt= nil
+dbA = GetInfo (66) ..'Aardwolf.db'
+dbkt=GetPluginInfo (GetPluginID (), 20) .. 'KillTable.db'
 rooms_tbl = {1, 1}
 areas_tbl = {}
 mobktbl = {}
@@ -2374,8 +2385,8 @@ mobktbl = {}
 function StartScript()
     do_Execute_no_echo('map')
     do_Execute_no_echo("cp check")
-    dbkt=GetPluginInfo (GetPluginID (), 20) .. 'KillTable.db'
-    dbA = GetInfo (66) ..'Aardwolf.db'
+    
+    
 
     GetPageSize()
     SendNoEcho('tags scan on')
@@ -2407,13 +2418,55 @@ function OnPluginInstall()
    -- print('cleaning the table')
    check_area_table()
    Clean_Kill_Table()
-
-	-- Connected? GMCPHandler Enabled? Not initialized yet? Request the GMCP for initialization -Kobus
-	if IsConnected() and GetPluginInfo("3e7dedbe37e44942dd46d264",17) and not didonce then
-		Execute("sendgmcp request room")
-		Execute("sendgmcp request char")
-	end
+  -- Connected? GMCPHandler Enabled? Not initialized yet? Request the GMCP for initialization -Kobus
+  if IsConnected() and GetPluginInfo("3e7dedbe37e44942dd46d264",17) and not didonce then
+    Execute("sendgmcp request room")
+    Execute("sendgmcp request char")
+  end
 end
+
+function OnPluginBroadcast (msg, id, name, text)
+    if (id == '3e7dedbe37e44942dd46d264') then
+        if (text == "room.info") then
+            res, gmcparg = CallPlugin("3e7dedbe37e44942dd46d264","gmcpval","room.info")
+            luastmt = "gmcpdata = " .. gmcparg
+            assert (loadstring (luastmt or "")) ()
+            currentRoom = {
+              name = gmcpdata.name,
+              roomid = gmcpdata.num,
+              areaid = gmcpdata.zone
+            }
+            got_room = true -- Got the room data - Kobus
+        end
+        if (text == "char.status") then
+            res, gmcparg = CallPlugin("3e7dedbe37e44942dd46d264","gmcpval","char.status")
+            luastmt = "gmcpdatacharstatus = " .. gmcparg
+            assert (loadstring (luastmt or "")) ()
+            char_status = gmcpdatacharstatus
+            mylevel = tonumber(gmcpdatacharstatus.level)
+        end
+        if (text == "char.base") then
+            res, gmcparg = CallPlugin("3e7dedbe37e44942dd46d264","gmcpval","char.base")
+            luastmt = "gmcpdata = " .. gmcparg
+            assert (loadstring (luastmt or "")) ()
+            mytier = tonumber(gmcpdata.tier)
+            got_char = true -- Got the char data - Kobus
+        end
+        if mylevel ~= oldlevel and didonce == true then -- We leveled?, rebuild CPMobs table
+            DebugNote("Rebuilding cpmobs table...")
+            CpMobsAbr(mylevel) -- Rebuild the CPMobs table - Kobus
+        end
+
+        if (text == "char.base") then
+            res, gmcparg = CallPlugin("3e7dedbe37e44942dd46d264","gmcpval","char.base")
+            luastmt = "gmcpdatacharstatus = " .. gmcparg
+            assert (loadstring (luastmt or "")) ()
+            char_base= gmcpdatacharstatus
+        end
+        if got_room and got_char and not didonce then didonce = true print("start") StartScript() end -- Got what we needed from GMCP, initialize the TOL script -- Kobus
+    end
+end
+
 function myHandler(udata, retries)
    DebugNote("BUSY!")
    return true
@@ -2443,16 +2496,59 @@ function DebugNote( msg )
 
 end
 
+  -----------------------------------------------------------
+  -- Scanning and highlighting
+  -----------------------------------------------------------
+function kill_scan_run()
+    WHERE_MOB = ''
+    where_trig_table = {}
+    SCAN_TABLE = {}
+end
+function scan_table_handler()
+  local found = false
+  for a=1,#SCAN_TABLE do
+    for p=1, #SCAN_TABLE[a] do 
+        -- print('scan table : ' .. SCAN_TABLE[a][p])
+        -- print(WHERE_MOB)
+        if string.lower(SCAN_TABLE[a][p]) == string.lower(WHERE_MOB) then
+          found = true
+          EnableTrigger('scan_nothing', 0)
+          WHERE_MOB = ''
+          where_trig_table = {}
+          break  
+        end
+    end
+  end
+  SCAN_TABLE = {}
+  if not found and #where_trig_table > 0 then
+    
+   -- print(#where_trig_table)
+    --tprint(where_trig_table)
+    EnableTrigger('scan_nothing', 1)
+    scan_continue()
+  end
+end
 
-  -----------------------------------------------------------
-  -- Questing
-  -----------------------------------------------------------
-  local CQuestHandler = require "questhandle"
-  local questHandler = CQuestHandler.create()
+ensure_room_change = -1
+function scan_continue()
+  if ensure_room_change == currentRoom.roomid then
+    hunt_off()
+    Note("You didn't move rooms, check your cexits and make sure the mob isn't in a maze")
+  else
+    ensure_room_change = currentRoom.roomid
+  end
+  if #where_trig_table >=1 then
+      Execute('xmapper1 move '.. where_trig_table[1].roomId)
+      SendNoEcho('scan here')
+      table.remove(where_trig_table, 1)
+    end
+end
+
+SCAN_TABLE = {}
 
 function istarget(name, line, wildcards, style)
   local highlight = false
-  local mobname = string.lower(wildcards[1])
+  local name = string.lower(wildcards[1])
   local target_mobs = { }
   if questHandler.mob ~= nil then target_mobs = { string.lower(questHandler.mob) } 
   end
@@ -2461,13 +2557,16 @@ function istarget(name, line, wildcards, style)
     for a=1,#cp_mobs do table.insert(target_mobs, string.lower(cp_mobs[a].name)) 
     end
   end
+  if #where_trig_table >= 1 then -- used for the wm and cpn commands
+    table.insert(target_mobs, WHERE_MOB)-- the global mob name
+    table.insert(SCAN_TABLE, wildcards)
+  end
   for a=1,#target_mobs do
-    if mobname == string.lower(target_mobs[a]) then
+    if name == string.lower(target_mobs[a]) then
       highlight = true
       break
     end
   end
-
   for a,s in ipairs(style) do
     local text = RGBColourToName(s.textcolour)
     local back = RGBColourToName(s.backcolour)
@@ -2477,6 +2576,12 @@ function istarget(name, line, wildcards, style)
   if highlight then ColourTell("black","yellow"," [TARGET]") end
   Note()
 end
+  -----------------------------------------------------------
+  -- Questing
+  -----------------------------------------------------------
+
+
+
 
   
   -- Questing Triggers
