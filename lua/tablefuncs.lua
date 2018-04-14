@@ -45,102 +45,96 @@ tableCountKeys(ttable, key, value, tnot)
 
 --]]
 function tableSort(ttable, sortkey, default, reverse)
-  reverse = reverse or false
-  local function sortfunc (a, b)
-    if sortkey then
-      local akey = ttable[a][sortkey] or default
-      local bkey = ttable[b][sortkey] or default
-      if type(akey) == 'boolean' then
-        if akey then
-          akey = 1
+    reverse = reverse or false
+    local function sortfunc (a, b)
+        if sortkey then
+            local akey = ttable[a][sortkey] or default
+            local bkey = ttable[b][sortkey] or default
+            if type(akey) == 'boolean' then
+                if akey then
+                    akey = 1
+                else
+                    akey = 0
+                end
+            end
+            if type(bkey) == 'boolean' then
+                if bkey then
+                    bkey = 1
+                else
+                    bkey = 0
+                end
+            end
+            if akey == nil or bkey == nil then
+                if akey == nil then
+                    print('BUG: akey: ', sortkey, ' - is nil for item', a)
+                elseif bkey == nil then
+                    print('BUG: bkey: ', sortkey, ' - is nil for item', b)
+                end
+                return false
+            end
+            if reverse then
+                return (bkey < akey)
+            else
+                return (akey < bkey)
+            end
         else
-          akey = 0
+            if reverse then
+                return (b < a)
+            else
+                return (a < b)
+            end
         end
-      end
-      if type(bkey) == 'boolean' then
-        if bkey then
-          bkey = 1
-        else
-          bkey = 0
-        end
-      end
-      if akey == nil or bkey == nil then
-        if akey == nil then          
-          print('BUG: akey: ', sortkey, ' - is nil for item', a)
-        elseif bkey == nil then
-          print('BUG: bkey: ', sortkey, ' - is nil for item', b)
-        end
-        return false
-      end
-      if reverse then
-        return (bkey < akey)
-      else
-        return (akey < bkey)
-      end
-    else
-      if reverse then
-        return (b < a)
-      else
-        return (a < b)
-      end
     end
-  end
-
-  local t2 = {}
-  if ttable then
-    for i,v in pairs(ttable) do
-      table.insert(t2, i)
+    local t2 = {}
+    if ttable then
+        for i, v in pairs(ttable) do
+            table.insert(t2, i)
+        end
+        table.sort(t2, sortfunc)
     end
-    table.sort(t2, sortfunc)
-  end
-
-  local i = 0        -- iterator variable
-  return function () -- iterator function
-    i = i + 1
-    return t2[i], ttable[t2[i]]
-  end  -- iterator function
-
+    local i = 0 -- iterator variable
+    return function () -- iterator function
+        i = i + 1
+        return t2[i], ttable[t2[i]]
+    end -- iterator function
 end
-
 function tableExtend(t, ...)
-  local pos, values
-  if select('#', ...) == 1 then
-    pos,values = #t+1, ...
-  else
-    pos,values = ...
-  end
-  if #values > 0 then
-    for i=#t,pos,-1 do
-      t[i+#values] = t[i]
+    local pos, values
+    if select('#', ...) == 1 then
+        pos, values = #t + 1, ...
+    else
+        pos, values = ...
     end
-    local offset = 1 - pos
-    for i=pos,pos+#values-1 do
-      t[i] = values[i + offset]
+    if #values > 0 then
+        for i = #t, pos, -1 do
+            t[i + #values] = t[i]
+        end
+        local offset = 1 - pos
+        for i = pos, pos + #values - 1 do
+            t[i] = values[i + offset]
+        end
     end
-  end
 end
-
 function tableCountItems(ttable)
-  local count = 0
-  for i,v in pairs(ttable) do
-    count = count + 1
-  end
-  if count == 0 then
-    for i,v in ipairs(ttable) do
-      count = count + 1
-    end    
-  end
-  return count
-end
-
-function tableCountKeys(ttable, key, value, tnot)
-  local count = 0
-  for i,v in pairs(ttable) do
-    if tnot and v[key] ~= value then
-      count = count + 1
-    elseif not tnot and v[key] == value then
-      count = count + 1
+    local count = 0
+    for i, v in pairs(ttable) do
+        count = count + 1
     end
-  end  
-  return count
+    if count == 0 then
+        for i, v in ipairs(ttable) do
+            count = count + 1
+        end
+    end
+    return count
+end
+function tableCountKeys(ttable, key, value, tnot)
+    local count = 0
+    for i, v in pairs(ttable) do
+        if tnot and v[key] ~= value then
+            count = count + 1
+        elseif not tnot and v[key] == value then
+            count = count + 1
+        end
+    end
+    return count
 end
