@@ -1503,6 +1503,7 @@ function OnPluginBroadcast (msg, id, name, text)
               roomid = gmcpdata.num,
               areaid = gmcpdata.zone
             }
+            ensure_room_change = -1
             got_room = true -- Got the room data - Kobus
         end
         if (text == "char.status") then
