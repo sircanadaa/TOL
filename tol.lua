@@ -1571,8 +1571,27 @@ function kill_scan_run()
     where_trig_table = {}
     SCAN_TABLE = {}
 end
+
 function scan_table_handler()
+  DebugNote(where_trig_table)
+  DebugNote('where_trig_table '.. #where_trig_table)
   local found = false
+  if #where_trig_table == 0 then
+    return
+  end
+  query = string.format('select a.uid as areaid '..
+          ' from rooms r '..
+          ' join areas a '..
+          ' on a.uid = r.area '..
+          ' where r.uid = %i',
+          where_trig_table[1].roomId)
+  local areaid = db_query(dbA, query)
+  DebugNote(areaid)
+  DebugNote(currentRoom)
+  if areaid[1].areaid ~= currentRoom.areaid then
+    Note('looks like you are not in the same area, cancelling.')
+    return
+  end 
   for a=1,#SCAN_TABLE do
     for p=1, #SCAN_TABLE[a] do 
         -- print('scan table : ' .. SCAN_TABLE[a][p])
@@ -1586,6 +1605,7 @@ function scan_table_handler()
         end
     end
   end
+
   SCAN_TABLE = {}
   if not found and #where_trig_table > 0 then
     
@@ -1595,6 +1615,7 @@ function scan_table_handler()
     scan_continue()
   end
 end
+
 
 ensure_room_change = -1
 function scan_continue()
