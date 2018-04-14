@@ -172,7 +172,7 @@
        omit_from_output="n"
       >
       </trigger>
-
+-->
  <!-- TRIGGER REGEX: 
 6 triggers:
 5: \[[0-9]+\] You damage (.+)! \[[0-9]+\]
