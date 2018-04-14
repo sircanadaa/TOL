@@ -105,6 +105,90 @@
    omit_from_output="n"
   >
   </trigger>
+    <!-- New regex triggers...
+      <trigger
+       enabled="y"
+       keep_evaluating="y"
+       match="^\[[0-9]+\] You damage (.+)! \[[0-9]+\]$"
+       script="get_mobname"
+       regexp="y"
+       send_to="12"
+       sequence="1"
+       omit_from_output="n"
+      >
+      </trigger>
+      <trigger
+       enabled="y"
+       keep_evaluating="y"
+       match="^(?:\[[0-9]+\] )?Your [a-z]+ misses (.+)\. \[[0-9]+\]$"
+       script="get_mobname"
+       regexp="y"
+       send_to="12"
+       sequence="1"
+       omit_from_output="n"
+      >
+      </trigger>
+      <trigger
+       enabled="y"
+       keep_evaluating="y"
+       match="^(?:\[[0-9]+\] )?Your [a-z]+ [a-z]+ misses (.+)\. \[[0-9]+\]$"
+       script="get_mobname"
+       regexp="y"
+       send_to="12"
+       sequence="1"
+       omit_from_output="n"
+      >
+      </trigger>
+      <trigger
+       enabled="y"
+       keep_evaluating="y"
+       match="^(?:\[[0-9]+\] )?Your (?:swing|acidic|digestion|slime|air|beating|blast|charge|crush|hit|pound|punch|slap|smash|suction|thwack|chill|freezing|earth|shock(?:ing)?|friction|wrath|flam(?:e|ing)|divine|light|magic|mental|mind|decaying|life|bite|chomp|peck|pierce|scratch|stab|sting|thrust|chop|claw|cleave|grep|slash|slice|whip|shadow|wail|water)(?: (?:bite|power|energy|touch|drain|blast))? (?!does|misses)[a-z]+ (?!misses|does)(.+)(?:\.|!) \[[0-9]+\]$"
+       script="get_mobname"
+       regexp="y"
+       send_to="12"
+       sequence="1"
+       omit_from_output="n"
+      >
+      </trigger>
+      <trigger
+       enabled="y"
+       keep_evaluating="y"
+       match="^(?:\[[0-9]+\] )?Your (?:swing|acidic|digestion|slime|air|beating|blast|charge|crush|hit|pound|punch|slap|smash|suction|thwack|chill|freezing|earth|shock(?:ing)?|friction|wrath|flam(?:e|ing)|divine|light|magic|mental|mind|decaying|life|bite|chomp|peck|pierce|scratch|stab|sting|thrust|chop|claw|cleave|grep|slash|slice|whip|shadow|wail|water)(?: (?:bite|power|energy|touch|drain|blast))? does (?:UNSPEAKABLE|UNTHINKABLE|UNIMAGINABLE|UNBELIEVABLE) things to (.+)(?:\.|!) \[[0-9]+\]$"
+       script="get_mobname"
+       regexp="y"
+       send_to="12"
+       sequence="1"
+       omit_from_output="n"
+      >
+      </trigger>
+      <trigger
+       enabled="y"
+       keep_evaluating="y"
+       match="^(?:\[[0-9]+\] )?Your (?:swing|acidic|digestion|slime|air|beating|blast|charge|crush|hit|pound|punch|slap|smash|suction|thwack|chill|freezing|earth|shock(?:ing)?|friction|wrath|flam(?:e|ing)|divine|light|magic|mental|mind|decaying|life|bite|chomp|peck|pierce|scratch|stab|sting|thrust|chop|claw|cleave|grep|slash|slice|whip|shadow|wail|water)(?: (?:bite|power|energy|touch|drain|blast))? [-\][*=<>:+]+ [a-zA-Z ]+ [-\][*=<>:+]+ (.+)(?:\.|!) \[[0-9]+\]$"
+       script="get_mobname"
+       regexp="y"
+       send_to="12"
+       sequence="1"
+       omit_from_output="n"
+      >
+      </trigger>
+
+ <!-- TRIGGER REGEX: 
+6 triggers:
+5: \[[0-9]+\] You damage (.+)! \[[0-9]+\]
+
+12346: (?:\[[0-9]+\] )?Your [a-z]+ misses (.+)\. \[[0-9]+\]
+
+12346(?:\[[0-9]+\] )?Your [a-z]+ [a-z]+ misses (.+)\. \[[0-9]+\]
+
+12346: (?:\[[0-9]+\] )?Your (?:swing|acidic|digestion|slime|air|beating|blast|charge|crush|hit|pound|punch|slap|smash|suction|thwack|chill|freezing|earth|shock(?:ing)?|friction|wrath|flam(?:e|ing)|divine|light|magic|mental|mind|decaying|life|bite|chomp|peck|pierce|scratch|stab|sting|thrust|chop|claw|cleave|grep|slash|slice|whip|shadow|wail|water)(?: (?:bite|power|energy|touch|drain|blast))? (?!does|misses)[a-z]+ (?!misses|does)(.+)(?:\.|!) \[[0-9]+\]
+
+12346: (?:\[[0-9]+\] )?Your (?:swing|acidic|digestion|slime|air|beating|blast|charge|crush|hit|pound|punch|slap|smash|suction|thwack|chill|freezing|earth|shock(?:ing)?|friction|wrath|flam(?:e|ing)|divine|light|magic|mental|mind|decaying|life|bite|chomp|peck|pierce|scratch|stab|sting|thrust|chop|claw|cleave|grep|slash|slice|whip|shadow|wail|water)(?: (?:bite|power|energy|touch|drain|blast))? does (?:UNSPEAKABLE|UNTHINKABLE|UNIMAGINABLE|UNBELIEVABLE) things to (.+)(?:\.|!) \[[0-9]+\]
+
+12346: (?:\[[0-9]+\] )?Your (?:swing|acidic|digestion|slime|air|beating|blast|charge|crush|hit|pound|punch|slap|smash|suction|thwack|chill|freezing|earth|shock(?:ing)?|friction|wrath|flam(?:e|ing)|divine|light|magic|mental|mind|decaying|life|bite|chomp|peck|pierce|scratch|stab|sting|thrust|chop|claw|cleave|grep|slash|slice|whip|shadow|wail|water)(?: (?:bite|power|energy|touch|drain|blast))? [-\][*=<>:+]+ [a-zA-Z ]+ [-\][*=<>:+]+ (.+)(?:\.|!) \[[0-9]+\]
+
+This should be 98.7% or so of damage messages.
+-->
 </triggers>
 <!--  Aliases  -->
 
@@ -118,6 +202,7 @@
 <!--  Script  -->
 <script>
 <![CDATA[
+    
 dofile (GetPluginInfo (GetPluginID (), 20) .. "cp_mobtablefilter.lua")
 ]]>
 </script>
