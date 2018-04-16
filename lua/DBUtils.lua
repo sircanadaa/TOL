@@ -16,12 +16,12 @@ function db_query_area(connection_str, sqlt)
     local return_table = {}
     local db = sqlite3.open(connection_str)
     for a in db:nrows(sqlt) do
-        return_table[a.name] = {}
-        return_table[a.name].keyword = a.keyword
-        return_table[a.name].name = a.name
-        return_table[a.name].minLevel = a.afrom
-        return_table[a.name].maxLevel = a.ato
-        return_table[a.name].lock = a.alock or ''
+        return_table[a.keyword] = {}
+        return_table[a.keyword].keyword = a.keyword
+        return_table[a.keyword].name = a.name
+        return_table[a.keyword].minLevel = a.afrom
+        return_table[a.keyword].maxLevel = a.ato
+        return_table[a.keyword].lock = a.alock or ''
     end
     db:close()
     return return_table

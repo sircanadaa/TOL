@@ -1040,9 +1040,11 @@ function getRoomIdRoomCP(name, nameHolder, tableNum)-- TODO some bug here where 
       " where areas.uid = rooms.area and rooms.name = %s",fixsql(cp_mobs[tableNum].location))
     local query1 = strbld("select rooms.uid as roomuid,"..
       " areas.name as areaName,"..
-      " rooms.name as roomName"..
-      " from rooms rooms, areas"..
+      " rooms.name as roomName, "..
+      " areas.uid as areauid "..
+      " from rooms rooms, areas "..
       " where areas.uid = rooms.area and rooms.name = %s",fixsql(cp_mobs[tableNum].location))
+
     local  cpmobquery = string.format("select *"..
         "from CPMobs "..
         "where name like %s and "..
@@ -1083,7 +1085,7 @@ function getRoomIdRoomCP(name, nameHolder, tableNum)-- TODO some bug here where 
     for z=1, area_table_size do
         roomNumber= tonumber(area_table[z].roomuid)
         DebugNote(areaLevel[area_table[z].areaName])
-        if areaLevel[area_table[z].areaName].minLevel > max_level or areaLevel[area_table[z].areaName].maxLevel<min_level then 
+        if areaLevel[area_table[z].areauid].minLevel > max_level or areaLevel[area_table[z].areauid].maxLevel<min_level then 
             rows_counter= rows_counter-1
             rows_counter_check = rows_counter_check-1
         else
