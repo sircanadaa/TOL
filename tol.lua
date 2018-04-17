@@ -447,10 +447,21 @@ greedy = false
 FirstRun_cp_var= true
 -- This function is just for testing. It should never actually be used.
 function printVars()
-  -- mobsleft = {}
-  -- EnableTrigger('campaign_item',1)
-  -- EnableTrigger('camp_item_start',1)
-  check_area_table()
+  mobsleft = {}
+  EnableTrigger('campaign_item',1)
+  EnableTrigger('camp_item_start',1)
+Execute("echo You still have to kill 1 * a large rat (Western Side of the Balcony)")
+Execute("echo You still have to kill 1 * Moriarty Jones (In Moriarty's Room)")
+Execute("echo You still have to kill 1 * Leon Birdie (Prosper's Island)")
+Execute("echo You still have to kill 1 * a worshipper of the sacred flame (The room of purification)")
+Execute("echo You still have to kill 2 * a line cook (The kitchens)")
+Execute("echo You still have to kill 2 * a blood beast (The Blood Swamp)")
+Execute("echo You still have to kill 1 * Vulcris (Vulcris' Sanctum)")
+Execute("echo You still have to kill 1 * Johna (The Partroxis)")
+Execute("echo You still have to kill 2 * a smiling faerie (The Botanical Gardens)")
+Execute("echo You still have to kill 2 * a cavorting faerie (The Botanical Gardens)")
+Execute("echo Note: One or more target names in this gquest might be slightly scrambled.")
+  --check_area_table()
 end
 -- end testing function
 kill_info = {}
@@ -861,13 +872,16 @@ dbA=GetInfo (66) ..'Aardwolf.db'
         " ORDER BY type ASC "
     sql_now= string.format(query1, fixsql(loc), fixsql(loc) )
     -- print(sql_now)
+
     local count_check= 0
     local hld = {}
     for _,rows in ipairs(db_query(dbA,sql_now)) do
       table.insert(hld, rows)
     end -- for
     -- tprint(hld)
+
     if #hld == 0 then
+      --debug.debug()
         print(loc)
         print('this cp will be weird because of unmapped rooms.. all entries are subject TOL has broken')
     end
@@ -1390,6 +1404,10 @@ function where_mob_trig(name, line, wildcards)
     -- print("printing return val:END ")
     -- print(currentRoom.areaid)
     -- print(wildcards[2])
+    if #where_trig_table then
+      print('The room you are trying to find seems to not be mapped')
+      return
+    end
     Execute('mapper goto ' .. where_trig_table[1].roomId)
     SendNoEcho('scan here')
     table.remove(where_trig_table, 1)
