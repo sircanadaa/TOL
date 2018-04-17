@@ -1404,7 +1404,7 @@ function where_mob_trig(name, line, wildcards)
     -- print("printing return val:END ")
     -- print(currentRoom.areaid)
     -- print(wildcards[2])
-    if #where_trig_table then
+    if #where_trig_table == 0 then
       print('The room you are trying to find seems to not be mapped')
       return
     end
