@@ -466,7 +466,8 @@ end
 -- end testing function
 kill_info = {}
 -- I hate to do it this way and will come up with a better solution... but for now
-damage_verbs = {'misses ',
+damage_verbs = {
+' misses ',
 ' tickles ',
 ' bruises ',
 ' scratches ',
@@ -569,6 +570,8 @@ function check_cur_mob(test_table)
     -- section of code.
     if #test_table == 3 then
         local line = test_table[1][1]
+        print('printing test table: '..test_table[1][1])
+
         if string.find(line, "%!") ~= nil then
             temp= string.sub(line, 8, string.find(line, "%!")-1 )
         elseif string.find(line, "%.") then
@@ -1617,7 +1620,11 @@ function scan_table_handler()
     for p=1, #SCAN_TABLE[a] do 
         -- print('scan table : ' .. SCAN_TABLE[a][p])
         -- print(WHERE_MOB)
-        if string.lower(SCAN_TABLE[a][p]) == string.lower(WHERE_MOB) then
+        local name = SCAN_TABLE[a][p]
+        if #name >30 then
+            name = string.sub(name, 1, 30)
+        end
+        if string.lower(name) == string.lower(WHERE_MOB) then
           found = true
           EnableTrigger('scan_nothing', 0)
           WHERE_MOB = ''
@@ -1661,16 +1668,22 @@ function istarget(name, line, wildcards, style)
   local target_mobs = { }
   if questHandler.mob ~= nil then target_mobs = { string.lower(questHandler.mob) } 
   end
-
   if #cp_mobs >= 1 then
     for a=1,#cp_mobs do table.insert(target_mobs, string.lower(cp_mobs[a].name)) 
     end
   end
   if #where_trig_table >= 1 then -- used for the wm and cpn commands
+    DebugNote('WHERE_MOB: ' .. WHERE_MOB)
     table.insert(target_mobs, WHERE_MOB)-- the global mob name
     table.insert(SCAN_TABLE, wildcards)
+    DebugNote(wildcards)
   end
   for a=1,#target_mobs do
+    if #name >30 then
+      DebugNote('name before: ' .. name)
+      name = string.sub(name, 1, 30)
+      DebugNote('name after: ' .. name)
+    end
     if name == string.lower(target_mobs[a]) then
       highlight = true
       break
