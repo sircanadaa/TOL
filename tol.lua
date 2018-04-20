@@ -39,7 +39,13 @@ auto_hunt_mob = ""
 -- PageSize code
 page_size = 0
 kill_pagesize = 0
-
+function Note(stuff)
+  if stuff == nil then
+    ColourNote("magenta", "black", "")
+  else
+    ColourNote("magenta", "black", stuff)
+  end
+end
 function GetPageSize()
   kill_pagesize = 0
   EnableTriggerGroup("page_size",1)
@@ -53,6 +59,8 @@ function ResetPageSize()
 end
 
 function auto_hunt_start(name, line, wildcards)
+    auto_hunt_stop()
+    kill_scan_run()
     Note("Starting autohunt")
     EnableTrigger('auto_hunt', 1)
     EnableTrigger('kill_auto_hunt', 1)
@@ -137,7 +145,7 @@ timestart = socket.gettime()
 end
 function timeEnd()
   timeend = socket.gettime()
-  print ('Completion Time: '..timetostr(timeend-timestart))
+  Note ('Completion Time: '..timetostr(timeend-timestart))
 end
 
 function quickScan()
@@ -229,7 +237,7 @@ end
 
 function add_Keywords(name, line, wildcards)
   if check_CPMobs_Table()<1 then
-    print ("you don't have CPMobs table, you can't use this function, try installing the CPMobs plugin")
+    Note ("you don't have CPMobs table, you can't use this function, try installing the CPMobs plugin")
     return
   end
   query = string.format("UPDATE CPMobs SET keywords=%s WHERE name=%s;", fixsql(wildcards[2]), fixsql(wildcards[1]))
@@ -237,15 +245,15 @@ function add_Keywords(name, line, wildcards)
   count = db_query(dbkt, querycheck)
   count = count[1].count
     if count<1 then
-      print ("You have the name wrong, or it is not in the table, try again!")
-      print ("You entered: " .. wildcards[1])
+      Note ("You have the name wrong, or it is not in the table, try again!")
+      Note ("You entered: " .. wildcards[1])
     end
   if tonumber(count)<1 then
     return
   end
   db_exec(dbkt, query)
   
-  print ("Added ".. wildcards[2].. " to the mob entry for ".. wildcards[1])
+  Note ("Added ".. wildcards[2].. " to the mob entry for ".. wildcards[1])
 end
 
 function check_CPMobs_Table()
@@ -294,7 +302,7 @@ function campaign_item (name, line, wildcards)-- the actual campaign item getter
   end
 
   if not name or not location then
-    print("error parsing line: ", line)
+    Note("error parsing line: ", line)
   else
     table.insert(mobsleft, {name=name, location=location, mobdead=mobdead, mobdead=mobdead,false, num = tonumber(num)})
   end
@@ -427,7 +435,7 @@ function cpn_script (index, line, wildcards)
     end --if
 index = tonumber(index)
 if room_num_table[index] == nil then
-  print ("No cp_mob at that value")
+  Note ("No cp_mob at that value")
   return
 end--if
   EnableTriggerGroup("HUNTING", true)
@@ -570,7 +578,7 @@ function check_cur_mob(test_table)
     -- section of code.
     if #test_table == 3 then
         local line = test_table[1][1]
-        print('printing test table: '..test_table[1][1])
+        Note('printing test table: '..test_table[1][1])
 
         if string.find(line, "%!") ~= nil then
             temp= string.sub(line, 8, string.find(line, "%!")-1 )
@@ -747,7 +755,7 @@ function printTable() -- prints the global table for names and room numbers, use
     ColourNote("Gray", "", "------------------------------------------------------------------------");
   DebugNote(cp_mobs)
   else
-    print ("Nothing to print")
+    Note ("Nothing to print")
   end--if
 end
 
@@ -755,7 +763,7 @@ function printTable1() -- prints the global table for names and room numbers, us
  if room_num_table2 ~= nil and #room_num_table2>0 then
   tprint(room_num_table2)
   else
-    print ("Nothing to print")
+    Note ("Nothing to print")
   end--if
 end
 
@@ -776,7 +784,7 @@ end
 function getName(index, num)
   local s= ''
   if cp_mobs== nil then
-    print ("Use tcp before that command please")
+    Note ("Use tcp before that command please")
     return
   end--if
   s = room_num_table[tonumber(index)][2] or curMob
@@ -901,6 +909,9 @@ dbA=GetInfo (66) ..'Aardwolf.db'
       return
       end--if
     end
+    -- testing this to see if it fixes unmapped room issue
+    
+    makeTable('loc', cp_mobs[tableNum].name, cp_mobs[tableNum].mobdead, false, 'loc', cp_mobs[tableNum].num)
   end--if
 
 sublist={1,1}
@@ -1094,14 +1105,30 @@ function getRoomIdRoomCP(name, nameHolder, tableNum)-- TODO some bug here where 
         area_table[rows_counter_check] = rows
     end--for
     local area_table_size = #area_table
-    if areaLevel == nil then
-        print('area table was nill when checking mobs, rebuilding...')
+    local area_level_size = 0
+    for i,_ in pairs(areaLevel) do
+        area_level_size = area_level_size +1
+    end
+    if areaLevel == nil or area_level_size== 0 then
+        Note('area table was nill when checking mobs, rebuilding...')
         areaLevel = db_query_area(dbkt, "select keyword, name, afrom, ato, alock from areas")
-        print('Done rebuilding, moving forward...')
+        Note('Done rebuilding, moving forward...')
     end
     for z=1, area_table_size do
         roomNumber= tonumber(area_table[z].roomuid)
-        DebugNote(areaLevel[area_table[z].areaName])
+        DebugNote("area_level_size: " .. area_level_size)
+        DebugNote("area_table size: " .. #area_table)
+        DebugNote(area_table[z].areauid)
+        if areaLevel[area_table[z].areauid] == nil then
+            areaLevel[area_table[z].areauid] = {
+            lock=0,
+            minLevel=0,
+            keyword=area_table[z].areauid,
+            name= area_table[z].name,
+            maxLevel=0
+            }
+        end
+        DebugNote(areaLevel[area_table[z].areauid])
         if areaLevel[area_table[z].areauid].minLevel > max_level or areaLevel[area_table[z].areauid].maxLevel<min_level then 
             rows_counter= rows_counter-1
             rows_counter_check = rows_counter_check-1
@@ -1196,7 +1223,7 @@ end
 
 function gotoNextMob()-- This will goto the next mob, use with tcp
   if cp_mobs == nil then
-    print ('Nothing to go to!')
+    Note ('Nothing to go to!')
     return
   end
   if mob_index == nil then
@@ -1206,7 +1233,7 @@ function gotoNextMob()-- This will goto the next mob, use with tcp
     return
   end--if
   if room_num_table[1][1] == -1 then
-    print ("Try tcpo or manually finding this mob.. use pto to check the other table")
+    Note ("Try tcpo or manually finding this mob.. use pto to check the other table")
     return
   end--if
   check_dead()
@@ -1233,11 +1260,11 @@ function gotoNextMob()-- This will goto the next mob, use with tcp
 end
 
 function gotoIndexMob(name, line, wildcards)-- This will goto the next mob, use with tcp
-  print(wildcards[1])
+  Note(wildcards[1])
   wild= tonumber(wildcards[1])
   if wild == nil then return end
   if cp_mobs == nil or #cp_mobs == 0 then
-    print("Nothing to goto.")
+    Note("Nothing to goto.")
     return
   end
   if room_num_table == nil  or #room_num_table == 0 then
@@ -1247,7 +1274,7 @@ function gotoIndexMob(name, line, wildcards)-- This will goto the next mob, use 
     wild = #room_num_table
   end
     if room_num_table[wild][1] == -1 then
-    print ("Try tcpo or manually finding this mob.. use pto to check the other table")
+    Note ("Try tcpo or manually finding this mob.. use pto to check the other table")
     return
   end--if
   check_diff()
@@ -1265,16 +1292,19 @@ end
 function tcpohandler(name, line, wildcards)
   if wildcards[1] ~= nil then
     if room_num_table2 == nil or #room_num_table2 == 0 then
-      print("nothing to print")
+      Note("nothing to print")
       return
     end--if
   end--if
   wild = tonumber(wildcards[1])
   if room_num_table2 == nil or #room_num_table2 == 0 then
-    print('nothing to print')
+    Note('nothing to print')
     return
   end
-  if tonumber(wildcards[1])>#room_num_table2 then
+  if wildcards[1] == nil then
+    wild = 1
+  end
+  if wild>#room_num_table2 then
     wild = #room_num_table2
   end
   if #wildcards>=1 then
@@ -1305,7 +1335,7 @@ function hunt_type (num, mob_id)
       mob_next_delete_value= tonumber(num)
       holder= getTable(num)
       if (string.find(string.lower(room_num_table[num][1]), string.lower(areas_tbl[currentRoom.areaid].name))) then
-        print('well this is awkward you are already in the correct area')
+        Note('well this is awkward you are already in the correct area')
       else
         Execute('xrunto1 '..room_num_table[num][1])
       end--if
@@ -1320,7 +1350,7 @@ function hunt_type (num, mob_id)
     mob_next_delete_value= mob_index
     holder= getTable(mob_index)
     if ( string.find(string.lower(room_num_table[mob_index][1]), string.lower(areas_tbl[currentRoom.areaid].name))) then
-      print('well this is awkward you are in the correct area')
+      Note('well this is awkward you are in the correct area')
     else
       Execute('xrunto1 '..room_num_table[mob_index][1])
     end--if
@@ -1334,6 +1364,8 @@ end
 where_mob= ''
 
 function whereMob(name, line, wildcards)
+  auto_hunt_stop()
+  kill_scan_run()
   where_mob= wildcards[1]
   if where_mob==nil then
      if mobname ~= nil then
@@ -1342,7 +1374,7 @@ function whereMob(name, line, wildcards)
 
       DoAfterSpecial(2, "EnableTrigger('where_mob_trig', false)", 12)
     else
-      print ("Need to use tcp or tcp <index> first")
+      Note ("Need to use tcp or tcp <index> first")
       return
     end --if
   else
@@ -1408,7 +1440,7 @@ function where_mob_trig(name, line, wildcards)
     -- print(currentRoom.areaid)
     -- print(wildcards[2])
     if #where_trig_table == 0 then
-      print('The room you are trying to find seems to not be mapped')
+      Note('The room you are trying to find seems to not be mapped')
       return
     end
     Execute('mapper goto ' .. where_trig_table[1].roomId)
@@ -1423,7 +1455,7 @@ function killMob()
   if mobname ~= nil then
     Execute("kill ".. mobname)
   else
-    print ("Need to use tcp first")
+    Note ("Need to use tcp first")
   end --if
 end
 
@@ -1481,7 +1513,7 @@ function StartScript()
     GetPageSize()
     SendNoEcho('tags scan on')
     areaLevel = db_query_area(dbkt, "select keyword, name, afrom, ato, alock from areas")
-    print (GetPluginInfo (GetPluginID (), 20))
+    Note (GetPluginInfo (GetPluginID (), 20))
     qry= "select * from rooms where uid not like '*' and uid not like '**' order by uid"
     qry2 = "select * from areas"
     qry3 = "select *, count(*) as timeskilled from mobkills group by name,room_id order by name, timeskilled desc"
@@ -1554,7 +1586,7 @@ function OnPluginBroadcast (msg, id, name, text)
             assert (loadstring (luastmt or "")) ()
             char_base= gmcpdatacharstatus
         end
-        if got_room and got_char and not didonce then didonce = true print("start") StartScript() end -- Got what we needed from GMCP, initialize the TOL script -- Kobus
+        if got_room and got_char and not didonce then didonce = true Note("start") StartScript() end -- Got what we needed from GMCP, initialize the TOL script -- Kobus
     end
 end
 
@@ -1641,6 +1673,9 @@ function scan_table_handler()
     --tprint(where_trig_table)
     EnableTrigger('scan_nothing', 1)
     scan_continue()
+  else
+    Note('Killing scan run: Mob is here!')
+    kill_scan_run()
   end
 end
 
@@ -1660,7 +1695,6 @@ function scan_continue()
     end
 end
 
-SCAN_TABLE = {}
 
 function istarget(name, line, wildcards, style)
   local highlight = false
