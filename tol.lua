@@ -59,6 +59,7 @@ function ResetPageSize()
 end
 
 function auto_hunt_start(name, line, wildcards)
+    hunt_off()
     auto_hunt_stop()
     kill_scan_run()
     Note("Starting autohunt")
@@ -82,12 +83,13 @@ function auto_hunt_continue(name, line, wildcards)
     end
     if string.find(move, 'through') then
         if currentRoom ~= nil then
-            query = string.format("select dir from exits where fromuid = %s order by length(dir) desc",
+            query = string.format("select dir, fromuid, touid from exits where fromuid = %s order by length(dir) desc",
                 currentRoom.roomid)
-            move =db_query(dbA, query)
-            DebugNote(move)
-            if #move >1 then
-                move = move[1]["dir"]
+            move1 =db_query(dbA, query)
+            DebugNote('printing move table return:')
+            DebugNote(move1)
+            if #move1 >1 then
+                move1 = move1[1]["dir"]
             end
         end
     end
@@ -373,6 +375,9 @@ function delete_mob_from_table_index(val)
         table.remove(room_num_table2,  p)
       end--if
   end--for
+  DebugNote('val: '.. val)
+  DebugNote(room_num_table[val])
+  DebugNote(room_num_table)
   if room_num_table[val].num == 1 then
     table.remove(room_num_table, tonumber(val))
   else
@@ -408,6 +413,8 @@ function quest_color()
 end
 
 function cpn_script (index, line, wildcards)
+  hunt_off()
+  kill_scan_run()
   local numcheck
   if wildcards ~= nil then
     numcheck = tonumber(wildcards[1])
@@ -849,9 +856,12 @@ function buildRoomTable()-- This sends the table to get room_ids
   clearTable()
   local roomCPCheck = 0
   for i,v in ipairs (cp_mobs) do
+    DebugNote(cp_mobs[i].name)
+    DebugNote(i)
     getRoomId(cp_mobs[i].name, i )
+       DebugNote(room_num_table)
   end
-    
+    DebugNote(room_num_table)
   for i,v in ipairs(room_num_table) do
     if (room_num_table[i][4]== false) then
       cp_mobs[i].intable = false
@@ -895,6 +905,9 @@ dbA=GetInfo (66) ..'Aardwolf.db'
       --debug.debug()
         print(loc)
         print('this cp will be weird because of unmapped rooms.. all entries are subject TOL has broken')
+        makeTable(-1, cp_mobs[tableNum].name, cp_mobs[tableNum].mobdead, false, cp_mobs[tableNum].location, cp_mobs[tableNum].num)
+        --debug.debug()
+        return
     end
     for g, rows in pairs(hld) do
       -- this whole thing needs reworked... its a mess right now..
@@ -910,8 +923,8 @@ dbA=GetInfo (66) ..'Aardwolf.db'
       end--if
     end
     -- testing this to see if it fixes unmapped room issue
+
     
-    makeTable('loc', cp_mobs[tableNum].name, cp_mobs[tableNum].mobdead, false, 'loc', cp_mobs[tableNum].num)
   end--if
 
 sublist={1,1}
@@ -1037,6 +1050,7 @@ function getRoomIdRoomCP(name, nameHolder, tableNum)-- TODO some bug here where 
     luastmt = "gmcpdata = " .. gmcparg --- Convert the serialized string back into a lua table.
     assert (loadstring (luastmt or "")) ()
     level = tonumber(gmcpdata.status.level) -- uncomment for live
+    --level = 201
     if GQ_flag then levelAdj = 22 end
     --level = 70 -- for testing
     min_level = level - levelAdj
@@ -1119,6 +1133,9 @@ function getRoomIdRoomCP(name, nameHolder, tableNum)-- TODO some bug here where 
         DebugNote("area_level_size: " .. area_level_size)
         DebugNote("area_table size: " .. #area_table)
         DebugNote(area_table[z].areauid)
+        if area_table[z].areauid == 'prosper' and level > 180 then
+             areaLevel[area_table[z].areauid].maxLevel = 201
+        end
         if areaLevel[area_table[z].areauid] == nil then
             areaLevel[area_table[z].areauid] = {
             lock=0,
@@ -1364,6 +1381,7 @@ end
 where_mob= ''
 
 function whereMob(name, line, wildcards)
+  hunt_off()
   auto_hunt_stop()
   kill_scan_run()
   where_mob= wildcards[1]
