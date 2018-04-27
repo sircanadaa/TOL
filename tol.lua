@@ -1122,8 +1122,13 @@ function getRoomIdRoomCP(name, nameHolder, tableNum)-- TODO some bug here where 
         DebugNote("area_table size: " .. #area_table)
         DebugNote(area_table[z].areauid)
         if area_table[z].areauid == 'prosper' and level > 180 then
-            areaLevel[area_table[z].areauid].maxLevel = 201
+             areaLevel[area_table[z].areauid].maxLevel = 201
+             areaLevel[area_table[z].areauid].minLevel = 175
         end
+        if area_table[z].areauid == 'sohtwo' and level > 180 then
+             areaLevel[area_table[z].areauid].maxLevel = 201
+             areaLevel[area_table[z].areauid].minLevel = 175
+        end 
         if areaLevel[area_table[z].areauid] == nil then
             areaLevel[area_table[z].areauid] = {
                 lock = 0,
