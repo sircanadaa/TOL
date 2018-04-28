@@ -464,21 +464,39 @@ FirstRun_cp_var = true
 
 -- This function is just for testing. It should never actually be used.
 function printVars()
-    mobsleft = {}
-    EnableTrigger('campaign_item', 1)
-    EnableTrigger('camp_item_start', 1)
-    Execute("echo You still have to kill 1 * a large rat (Western Side of the Balcony)")
-    Execute("echo You still have to kill 1 * Moriarty Jones (In Moriarty's Room)")
-    Execute("echo You still have to kill 1 * Leon Birdie (Prosper's Island)")
-    Execute("echo You still have to kill 1 * a worshipper of the sacred flame (The room of purification)")
-    Execute("echo You still have to kill 2 * a line cook (The kitchens)")
-    Execute("echo You still have to kill 2 * a blood beast (The Blood Swamp)")
-    Execute("echo You still have to kill 1 * Vulcris (Vulcris' Sanctum)")
-    Execute("echo You still have to kill 1 * Johna (The Partroxis)")
-    Execute("echo You still have to kill 2 * a smiling faerie (The Botanical Gardens)")
-    Execute("echo You still have to kill 2 * a cavorting faerie (The Botanical Gardens)")
-    Execute("echo Note: One or more target names in this gquest might be slightly scrambled.")
-    --check_area_table()
+  mobsleft = {}
+  EnableTrigger('campaign_item',1)
+  EnableTrigger('camp_item_start',1)
+Execute("echo You still have to kill * some burning embers (Scorched earth)")
+Execute("echo You still have to kill * the stage manager (Rehearsal Room B)")
+Execute("echo You still have to kill * a servant (Western Tower)")
+Execute("echo You still have to kill * a cavorting faerie (The Botanical Gardens)")
+Execute("echo You still have to kill * a blacksmith (A blacksmith's shop)")
+Execute("echo You still have to kill * a partially clothed actor (Offstage:No Park Guest Access)")
+Execute("echo You still have to kill * Al-E-Gator (Swamped!)")
+Execute("echo You still have to kill * a citizen of the realm (A Path Around the Maw)")
+Execute("echo You still have to kill * a citizen (Main street)")
+Execute("echo You still have to kill * a dolphinfish (Exploring the Deep Ocean)")
+Execute("echo You still have to kill * a brilliant Nyarlithit (The Final Conflict)")
+Execute("echo You still have to kill * Good Eclaboussure (Outer Space)")
+Execute("echo You still have to kill * the ice lord (The Chamber of the Ice Lord)")
+Execute("echo You still have to kill * a raw recruit (An Iron Training Room)")
+Execute("echo You still have to kill * a guest (A Guest Chamber)")
+Execute("echo You still have to kill * a killer bee (A Wilting Root Hair)")
+Execute("echo You still have to kill * Evil Peane (Outer Space)")
+Execute("echo You still have to kill * a Reakle (Inside the Great Hall of the Castle)")
+Execute("echo You still have to kill 1 * a large rat (Western Side of the Balcony)")
+Execute("echo You still have to kill 1 * Moriarty Jones (In Moriarty's Room)")
+Execute("echo You still have to kill 1 * Leon Birdie (Prosper's Island)")
+Execute("echo You still have to kill 1 * a worshipper of the sacred flame (The room of purification)")
+Execute("echo You still have to kill 2 * a line cook (The kitchens)")
+Execute("echo You still have to kill 2 * a blood beast (The Blood Swamp)")
+Execute("echo You still have to kill 1 * Vulcris (Vulcris' Sanctum)")
+Execute("echo You still have to kill 1 * Johna (The Partroxis)")
+Execute("echo You still have to kill 2 * a smiling faerie (The Botanical Gardens)")
+Execute("echo You still have to kill 2 * a cavorting faerie (The Botanical Gardens)")
+Execute("echo Note: One or more target names in this gquest might be slightly scrambled.")
+  --check_area_table()
 end
 -- end testing function
 kill_info = {}
@@ -1122,14 +1140,22 @@ function getRoomIdRoomCP(name, nameHolder, tableNum)-- TODO some bug here where 
         DebugNote("area_table size: " .. #area_table)
         DebugNote(area_table[z].areauid)
         if area_table[z].areauid == 'prosper' and level > 180 then
+             DebugNote("prosper was found in the SH range setting things up")
              areaLevel[area_table[z].areauid].maxLevel = 201
              areaLevel[area_table[z].areauid].minLevel = 175
         end
         if area_table[z].areauid == 'sohtwo' and level > 180 then
-             areaLevel[area_table[z].areauid].maxLevel = 201
-             areaLevel[area_table[z].areauid].minLevel = 175
+             DebugNote("sowtwo found, setting things up")
+             areaLevel[area_table[z].areauid] = {
+            lock=0,
+            minLevel=175,
+            keyword=area_table[z].areauid,
+            name= area_table[z].name,
+            maxLevel=201
+            }
         end 
         if areaLevel[area_table[z].areauid] == nil then
+            DebugNote("Could not find an entry for ".. area_table[z].areauid)
             areaLevel[area_table[z].areauid] = {
                 lock = 0,
                 minLevel = 0,
