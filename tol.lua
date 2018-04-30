@@ -43,7 +43,7 @@ function Note(stuff)
     if stuff == nil then
         ColourNote("magenta", "black", "")
     else
-        ColourNote("magenta", "black", stuff)
+        ColourNote("magenta", "black", tostring(stuff))
     end
 end
 function GetPageSize()
@@ -104,6 +104,7 @@ function auto_hunt_stop()
 end
 
 function hunt_off()
+    Note ("Shutting huntings scripts off.")
     EnableTriggerGroup("HUNTING", false)
     kill_scan_run()
 end
@@ -1473,7 +1474,8 @@ function where_mob_trig(name, line, wildcards)
             return
         end
         Execute('mapper goto ' .. where_trig_table[1].roomId)
-        EnableTrigger('get_all_output', true)
+        
+        --EnableTrigger('get_all_output', true)
         SendNoEcho('study ' ..mobname)   
         table.remove(where_trig_table, 1)
         EnableTrigger('where_mob_trig', false)
@@ -1642,6 +1644,7 @@ end
 -- Scanning and highlighting
 -----------------------------------------------------------
 function kill_scan_run()
+    Note("Shutting off scan related scripts.")
     WHERE_MOB = ''
     where_trig_table = {}
     SCAN_TABLE = {}    
@@ -1711,6 +1714,7 @@ function scan_continue()
 end
 
 function istarget_study(name, line, wildcards, style)
+    DebugNote("function: ISTARGET_STUDY")
     if wildcards[0] == "There is no one here by that name." or
         wildcards[0] == "" then
         EnableTrigger('get_all_output', false)
@@ -1750,11 +1754,16 @@ function istarget_study(name, line, wildcards, style)
         if highlight then text = "black" back = "yellow" end
         ColourTell(text, back, s.text)
     end
-    if highlight then ColourTell("black", "yellow", " [TARGET]") end
+    if highlight then
+        ColourTell("black", "yellow", " [TARGET]")
+        where_trig_table = {}
+    end
     Note()
+    EnableTrigger('get_all_output', false)
 end
 
 function istarget(name, line, wildcards, style)
+  DebugNote("function: ISTARGET")
     local highlight = false
     local name = string.lower(wildcards[1])
     local target_mobs = {}
