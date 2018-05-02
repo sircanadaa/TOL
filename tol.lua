@@ -1276,7 +1276,7 @@ function gotoNextMob()-- This will goto the next mob, use with tcp
         DebugNote(mob_index)
         mob_next_delete_value = mob_index
         EnableTrigger('get_all_output', true)
-        Send("study " .. mobname)   
+        Send('study '.. mobname)
 
     else
         if hunt_type(0, 1) == 1 then
@@ -1287,7 +1287,7 @@ function gotoNextMob()-- This will goto the next mob, use with tcp
         DebugNote(mob_index + 1)
         mob_next_delete_value = mob_index + 1
         EnableTrigger('get_all_output', true)
-        SendNoEcho('study ' ..mobname)   
+        SendNoEcho('study')
     end
 end
 
@@ -1318,7 +1318,7 @@ function gotoIndexMob(name, line, wildcards)-- This will goto the next mob, use 
     mob_next_delete_value = wild
     Execute('xmapper1 move ' .. getTable(tonumber(wild)))
 
-    SendNoEcho('study ' ..mobname)
+    SendNoEcho('study')
 end
 
 function tcpohandler(name, line, wildcards)
@@ -1346,13 +1346,13 @@ function tcpohandler(name, line, wildcards)
         DebugNote(wild)
         mob_next_delete_value = wild
         EnableTrigger('get_all_output', true)
-        SendNoEcho('study ' ..mobname)   
+        SendNoEcho('study')
     else
         mobname = sanitizeName(room_num_table2[1][2])
         Execute ('xmapper1 move ' .. room_num_table2[1][1])
         mob_next_delete_value = 1
         EnableTrigger('get_all_output', true)
-        SendNoEcho('study ' ..mobname)   
+        SendNoEcho('study')
     end
 end
 
@@ -1475,8 +1475,8 @@ function where_mob_trig(name, line, wildcards)
         end
         Execute('mapper goto ' .. where_trig_table[1].roomId)
         
-        --EnableTrigger('get_all_output', true)
-        SendNoEcho('study ' ..mobname)   
+        EnableTrigger('get_all_output', true)
+        SendNoEcho('study')
         table.remove(where_trig_table, 1)
         EnableTrigger('where_mob_trig', false)
     end
@@ -1644,10 +1644,10 @@ end
 -- Scanning and highlighting
 -----------------------------------------------------------
 function kill_scan_run()
-    Note("Shutting off scan related scripts.")
+    DebugNote("Shutting off scan related scripts.")
     WHERE_MOB = ''
     where_trig_table = {}
-    SCAN_TABLE = {}    
+    SCAN_TABLE = {}
 end
 
 function scan_table_handler()
@@ -1708,58 +1708,76 @@ function scan_continue()
     end
     if #where_trig_table >= 1 then
         Execute('xmapper1 move ' .. where_trig_table[1].roomId)
-        SendNoEcho('study ' ..mobname)   
+        SendNoEcho('study')
         table.remove(where_trig_table, 1)
     end
 end
 
+function has_value(tab, val)
+    DebugNote("Match value: ".. val)
+
+    -- Check for custom wm attend.
+    if #where_trig_table >= 1 then
+        DebugNote('WHERE_MOB: ' .. WHERE_MOB)
+        if string.match(val,WHERE_MOB) then
+            DebugNote("Where_mob match.")
+            return true
+        end
+    end
+
+    -- Check quest mob
+    if questHandler.mob ~= nil and string.match(val,string.lower(questHandler.mob)) then
+        DebugNote("Quest match.")
+        return true
+    end
+
+    -- Just in case
+    if not val == nil or tab == nil then
+        -- Check for cp mobs.
+        for index, value in pairs(tab) do
+            if value == nil then return end
+
+            if string.match(val, string.lower(value.name)) then
+                DebugNote("Cp match.")
+                return true
+            end
+        end
+    end
+
+    DebugNote("No match found.")
+    return false
+end
+
 function istarget_study(name, line, wildcards, style)
-    DebugNote("function: ISTARGET_STUDY")
-    if wildcards[0] == "There is no one here by that name." or
-        wildcards[0] == "" then
+   DebugNote("function: ISTARGET_STUDY")
+
+    -- Disable get_all_output trigger if line is empty.
+    if wildcards[0] == "" then
         EnableTrigger('get_all_output', false)
         return
     end
 
-    local highlight = false
-    local name = string.lower(wildcards[1])
-    local target_mobs = {}
-    if questHandler.mob ~= nil then target_mobs = {string.lower(questHandler.mob)}
+    local name = string.sub(string.lower(wildcards[1]), 1, 30)
+
+    if has_value(cp_mobs, name) then
+        DebugNote("MOB IS HERE!")
+        EnableTriggerGroup("get_all_output", 0)
+
+        kill_scan_run()
+        for a, s in ipairs(style) do
+            local text = RGBColourToName(s.textcolour)
+            local back = RGBColourToName(s.backcolour)
+            text = "black" back = "yellow"
+            ColourTell(text, back, s.text)
+         end
+            ColourTell("black", "yellow", " [TARGET]")
+            print("\n")
+            where_trig_table = {}
+    else
+        -- TODO: Check if there are more rooms in WM mode to runto.
+        -- TODO: In normal mode, maybe here we can activate wm
+        --          or print a message to user to do it manually.
     end
-    if #cp_mobs >= 1 then
-        for a = 1, #cp_mobs do table.insert(target_mobs, string.lower(cp_mobs[a].name))
-        end
-    end
-    if #where_trig_table >= 1 then -- used for the wm and cpn commands
-        DebugNote('WHERE_MOB: ' .. WHERE_MOB)
-        table.insert(target_mobs, WHERE_MOB)-- the global mob name
-        table.insert(SCAN_TABLE, wildcards)
-        DebugNote(wildcards)
-    end
-    for a = 1, #target_mobs do
-        if #name > 30 then
-            DebugNote('name before: ' .. name)
-            name = string.sub(name, 1, 30)
-            DebugNote('name after: ' .. name)
-        end
-        if string.match(string.lower(name), string.lower(target_mobs[a])) then
-            highlight = true
-            EnableTriggerGroup("get_all_output", 0)
-            break
-        end
-    end
-    for a, s in ipairs(style) do
-        local text = RGBColourToName(s.textcolour)
-        local back = RGBColourToName(s.backcolour)
-        if highlight then text = "black" back = "yellow" end
-        ColourTell(text, back, s.text)
-    end
-    if highlight then
-        ColourTell("black", "yellow", " [TARGET]")
-        where_trig_table = {}
-    end
-    Note()
-    EnableTrigger('get_all_output', false)
 end
 
 function istarget(name, line, wildcards, style)
