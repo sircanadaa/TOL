@@ -1473,12 +1473,11 @@ function where_mob_trig(name, line, wildcards)
             Note('The room you are trying to find seems to not be mapped')
             return
         end
-        Execute('mapper goto ' .. where_trig_table[1].roomId)
         
-        EnableTrigger('get_all_output', true)
-        SendNoEcho('study')
-        table.remove(where_trig_table, 1)
         EnableTrigger('where_mob_trig', false)
+
+        IS_WM_ENABLED = true
+        wm_study_continue()
     end
 end
 
@@ -1569,6 +1568,23 @@ function OnPluginInstall()
 end
 
 function OnPluginBroadcast (msg, id, name, text)
+    --DebugNote ("msg = " .. msg)
+    --DebugNote ("id = " .. id)
+    --DebugNote ("name = " .. name)
+    --DebugNote ("text = " .. text)
+
+    if id == 'b6eae87ccedd84f510b74714' then
+       if text == 'kinda_busy' then
+            CAN_RUN=false
+        elseif text == 'ok_you_can_go_now' then
+            Note("ok_you_can_go_now")
+            if IS_WM_ENABLED then
+                wm_study_continue()
+            end    
+            CAN_RUN=true
+        end    
+    end    
+
     if (id == '3e7dedbe37e44942dd46d264') then
         if (text == "room.info") then
             res, gmcparg = CallPlugin("3e7dedbe37e44942dd46d264", "gmcpval", "room.info")
@@ -1748,20 +1764,48 @@ function has_value(tab, val)
     return false
 end
 
+function mapper_goto(room_id)
+    DebugNote("GOTO")
+    Execute('mapper goto ' .. room_id)
+
+end
+
+
+function wm_study_continue()
+    EnableTrigger('get_all_output', false)
+    DebugNote("wm_study_continue")
+    
+    if #where_trig_table >= 1 then        
+        table.remove(where_trig_table, 1)
+        EnableTrigger('get_all_output', true)
+        SendNoEcho("study")
+        DebugNote("From: ".. currentRoom.roomid)
+        DebugNote("Going to: ".. where_trig_table[1].roomId)
+        mapper_goto(where_trig_table[1].roomId)  
+    else
+        Note("Searching finished.")
+    end 
+end
+
+
 function istarget_study(name, line, wildcards, style)
-   DebugNote("function: ISTARGET_STUDY")
+   -- DebugNote("function: ISTARGET_STUDY")
+
 
     -- Disable get_all_output trigger if line is empty.
     if wildcards[0] == "" then
         EnableTrigger('get_all_output', false)
+        DebugNote("--END OF STUDY--")
         return
     end
 
     local name = string.sub(string.lower(wildcards[1]), 1, 30)
 
     if has_value(cp_mobs, name) then
-        DebugNote("MOB IS HERE!")
+        Note("MOB IS HERE!")
+        IS_WM_ENABLED = false
         EnableTriggerGroup("get_all_output", 0)
+        EnableTrigger('where_mob_trig', 0)
 
         kill_scan_run()
         for a, s in ipairs(style) do
@@ -1773,7 +1817,46 @@ function istarget_study(name, line, wildcards, style)
             ColourTell("black", "yellow", " [TARGET]")
             print("\n")
             where_trig_table = {}
-    else
+    -- else
+        -- DebugNote(where_trig_table)
+   
+
+        --[[
+
+        if #where_trig_table >= 1 then
+            DebugNote("Where trigger")
+
+            DebugNote(CAN_RUN)
+            DebugNote(currentRoom.roomid)
+            DebugNote(where_trig_table[1].roomId )
+            
+            for k, v in pairs(where_trig_table) do
+                DebugNote(v.roomId)
+
+                if v.roomId == currentRoom.roomid then
+                    break
+                else
+                   while(CAN_RUN==true) do
+                        Execute('xmapper1 move ' .. where_trig_table[1].roomId)
+                        SendNoEcho('study')
+                        table.remove(where_trig_table, 1)
+                    end 
+
+                end
+
+
+            end]]
+
+
+            --if not where_trig_table[1].roomId == currentRoom.roomid then
+             --   DebugNote("here")
+             --   while(CAN_RUN==true) do
+              --      Execute('xmapper1 move ' .. where_trig_table[1].roomId)
+              --      SendNoEcho('study')
+               --     table.remove(where_trig_table, 1)
+               -- end
+           -- end
+       -- end
         -- TODO: Check if there are more rooms in WM mode to runto.
         -- TODO: In normal mode, maybe here we can activate wm
         --          or print a message to user to do it manually.

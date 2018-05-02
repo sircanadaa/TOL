@@ -783,12 +783,16 @@ Note:
    regexp="y"
    repeat="y"
    name="get_all_output"
-   group="get_all_output"
-   expand_variables="y"
-   keep_evaluating="y"
-   omit_from_output="y"
-   lowercase_wildcard="y" >
+   group="get_all_output" >
   </trigger>
+
+<trigger
+   enabled="y"
+   script="wm_study_continue"
+   match="{end study}"
+   send_to="12"
+   omit_from_output="y" >
+ </trigger>  
 
   <trigger
     enabled="n"
