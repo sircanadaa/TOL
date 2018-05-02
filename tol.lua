@@ -1731,7 +1731,6 @@ end
 
 function has_value(tab, val)
     DebugNote("Match value: ".. val)
-    DebugNote(tab)
 
     -- Check for custom wm attend.
     if #where_trig_table >= 1 then
@@ -1739,6 +1738,8 @@ function has_value(tab, val)
         if string.match(val,WHERE_MOB) then
             DebugNote("Where_mob match.")
             return true
+        else
+            return false
         end
     end
 
@@ -1752,7 +1753,6 @@ function has_value(tab, val)
     for index, value in pairs(tab) do
         if value == nil then return end
 
-        DebugNote("Compare ".. val .."with ".. value.name)
         if string.match(val, string.lower(value.name)) then
             DebugNote("Cp match.")
             return true
@@ -1763,34 +1763,44 @@ function has_value(tab, val)
     return false
 end
 
-function mapper_goto(room_id)
-    DebugNote("GOTO")
-    Execute('mapper goto ' .. room_id)
-
-end
-
-
 function wm_study_continue()
-    EnableTrigger('get_all_output', false)
     DebugNote("wm_study_continue")
+
+    if #where_trig_table >= 1 then
+
+        -- Not tested yet. I am not sure about that.
+        -- TODO: Test it.
+        if not currentRoom.roomid == where_trig_table[1].roomId then
+            mapper_goto(where_trig_table[1].roomId)
+            table.remove(where_trig_table, 1)
+        end
     
-    if #where_trig_table >= 1 then        
-        DebugNote("From: ".. currentRoom.roomid)
-        DebugNote("Going to: ".. where_trig_table[1].roomId)
-        mapper_goto(where_trig_table[1].roomId)  
+        EnableTriggerGroup("get_all_output", 1)
         SendNoEcho("study")
-        table.remove(where_trig_table, 1)
+
+        if IS_WM_ENABLED then
+            DebugNote("From: ".. currentRoom.roomid)
+            DebugNote("Going to: ".. where_trig_table[1].roomId)
+
+            -- Wait 0.4 seconds before execute mapper goto.
+            -- That is because the "mapper goto" command is running before "study".
+            -- TODO: Is 0.4 stable only in my client or in all clients?
+            -- TODO: Is there any other better approach?
+            --      Maybe the problem is that we call another plugin command?
+            DoAfterSpecial("0.4", "Execute('mapper goto '.. where_trig_table[1].roomId)", 12)
+            table.remove(where_trig_table, 1)
+        end
     else
-        Note("Searching finished.")
+        DebugNote("Searching finished.")
     end 
 end
-
 
 function istarget_study(name, line, wildcards, style)
     DebugNote("function: ISTARGET_STUDY")
 
     -- Disable get_all_output trigger if line is empty.
     if wildcards[0] == "" then
+        IS_WM_ENABLED = true
         EnableTrigger('get_all_output', false)
         DebugNote("--END OF STUDY--")
         return
@@ -1802,66 +1812,27 @@ function istarget_study(name, line, wildcards, style)
         DebugNote("MOB IS HERE!")
         IS_WM_ENABLED = false
 
-        if not tstart then
-            tend = GetInfo (232)
-            Note (string.format ("Time taken = %1.3f seconds", tend - tstart))
-        end
-        EnableTriggerGroup("get_all_output", 0)
-        EnableTrigger('where_mob_trig', 0)
+        -- Delete the timers from wm_study_continue()
+        DeleteTemporaryTimers();
 
-        kill_scan_run()
+        -- Calculate the time elapsed from the start of wm till now.
+        -- Only for Debugging purposes.
+        if tstart then
+            tend = GetInfo (232)
+            DebugNote(string.format ("Time taken = %1.3f seconds", tend - tstart))
+        end
+
+        -- Print target mob with colours.
         for a, s in ipairs(style) do
             local text = RGBColourToName(s.textcolour)
             local back = RGBColourToName(s.backcolour)
             text = "black" back = "yellow"
-            ColourTell(text, back, s.text)
+            ColourTell(text, back, s.text .." [TARGET]")
          end
-            ColourTell("black", "yellow", " [TARGET]")
-            print("\n")
-            where_trig_table = {}
-    -- else
-        -- DebugNote(where_trig_table)
-   
 
-        --[[
-
-        if #where_trig_table >= 1 then
-            DebugNote("Where trigger")
-
-            DebugNote(CAN_RUN)
-            DebugNote(currentRoom.roomid)
-            DebugNote(where_trig_table[1].roomId )
-            
-            for k, v in pairs(where_trig_table) do
-                DebugNote(v.roomId)
-
-                if v.roomId == currentRoom.roomid then
-                    break
-                else
-                   while(CAN_RUN==true) do
-                        Execute('xmapper1 move ' .. where_trig_table[1].roomId)
-                        SendNoEcho('study')
-                        table.remove(where_trig_table, 1)
-                    end 
-
-                end
-
-
-            end]]
-
-
-            --if not where_trig_table[1].roomId == currentRoom.roomid then
-             --   DebugNote("here")
-             --   while(CAN_RUN==true) do
-              --      Execute('xmapper1 move ' .. where_trig_table[1].roomId)
-              --      SendNoEcho('study')
-               --     table.remove(where_trig_table, 1)
-               -- end
-           -- end
-       -- end
-        -- TODO: Check if there are more rooms in WM mode to runto.
-        -- TODO: In normal mode, maybe here we can activate wm
-        --          or print a message to user to do it manually.
+        EnableTriggerGroup("get_all_output", 0)
+        EnableTrigger('where_mob_trig', 0)
+        kill_scan_run()
     end
 end
 
