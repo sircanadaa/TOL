@@ -1394,8 +1394,7 @@ end
 where_mob = ''
 
 function whereMob(name, line, wildcards)
-
-tstart = GetInfo (232)
+    tstart = GetInfo (232)
     hunt_off()
     auto_hunt_stop()
     kill_scan_run()
@@ -1732,6 +1731,7 @@ end
 
 function has_value(tab, val)
     DebugNote("Match value: ".. val)
+    DebugNote(tab)
 
     -- Check for custom wm attend.
     if #where_trig_table >= 1 then
@@ -1748,16 +1748,14 @@ function has_value(tab, val)
         return true
     end
 
-    -- Just in case
-    if not val == nil or tab == nil then
-        -- Check for cp mobs.
-        for index, value in pairs(tab) do
-            if value == nil then return end
+    -- Check for cp mobs.
+    for index, value in pairs(tab) do
+        if value == nil then return end
 
-            if string.match(val, string.lower(value.name)) then
-                DebugNote("Cp match.")
-                return true
-            end
+        DebugNote("Compare ".. val .."with ".. value.name)
+        if string.match(val, string.lower(value.name)) then
+            DebugNote("Cp match.")
+            return true
         end
     end
 
@@ -1801,12 +1799,13 @@ function istarget_study(name, line, wildcards, style)
     local name = string.sub(string.lower(wildcards[1]), 1, 30)
 
     if has_value(cp_mobs, name) then
-        Note("MOB IS HERE!")
-
-        tend = GetInfo (232)    
-        Note (string.format ("Time taken = %1.3f seconds", tend - tstart))
+        DebugNote("MOB IS HERE!")
         IS_WM_ENABLED = false
 
+        if not tstart then
+            tend = GetInfo (232)
+            Note (string.format ("Time taken = %1.3f seconds", tend - tstart))
+        end
         EnableTriggerGroup("get_all_output", 0)
         EnableTrigger('where_mob_trig', 0)
 
