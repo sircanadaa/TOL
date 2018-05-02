@@ -1275,7 +1275,6 @@ function gotoNextMob()-- This will goto the next mob, use with tcp
         DebugNote("Entry for mob_next_delete_value")
         DebugNote(mob_index)
         mob_next_delete_value = mob_index
-        EnableTrigger('get_all_output', true)
         Send('study '.. mobname)
 
     else
@@ -1286,7 +1285,6 @@ function gotoNextMob()-- This will goto the next mob, use with tcp
         DebugNote("Entry for mob_next_delete_value")
         DebugNote(mob_index + 1)
         mob_next_delete_value = mob_index + 1
-        EnableTrigger('get_all_output', true)
         SendNoEcho('study')
     end
 end
@@ -1396,6 +1394,8 @@ end
 where_mob = ''
 
 function whereMob(name, line, wildcards)
+
+tstart = GetInfo (232)
     hunt_off()
     auto_hunt_stop()
     kill_scan_run()
@@ -1572,18 +1572,19 @@ function OnPluginBroadcast (msg, id, name, text)
     --DebugNote ("id = " .. id)
     --DebugNote ("name = " .. name)
     --DebugNote ("text = " .. text)
-
-    if id == 'b6eae87ccedd84f510b74714' then
+    
+     if id == 'b6eae87ccedd84f510b74714' then
        if text == 'kinda_busy' then
+            DebugNote("kinda_busy")
             CAN_RUN=false
         elseif text == 'ok_you_can_go_now' then
-            Note("ok_you_can_go_now")
+            DebugNote("ok_you_can_go_now")
             if IS_WM_ENABLED then
                 wm_study_continue()
-            end    
+            end
             CAN_RUN=true
         end    
-    end    
+    end  
 
     if (id == '3e7dedbe37e44942dd46d264') then
         if (text == "room.info") then
@@ -1776,12 +1777,11 @@ function wm_study_continue()
     DebugNote("wm_study_continue")
     
     if #where_trig_table >= 1 then        
-        table.remove(where_trig_table, 1)
-        EnableTrigger('get_all_output', true)
-        SendNoEcho("study")
         DebugNote("From: ".. currentRoom.roomid)
         DebugNote("Going to: ".. where_trig_table[1].roomId)
         mapper_goto(where_trig_table[1].roomId)  
+        SendNoEcho("study")
+        table.remove(where_trig_table, 1)
     else
         Note("Searching finished.")
     end 
@@ -1789,8 +1789,7 @@ end
 
 
 function istarget_study(name, line, wildcards, style)
-   -- DebugNote("function: ISTARGET_STUDY")
-
+    DebugNote("function: ISTARGET_STUDY")
 
     -- Disable get_all_output trigger if line is empty.
     if wildcards[0] == "" then
@@ -1803,7 +1802,11 @@ function istarget_study(name, line, wildcards, style)
 
     if has_value(cp_mobs, name) then
         Note("MOB IS HERE!")
+
+        tend = GetInfo (232)    
+        Note (string.format ("Time taken = %1.3f seconds", tend - tstart))
         IS_WM_ENABLED = false
+
         EnableTriggerGroup("get_all_output", 0)
         EnableTrigger('where_mob_trig', 0)
 

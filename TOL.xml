@@ -754,9 +754,9 @@ Note:
 
   <trigger
     enabled="y"
-    script="scan_table_handler"
+    script="wm_study_continue"
     match="^(There is no one here by that name.)$"
-    name="scan_table_handler"
+    name="wm_study_continue"
     regexp="y"
     sequence="100"
     send_to="12" >
@@ -786,13 +786,6 @@ Note:
    group="get_all_output" >
   </trigger>
 
-<trigger
-   enabled="y"
-   script="wm_study_continue"
-   match="{end study}"
-   send_to="12"
-   omit_from_output="y" >
- </trigger>  
 
   <trigger
     enabled="n"
