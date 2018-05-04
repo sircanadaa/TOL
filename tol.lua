@@ -465,38 +465,52 @@ FirstRun_cp_var = true
 
 -- This function is just for testing. It should never actually be used.
 function printVars()
-  mobsleft = {}
-  EnableTrigger('campaign_item',1)
-  EnableTrigger('camp_item_start',1)
-Execute("echo You still have to kill * some burning embers (Scorched earth)")
-Execute("echo You still have to kill * the stage manager (Rehearsal Room B)")
-Execute("echo You still have to kill * a servant (Western Tower)")
-Execute("echo You still have to kill * a cavorting faerie (The Botanical Gardens)")
-Execute("echo You still have to kill * a blacksmith (A blacksmith's shop)")
-Execute("echo You still have to kill * a partially clothed actor (Offstage:No Park Guest Access)")
-Execute("echo You still have to kill * Al-E-Gator (Swamped!)")
-Execute("echo You still have to kill * a citizen of the realm (A Path Around the Maw)")
-Execute("echo You still have to kill * a citizen (Main street)")
-Execute("echo You still have to kill * a dolphinfish (Exploring the Deep Ocean)")
-Execute("echo You still have to kill * a brilliant Nyarlithit (The Final Conflict)")
-Execute("echo You still have to kill * Good Eclaboussure (Outer Space)")
-Execute("echo You still have to kill * the ice lord (The Chamber of the Ice Lord)")
-Execute("echo You still have to kill * a raw recruit (An Iron Training Room)")
-Execute("echo You still have to kill * a guest (A Guest Chamber)")
-Execute("echo You still have to kill * a killer bee (A Wilting Root Hair)")
-Execute("echo You still have to kill * Evil Peane (Outer Space)")
-Execute("echo You still have to kill * a Reakle (Inside the Great Hall of the Castle)")
-Execute("echo You still have to kill 1 * a large rat (Western Side of the Balcony)")
-Execute("echo You still have to kill 1 * Moriarty Jones (In Moriarty's Room)")
-Execute("echo You still have to kill 1 * Leon Birdie (Prosper's Island)")
-Execute("echo You still have to kill 1 * a worshipper of the sacred flame (The room of purification)")
-Execute("echo You still have to kill 2 * a line cook (The kitchens)")
-Execute("echo You still have to kill 2 * a blood beast (The Blood Swamp)")
-Execute("echo You still have to kill 1 * Vulcris (Vulcris' Sanctum)")
-Execute("echo You still have to kill 1 * Johna (The Partroxis)")
-Execute("echo You still have to kill 2 * a smiling faerie (The Botanical Gardens)")
-Execute("echo You still have to kill 2 * a cavorting faerie (The Botanical Gardens)")
-Execute("echo Note: One or more target names in this gquest might be slightly scrambled.")
+    if where_trig_table ~= nil then
+        local count = 0
+        for i,p in pairs(where_trig_table) do
+            count = count + 1
+        end
+        print("where_trig_table: "..count)
+    end
+    if SCAN_TABLE ~= nil then
+        local count = 0
+        for i,p in pairs(SCAN_TABLE) do
+            count = count + 1
+        end
+        print('SCAN_TABLE'..count)
+    end
+--   mobsleft = {}
+--   EnableTrigger('campaign_item',1)
+--   EnableTrigger('camp_item_start',1)
+-- Execute("echo You still have to kill * some burning embers (Scorched earth)")
+-- Execute("echo You still have to kill * the stage manager (Rehearsal Room B)")
+-- Execute("echo You still have to kill * a servant (Western Tower)")
+-- Execute("echo You still have to kill * a cavorting faerie (The Botanical Gardens)")
+-- Execute("echo You still have to kill * a blacksmith (A blacksmith's shop)")
+-- Execute("echo You still have to kill * a partially clothed actor (Offstage:No Park Guest Access)")
+-- Execute("echo You still have to kill * Al-E-Gator (Swamped!)")
+-- Execute("echo You still have to kill * a citizen of the realm (A Path Around the Maw)")
+-- Execute("echo You still have to kill * a citizen (Main street)")
+-- Execute("echo You still have to kill * a dolphinfish (Exploring the Deep Ocean)")
+-- Execute("echo You still have to kill * a brilliant Nyarlithit (The Final Conflict)")
+-- Execute("echo You still have to kill * Good Eclaboussure (Outer Space)")
+-- Execute("echo You still have to kill * the ice lord (The Chamber of the Ice Lord)")
+-- Execute("echo You still have to kill * a raw recruit (An Iron Training Room)")
+-- Execute("echo You still have to kill * a guest (A Guest Chamber)")
+-- Execute("echo You still have to kill * a killer bee (A Wilting Root Hair)")
+-- Execute("echo You still have to kill * Evil Peane (Outer Space)")
+-- Execute("echo You still have to kill * a Reakle (Inside the Great Hall of the Castle)")
+-- Execute("echo You still have to kill 1 * a large rat (Western Side of the Balcony)")
+-- Execute("echo You still have to kill 1 * Moriarty Jones (In Moriarty's Room)")
+-- Execute("echo You still have to kill 1 * Leon Birdie (Prosper's Island)")
+-- Execute("echo You still have to kill 1 * a worshipper of the sacred flame (The room of purification)")
+-- Execute("echo You still have to kill 2 * a line cook (The kitchens)")
+-- Execute("echo You still have to kill 2 * a blood beast (The Blood Swamp)")
+-- Execute("echo You still have to kill 1 * Vulcris (Vulcris' Sanctum)")
+-- Execute("echo You still have to kill 1 * Johna (The Partroxis)")
+-- Execute("echo You still have to kill 2 * a smiling faerie (The Botanical Gardens)")
+-- Execute("echo You still have to kill 2 * a cavorting faerie (The Botanical Gardens)")
+-- Execute("echo Note: One or more target names in this gquest might be slightly scrambled.")
   --check_area_table()
 end
 -- end testing function
@@ -1578,9 +1592,9 @@ function OnPluginBroadcast (msg, id, name, text)
             CAN_RUN=false
         elseif text == 'ok_you_can_go_now' then
             DebugNote("ok_you_can_go_now")
-            if IS_WM_ENABLED then
-                wm_study_continue()
-            end
+            -- if IS_WM_ENABLED then
+            --     wm_study_continue()
+            -- end
             CAN_RUN=true
         end    
     end  
@@ -1763,11 +1777,11 @@ function has_value(tab, val)
     return false
 end
 
-function wm_study_continue()
+function wm_study_continue(send_study)
     DebugNote("wm_study_continue")
-
+    local send_study = send_study or true
     if #where_trig_table >= 1 then
-
+        DebugNote('Where_trig_table Size: ' .. #where_trig_table)
         -- Not tested yet. I am not sure about that.
         -- TODO: Test it.
         if not currentRoom.roomid == where_trig_table[1].roomId then
@@ -1775,9 +1789,17 @@ function wm_study_continue()
             table.remove(where_trig_table, 1)
         end
     
-        EnableTriggerGroup("get_all_output", 1)
-        SendNoEcho("study")
-
+        EnableTriggerGroup("study_output", 1)
+        
+        res, gmcparg = CallPlugin("3e7dedbe37e44942dd46d264", "gmcpval", "char.status")
+        luastmt = "gmcpdata = " .. gmcparg
+        assert (loadstring (luastmt or "")) ()
+        runningFlag = tonumber(gmcpdata.state)
+        print(runningFlag)
+        if runningFlag == 8 then 
+            where_trig_table = {}
+            return
+        end
         if IS_WM_ENABLED then
             DebugNote("From: ".. currentRoom.roomid)
             DebugNote("Going to: ".. where_trig_table[1].roomId)
@@ -1787,8 +1809,38 @@ function wm_study_continue()
             -- TODO: Is 0.4 stable only in my client or in all clients?
             -- TODO: Is there any other better approach?
             --      Maybe the problem is that we call another plugin command?
-            DoAfterSpecial("0.4", "Execute('mapper goto '.. where_trig_table[1].roomId)", 12)
+           -- DoAfterSpecial("0.4", "Execute('mapper goto '.. where_trig_table[1].roomId)", 12)
+            --Execute('mapper goto '.. where_trig_table[1].roomId)
+            local path , dist= findpath(currentRoom.roomid, where_trig_table[1].roomId)
+            DebugNote(path)
+            local speedwalk = ''
+            if dist >0 then
+                for i,p in pairs(path) do
+                    if string.len(p['dir']) > 1 then
+                        if string.len(speedwalk) > 1 then
+                            DebugNote(speedwalk)
+                            Execute('run '.. speedwalk)
+                            speedwalk = ''
+                        end
+                        Execute(p['dir'])
+                    else
+                        speedwalk = speedwalk .. p['dir']
+                    end
+                end
+                DebugNote(speedwalk)
+                Execute('run '.. speedwalk)
+                --Execute('echo {end speedwalk}')
+            else
+                table.remove(where_trig_table, 1)
+                wm_study_continue(3)
+            end
+            
+            DebugNote(dist)
             table.remove(where_trig_table, 1)
+        end
+        DebugNote(tostring(send_study))
+        if send_study ~= 3 then
+            Send("study ".. mobname)
         end
     else
         DebugNote("Searching finished.")
@@ -1797,7 +1849,7 @@ end
 
 function istarget_study(name, line, wildcards, style)
     DebugNote("function: ISTARGET_STUDY")
-
+    EnableTriggerGroup("study_output", 0)
     -- Disable get_all_output trigger if line is empty.
     if wildcards[0] == "" then
         IS_WM_ENABLED = true
@@ -1819,7 +1871,7 @@ function istarget_study(name, line, wildcards, style)
         -- Only for Debugging purposes.
         if tstart then
             tend = GetInfo (232)
-            DebugNote(string.format ("Time taken = %1.3f seconds", tend - tstart))
+            Note(string.format ("Time taken = %1.3f seconds", tend - tstart))
         end
 
         -- Print target mob with colours.

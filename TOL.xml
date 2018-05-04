@@ -763,8 +763,18 @@ Note:
   </trigger>
 
   <trigger
-   enabled="y"
-   match="^.*(You quickly evaluate the health of.*)(?s)(.*$)"
+    enabled="n"
+    script="wm_study_continue"
+    match="^\{end speedwalk\}$"
+    name="wm_study_continue1"
+    regexp="y"
+    sequence="100"
+    send_to="12" >
+  </trigger>
+
+  <trigger
+   enabled="n"
+   match="^You quickly evaluate the health of"
    regexp="y"
    repeat="y"
    name="study_output"
@@ -773,6 +783,7 @@ Note:
    sequence="100" >
     <send>
       EnableTriggerGroup("get_all_output", 1)
+      --print('TRIGGER: You quickly evaluate the health of')
     </send>  
   </trigger>
 
