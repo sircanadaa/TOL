@@ -783,7 +783,7 @@ Note:
    sequence="100" >
     <send>
       EnableTriggerGroup("get_all_output", 1)
-      --print('TRIGGER: You quickly evaluate the health of')
+      DebugNote('get_all_output on')
     </send>  
   </trigger>
 

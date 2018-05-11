@@ -1289,7 +1289,7 @@ function gotoNextMob()-- This will goto the next mob, use with tcp
         DebugNote("Entry for mob_next_delete_value")
         DebugNote(mob_index)
         mob_next_delete_value = mob_index
-        Send('study '.. mobname)
+        Send('scan '.. mobname)
 
     else
         if hunt_type(0, 1) == 1 then
@@ -1299,7 +1299,7 @@ function gotoNextMob()-- This will goto the next mob, use with tcp
         DebugNote("Entry for mob_next_delete_value")
         DebugNote(mob_index + 1)
         mob_next_delete_value = mob_index + 1
-        SendNoEcho('study')
+        SendNoEcho('scan '.. mobname)
     end
 end
 
@@ -1330,7 +1330,7 @@ function gotoIndexMob(name, line, wildcards)-- This will goto the next mob, use 
     mob_next_delete_value = wild
     Execute('xmapper1 move ' .. getTable(tonumber(wild)))
 
-    SendNoEcho('study')
+    SendNoEcho('scan ' .. mobname)
 end
 
 function tcpohandler(name, line, wildcards)
@@ -1357,14 +1357,14 @@ function tcpohandler(name, line, wildcards)
         DebugNote("Entry for mob_next_delete_value")
         DebugNote(wild)
         mob_next_delete_value = wild
-        EnableTrigger('get_all_output', true)
-        SendNoEcho('study')
+        --EnableTrigger('get_all_output', true)
+        SendNoEcho('scan ' .. mobname)
     else
         mobname = sanitizeName(room_num_table2[1][2])
         Execute ('xmapper1 move ' .. room_num_table2[1][1])
         mob_next_delete_value = 1
-        EnableTrigger('get_all_output', true)
-        SendNoEcho('study')
+        --EnableTrigger('get_all_output', true)
+        SendNoEcho('scan ' .. mobname)
     end
 end
 
@@ -1697,6 +1697,7 @@ function scan_table_handler()
     DebugNote(areaid)
     DebugNote(currentRoom)
     if areaid[1].areaid ~= currentRoom.areaid then
+        where_trig_table = {}
         Note('looks like you are not in the same area, cancelling.')
         return
     end
@@ -1790,6 +1791,7 @@ function wm_study_continue(send_study)
         end
     
         EnableTriggerGroup("study_output", 1)
+DebugNote('study_output on')
         
         res, gmcparg = CallPlugin("3e7dedbe37e44942dd46d264", "gmcpval", "char.status")
         luastmt = "gmcpdata = " .. gmcparg
@@ -1814,6 +1816,10 @@ function wm_study_continue(send_study)
             local path , dist= findpath(currentRoom.roomid, where_trig_table[1].roomId)
             DebugNote(path)
             local speedwalk = ''
+            if dist == nil then
+                Note('There was no usable path to the creature.')
+                return
+            end
             if dist >0 then
                 for i,p in pairs(path) do
                     if string.len(p['dir']) > 1 then
@@ -1850,10 +1856,14 @@ end
 function istarget_study(name, line, wildcards, style)
     DebugNote("function: ISTARGET_STUDY")
     EnableTriggerGroup("study_output", 0)
+DebugNote('study_output off')
+EnableTrigger('get_all_output', false)
+        DebugNote('get_all_ouput off')
     -- Disable get_all_output trigger if line is empty.
     if wildcards[0] == "" then
         IS_WM_ENABLED = true
         EnableTrigger('get_all_output', false)
+        DebugNote('get_all_ouput off')
         DebugNote("--END OF STUDY--")
         return
     end
@@ -1883,6 +1893,7 @@ function istarget_study(name, line, wildcards, style)
          end
 
         EnableTriggerGroup("get_all_output", 0)
+DebugNote('get_all_output off')
         EnableTrigger('where_mob_trig', 0)
         kill_scan_run()
     end
@@ -1914,6 +1925,7 @@ function istarget(name, line, wildcards, style)
         if string.match(string.lower(name), string.lower(target_mobs[a])) then
             highlight = true
             EnableTriggerGroup("get_all_output", 0)
+DebugNote('get_all_output off')
             break
         end
     end
