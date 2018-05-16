@@ -1226,6 +1226,7 @@ function sortRoomCPByPath()
     local x
     local room = -1
     dist_tbl = {}
+    dist_correction = {}
     DebugNote('==============================')
     DebugNote(currentRoom.roomid)
     for i, p in ipairs(room_num_table) do
@@ -1235,20 +1236,36 @@ function sortRoomCPByPath()
         DebugNote('Depth:')
         DebugNote (dep)
         if dep ~= nil then
-            table.insert(dist_tbl, {i, dep})
+            table.insert(dist_tbl, {i, dep, p[5]})
         else
-            table.insert(dist_tbl, {i, 501})
+            if (p.dist ~= nil) then
+                table.insert(dist_tbl, {i, p.dist})
+            else
+                table.insert(dist_correction, {i, 501, p[5]})
+            end
         end
     end
     local keys = {}
     local b = {}
     local q = {}
-    for k in pairs(dist_tbl) do table.insert(keys, k) end
-    table.sort(keys, function(a, b) return dist_tbl[a][2] < dist_tbl[b][2] end)
-    for _, k in ipairs(keys) do
-        cp_mobs[k].dist = dist_tbl[k][2]
-        table.insert(b, cp_mobs[k])
-        table.insert(q, room_num_table[k])
+    for i, p in ipairs(dist_correction) do
+        local stop_correction = 0
+        for q, n in ipairs(dist_tbl) do
+            if ( p[3]== n[3]  and stop_correction == 0) then
+                table.insert(dist_tbl, {p[1], n[2]})
+                stop_correction = 1
+            end
+        end
+        if stop_correction == 0 then
+            table.insert(dist_tbl, {p[1], 501})
+        end
+    end
+    
+    table.sort(dist_tbl, function(a, b) return a[2] < b[2] end)
+    for _, k in ipairs(dist_tbl) do
+        cp_mobs[k[1]].dist = k[2]
+        table.insert(b, cp_mobs[k[1]])
+        table.insert(q, room_num_table[k[1]])
     end
     room_num_table = q
     cp_mobs = b
@@ -1750,7 +1767,7 @@ function has_value(tab, val)
     -- Check for custom wm attend.
     if #where_trig_table >= 1 then
         DebugNote('WHERE_MOB: ' .. WHERE_MOB)
-        if string.match(val,WHERE_MOB) then
+        if string.match(val,string.lower(WHERE_MOB)) then
             DebugNote("Where_mob match.")
             return true
         else
@@ -1822,18 +1839,20 @@ DebugNote('study_output on')
             end
             if dist >0 then
                 for i,p in pairs(path) do
+                    DebugNote(string.len(p['dir']))
                     if string.len(p['dir']) > 1 then
-                        if string.len(speedwalk) > 1 then
-                            DebugNote(speedwalk)
+                        if string.len(speedwalk) > 0 then
+                            DebugNote('speedwalk '..speedwalk)
                             Execute('run '.. speedwalk)
                             speedwalk = ''
                         end
+                        DebugNote('execute special')
                         Execute(p['dir'])
                     else
                         speedwalk = speedwalk .. p['dir']
                     end
                 end
-                DebugNote(speedwalk)
+                DebugNote('speedwalk2 ' ..speedwalk)
                 Execute('run '.. speedwalk)
                 --Execute('echo {end speedwalk}')
             else
