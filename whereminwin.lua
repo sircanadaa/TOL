@@ -255,7 +255,13 @@ local runningFlag = 3
 local curZone
 local lastZone
 function OnPluginBroadcast (msg, id, name, text)
-    
+    if text == 'ok_you_can_go_now' then
+        allowScript()
+    end
+    if text == 'kinda_busy' then
+        
+      stallScript()
+    end
     if (text == "char.status") then
         res, gmcparg = CallPlugin("3e7dedbe37e44942dd46d264", "gmcpval", "char.status")
         luastmt = "gmcpdata = " .. gmcparg
