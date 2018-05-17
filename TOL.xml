@@ -754,17 +754,27 @@ Note:
 
   <trigger
     enabled="y"
-    script="scan_table_handler"
+    script="wm_study_continue"
     match="^(There is no one here by that name.)$"
-    name="scan_table_handler"
+    name="wm_study_continue"
     regexp="y"
     sequence="100"
     send_to="12" >
   </trigger>
 
   <trigger
-   enabled="y"
-   match="^.*(You quickly evaluate the health of.*)(?s)(.*$)"
+    enabled="n"
+    script="wm_study_continue"
+    match="^\{end speedwalk\}$"
+    name="wm_study_continue1"
+    regexp="y"
+    sequence="100"
+    send_to="12" >
+  </trigger>
+
+  <trigger
+   enabled="n"
+   match="^You quickly evaluate the health of"
    regexp="y"
    repeat="y"
    name="study_output"
@@ -773,6 +783,7 @@ Note:
    sequence="100" >
     <send>
       EnableTriggerGroup("get_all_output", 1)
+      DebugNote('get_all_output on')
     </send>  
   </trigger>
 
@@ -783,12 +794,9 @@ Note:
    regexp="y"
    repeat="y"
    name="get_all_output"
-   group="get_all_output"
-   expand_variables="y"
-   keep_evaluating="y"
-   omit_from_output="y"
-   lowercase_wildcard="y" >
+   group="get_all_output" >
   </trigger>
+
 
   <trigger
     enabled="n"
