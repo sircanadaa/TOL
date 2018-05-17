@@ -423,7 +423,7 @@ function cpn_script (index, line, wildcards)
     if wildcards ~= nil then
         numcheck = tonumber(wildcards[1])
     end
-
+    
     DebugNote (index)
     DebugNote (type(index))
     DebugNote (numcheck)
@@ -467,51 +467,51 @@ FirstRun_cp_var = true
 function printVars()
     if where_trig_table ~= nil then
         local count = 0
-        for i,p in pairs(where_trig_table) do
+        for i, p in pairs(where_trig_table) do
             count = count + 1
         end
         print("where_trig_table: "..count)
     end
     if SCAN_TABLE ~= nil then
         local count = 0
-        for i,p in pairs(SCAN_TABLE) do
+        for i, p in pairs(SCAN_TABLE) do
             count = count + 1
         end
         print('SCAN_TABLE'..count)
     end
---   mobsleft = {}
---   EnableTrigger('campaign_item',1)
---   EnableTrigger('camp_item_start',1)
--- Execute("echo You still have to kill * some burning embers (Scorched earth)")
--- Execute("echo You still have to kill * the stage manager (Rehearsal Room B)")
--- Execute("echo You still have to kill * a servant (Western Tower)")
--- Execute("echo You still have to kill * a cavorting faerie (The Botanical Gardens)")
--- Execute("echo You still have to kill * a blacksmith (A blacksmith's shop)")
--- Execute("echo You still have to kill * a partially clothed actor (Offstage:No Park Guest Access)")
--- Execute("echo You still have to kill * Al-E-Gator (Swamped!)")
--- Execute("echo You still have to kill * a citizen of the realm (A Path Around the Maw)")
--- Execute("echo You still have to kill * a citizen (Main street)")
--- Execute("echo You still have to kill * a dolphinfish (Exploring the Deep Ocean)")
--- Execute("echo You still have to kill * a brilliant Nyarlithit (The Final Conflict)")
--- Execute("echo You still have to kill * Good Eclaboussure (Outer Space)")
--- Execute("echo You still have to kill * the ice lord (The Chamber of the Ice Lord)")
--- Execute("echo You still have to kill * a raw recruit (An Iron Training Room)")
--- Execute("echo You still have to kill * a guest (A Guest Chamber)")
--- Execute("echo You still have to kill * a killer bee (A Wilting Root Hair)")
--- Execute("echo You still have to kill * Evil Peane (Outer Space)")
--- Execute("echo You still have to kill * a Reakle (Inside the Great Hall of the Castle)")
--- Execute("echo You still have to kill 1 * a large rat (Western Side of the Balcony)")
--- Execute("echo You still have to kill 1 * Moriarty Jones (In Moriarty's Room)")
--- Execute("echo You still have to kill 1 * Leon Birdie (Prosper's Island)")
--- Execute("echo You still have to kill 1 * a worshipper of the sacred flame (The room of purification)")
--- Execute("echo You still have to kill 2 * a line cook (The kitchens)")
--- Execute("echo You still have to kill 2 * a blood beast (The Blood Swamp)")
--- Execute("echo You still have to kill 1 * Vulcris (Vulcris' Sanctum)")
--- Execute("echo You still have to kill 1 * Johna (The Partroxis)")
--- Execute("echo You still have to kill 2 * a smiling faerie (The Botanical Gardens)")
--- Execute("echo You still have to kill 2 * a cavorting faerie (The Botanical Gardens)")
--- Execute("echo Note: One or more target names in this gquest might be slightly scrambled.")
-  --check_area_table()
+    --   mobsleft = {}
+    --   EnableTrigger('campaign_item',1)
+    --   EnableTrigger('camp_item_start',1)
+    -- Execute("echo You still have to kill * some burning embers (Scorched earth)")
+    -- Execute("echo You still have to kill * the stage manager (Rehearsal Room B)")
+    -- Execute("echo You still have to kill * a servant (Western Tower)")
+    -- Execute("echo You still have to kill * a cavorting faerie (The Botanical Gardens)")
+    -- Execute("echo You still have to kill * a blacksmith (A blacksmith's shop)")
+    -- Execute("echo You still have to kill * a partially clothed actor (Offstage:No Park Guest Access)")
+    -- Execute("echo You still have to kill * Al-E-Gator (Swamped!)")
+    -- Execute("echo You still have to kill * a citizen of the realm (A Path Around the Maw)")
+    -- Execute("echo You still have to kill * a citizen (Main street)")
+    -- Execute("echo You still have to kill * a dolphinfish (Exploring the Deep Ocean)")
+    -- Execute("echo You still have to kill * a brilliant Nyarlithit (The Final Conflict)")
+    -- Execute("echo You still have to kill * Good Eclaboussure (Outer Space)")
+    -- Execute("echo You still have to kill * the ice lord (The Chamber of the Ice Lord)")
+    -- Execute("echo You still have to kill * a raw recruit (An Iron Training Room)")
+    -- Execute("echo You still have to kill * a guest (A Guest Chamber)")
+    -- Execute("echo You still have to kill * a killer bee (A Wilting Root Hair)")
+    -- Execute("echo You still have to kill * Evil Peane (Outer Space)")
+    -- Execute("echo You still have to kill * a Reakle (Inside the Great Hall of the Castle)")
+    -- Execute("echo You still have to kill 1 * a large rat (Western Side of the Balcony)")
+    -- Execute("echo You still have to kill 1 * Moriarty Jones (In Moriarty's Room)")
+    -- Execute("echo You still have to kill 1 * Leon Birdie (Prosper's Island)")
+    -- Execute("echo You still have to kill 1 * a worshipper of the sacred flame (The room of purification)")
+    -- Execute("echo You still have to kill 2 * a line cook (The kitchens)")
+    -- Execute("echo You still have to kill 2 * a blood beast (The Blood Swamp)")
+    -- Execute("echo You still have to kill 1 * Vulcris (Vulcris' Sanctum)")
+    -- Execute("echo You still have to kill 1 * Johna (The Partroxis)")
+    -- Execute("echo You still have to kill 2 * a smiling faerie (The Botanical Gardens)")
+    -- Execute("echo You still have to kill 2 * a cavorting faerie (The Botanical Gardens)")
+    -- Execute("echo Note: One or more target names in this gquest might be slightly scrambled.")
+    --check_area_table()
 end
 -- end testing function
 kill_info = {}
@@ -617,7 +617,7 @@ function check_cur_mob(test_table)
         enemy = ""
     end
     cur_mob = nil
-
+    
     if #test_table == 3 then
         local line = test_table[1][1]
         Note('printing test table: '..test_table[1][1])
@@ -627,7 +627,7 @@ function check_cur_mob(test_table)
         elseif string.find(line, "%.") then
             temp = string.sub(line, 8, string.find(line, "%.") - 1)
         end
-
+        
         for i, v in pairs(damage_verbs) do
             o, p = string.find(temp, v)
             if p ~= nil then
@@ -642,11 +642,11 @@ function check_cur_mob(test_table)
             temp = string.sub(temp, i + 1, #temp)
             i = string.find(temp, "[%A][%s]")
         end
-
+        
         temp = string.sub(temp, 2, #temp)
         return temp
     end
-
+    
     for i, p in pairs(test_table) do
         if i > 1 and p[2] == 'green' then
             cur_mob = string.sub(p[1], 0, -3)
@@ -674,7 +674,7 @@ function mob_name(name, line, wildcards, styles)
     end
     last_Enemy = check_cur_mob(test_table)
 end
- 
+
 function Add_To_Kill_Table(name, line, wildcards)
     if greedy == false then
         return
@@ -683,18 +683,18 @@ function Add_To_Kill_Table(name, line, wildcards)
     kill_info.name = last_Enemy
     Add_Kill_Table(kill_info)
 end
- 
+
 function check_dead ()
     check_diff()
     for p, q in ipairs(room_num_table) do
         if cp_mobs[p].mobdead ~= nil then
             if q[2] == cp_mobs[p].name and cp_mobs[p].mobdead == true then --used to be k.name and k.mobdead in case it doesn't work
-    room_num_table[p][3] = true
-else
-    room_num_table[p][3] = false
-end
-end
-end
+                room_num_table[p][3] = true
+            else
+                room_num_table[p][3] = false
+            end
+        end
+    end
 end
 
 -- TODO: Evaluate if this function is actually needed anymore.
@@ -703,14 +703,14 @@ function check_diff()
     if AutoUpdate_var == true then
         return
     end
-
+    
     for p, q in pairs(room_num_table) do
         
         if cp_mobs[p] == nil then
             delete_mob_from_table_index(p)
             return
         end
-
+        
         if string.lower(q[2]) ~= string.lower(cp_mobs[p].name) and #room_num_table > #cp_mobs then
             delete_mob_from_table_index(p) -- not sure if this is working yet
             DebugNote ("If you see this message this was the function causing the stack overflow")
@@ -719,7 +719,7 @@ function check_diff()
             buildRoomTable()
             return
         end
-
+        
         if string.lower(q[2]) ~= string.lower(cp_mobs[p].name) and #room_num_table == #cp_mobs then
             DebugNote('room ==cp_mobs and names dont match')
             DebugNote(q[2] .. " " .. cp_mobs[p].name)
@@ -746,7 +746,7 @@ function CpMobsAbr(str)
     CPMobsLevelBound = nil
     levelAdj = 30
     levmin = tonumber(str) - levelAdj
-
+    
     if levmin < 0 then levmin = 0 end
     
     levmax = tonumber(str) + levelAdj
@@ -1003,7 +1003,7 @@ function getRoomIdAreaCP(name, tableNum)
                 table.insert(sublist, {p.name, p.room_id, p.timeskilled})
             end
         end
-
+        
         DebugNote("\n In second block " .. name.."\n")
         for i, a in pairs(sublist) do
             count = count + 1
@@ -1026,7 +1026,7 @@ function getRoomIdAreaCP(name, tableNum)
             end
         end
     end
-
+    
     if roomNumber ~= nil and nameHolder ~= nil then
         DebugNote ("check")
         DebugNote(cp_mobs[tableNum].num)
@@ -1034,13 +1034,13 @@ function getRoomIdAreaCP(name, tableNum)
         makeTable(tonumber(roomNumber), nameHolder, cp_mobs[tableNum].mobdead, true, loc, cp_mobs[tableNum].num)
         mob_index = 1
     end
-
+    
     if roomNumber == nil then
         DebugNote("here")
         makeTable(loc, cp_mobs[tableNum].name, cp_mobs[tableNum].mobdead, false, loc, cp_mobs[tableNum].num)
         mob_index = 1
     end
-
+    
     DebugNote("Times killed table")
     DebugNote(test_timeskileed)
     DebugNote("Times killed table === end")
@@ -1155,22 +1155,22 @@ function getRoomIdRoomCP(name, nameHolder, tableNum)-- TODO some bug here where 
         DebugNote("area_table size: " .. #area_table)
         DebugNote(area_table[z].areauid)
         if area_table[z].areauid == 'prosper' and level > 180 then
-             DebugNote("prosper was found in the SH range setting things up")
-             areaLevel[area_table[z].areauid].maxLevel = 201
-             areaLevel[area_table[z].areauid].minLevel = 175
+            DebugNote("prosper was found in the SH range setting things up")
+            areaLevel[area_table[z].areauid].maxLevel = 201
+            areaLevel[area_table[z].areauid].minLevel = 175
         end
         if area_table[z].areauid == 'sohtwo' and level > 180 then
-             DebugNote("sowtwo found, setting things up")
-             areaLevel[area_table[z].areauid] = {
-            lock=0,
-            minLevel=175,
-            keyword=area_table[z].areauid,
-            name= area_table[z].name,
-            maxLevel=201
+            DebugNote("sowtwo found, setting things up")
+            areaLevel[area_table[z].areauid] = {
+                lock = 0,
+                minLevel = 175,
+                keyword = area_table[z].areauid,
+                name = area_table[z].name,
+                maxLevel = 201
             }
-        end 
+        end
         if areaLevel[area_table[z].areauid] == nil then
-            DebugNote("Could not find an entry for ".. area_table[z].areauid)
+            DebugNote("Could not find an entry for " .. area_table[z].areauid)
             areaLevel[area_table[z].areauid] = {
                 lock = 0,
                 minLevel = 0,
@@ -1251,7 +1251,7 @@ function sortRoomCPByPath()
     for i, p in ipairs(dist_correction) do
         local stop_correction = 0
         for q, n in ipairs(dist_tbl) do
-            if ( p[3]== n[3]  and stop_correction == 0) then
+            if (p[3] == n[3] and stop_correction == 0) then
                 table.insert(dist_tbl, {p[1], n[2]})
                 stop_correction = 1
             end
@@ -1306,8 +1306,8 @@ function gotoNextMob()-- This will goto the next mob, use with tcp
         DebugNote("Entry for mob_next_delete_value")
         DebugNote(mob_index)
         mob_next_delete_value = mob_index
-        Send('scan '.. mobname)
-
+        Send('scan ' .. mobname)
+        
     else
         if hunt_type(0, 1) == 1 then
             return
@@ -1316,7 +1316,7 @@ function gotoNextMob()-- This will goto the next mob, use with tcp
         DebugNote("Entry for mob_next_delete_value")
         DebugNote(mob_index + 1)
         mob_next_delete_value = mob_index + 1
-        SendNoEcho('scan '.. mobname)
+        SendNoEcho('scan ' .. mobname)
     end
 end
 
@@ -1346,7 +1346,7 @@ function gotoIndexMob(name, line, wildcards)-- This will goto the next mob, use 
     DebugNote(wild)
     mob_next_delete_value = wild
     Execute('xmapper1 move ' .. getTable(tonumber(wild)))
-
+    
     SendNoEcho('scan ' .. mobname)
 end
 
@@ -1416,7 +1416,7 @@ function hunt_type (num, mob_id)
             else
                 Execute('xrunto1 '..room_num_table[mob_index][1])
             end
-            cpn_script(mob_index)        
+            cpn_script(mob_index)
             return 1
         end
     end
@@ -1473,7 +1473,7 @@ function where_mob_trig(name, line, wildcards)
             bool = 1
         end
     end
-
+    
     if bool == 1 then
         if currentRoom == nil or table.getn(currentRoom) == 0 then
             res, gmcparg = CallPlugin("3e7dedbe37e44942dd46d264", "gmcpval", "room.info")
@@ -1485,7 +1485,7 @@ function where_mob_trig(name, line, wildcards)
                 areaid = gmcpdata.zone
             }
         end
-
+        
         if currentRoom.areaid == nil then return end
         qryArea = string.format(
             " select r.uid  as roomId   " ..
@@ -1496,8 +1496,8 @@ function where_mob_trig(name, line, wildcards)
             "    and r.name = %s        " ..
             " order by roomId desc       ",
             fixsql(currentRoom.areaid),
-            fixsql(wildcards[2]))
-
+        fixsql(wildcards[2]))
+        
         where_trig_table = db_query(dbA, qryArea)
         if #where_trig_table == 0 then
             Note('The room you are trying to find seems to not be mapped')
@@ -1505,7 +1505,7 @@ function where_mob_trig(name, line, wildcards)
         end
         
         EnableTrigger('where_mob_trig', false)
-
+        
         IS_WM_ENABLED = true
         wm_study_continue()
     end
@@ -1603,19 +1603,19 @@ function OnPluginBroadcast (msg, id, name, text)
     --DebugNote ("name = " .. name)
     --DebugNote ("text = " .. text)
     
-     if id == 'b6eae87ccedd84f510b74714' then
-       if text == 'kinda_busy' then
+    if id == 'b6eae87ccedd84f510b74714' then
+        if text == 'kinda_busy' then
             DebugNote("kinda_busy")
-            CAN_RUN=false
+            CAN_RUN = false
         elseif text == 'ok_you_can_go_now' then
             DebugNote("ok_you_can_go_now")
             -- if IS_WM_ENABLED then
             --     wm_study_continue()
             -- end
-            CAN_RUN=true
-        end    
-    end  
-
+            CAN_RUN = true
+        end
+    end
+    
     if (id == '3e7dedbe37e44942dd46d264') then
         if (text == "room.info") then
             res, gmcparg = CallPlugin("3e7dedbe37e44942dd46d264", "gmcpval", "room.info")
@@ -1762,35 +1762,35 @@ function scan_continue()
 end
 
 function has_value(tab, val)
-    DebugNote("Match value: ".. val)
-
+    DebugNote("Match value: " .. val)
+    
     -- Check for custom wm attend.
     if #where_trig_table >= 1 then
         DebugNote('WHERE_MOB: ' .. WHERE_MOB)
-        if string.match(val,string.lower(WHERE_MOB)) then
+        if string.match(val, string.lower(WHERE_MOB)) then
             DebugNote("Where_mob match.")
             return true
         else
             return false
         end
     end
-
+    
     -- Check quest mob
-    if questHandler.mob ~= nil and string.match(val,string.lower(questHandler.mob)) then
+    if questHandler.mob ~= nil and string.match(val, string.lower(questHandler.mob)) then
         DebugNote("Quest match.")
         return true
     end
-
+    
     -- Check for cp mobs.
     for index, value in pairs(tab) do
         if value == nil then return end
-
+        
         if string.match(val, string.lower(value.name)) then
             DebugNote("Cp match.")
             return true
         end
     end
-
+    
     DebugNote("No match found.")
     return false
 end
@@ -1806,44 +1806,44 @@ function wm_study_continue(send_study)
             mapper_goto(where_trig_table[1].roomId)
             table.remove(where_trig_table, 1)
         end
-    
+        
         EnableTriggerGroup("study_output", 1)
-DebugNote('study_output on')
+        DebugNote('study_output on')
         
         res, gmcparg = CallPlugin("3e7dedbe37e44942dd46d264", "gmcpval", "char.status")
         luastmt = "gmcpdata = " .. gmcparg
         assert (loadstring (luastmt or "")) ()
         runningFlag = tonumber(gmcpdata.state)
         print(runningFlag)
-        if runningFlag == 8 then 
+        if runningFlag == 8 then
             where_trig_table = {}
             return
         end
         if IS_WM_ENABLED then
-            DebugNote("From: ".. currentRoom.roomid)
-            DebugNote("Going to: ".. where_trig_table[1].roomId)
-
+            DebugNote("From: " .. currentRoom.roomid)
+            DebugNote("Going to: " .. where_trig_table[1].roomId)
+            
             -- Wait 0.4 seconds before execute mapper goto.
             -- That is because the "mapper goto" command is running before "study".
             -- TODO: Is 0.4 stable only in my client or in all clients?
             -- TODO: Is there any other better approach?
             --      Maybe the problem is that we call another plugin command?
-           -- DoAfterSpecial("0.4", "Execute('mapper goto '.. where_trig_table[1].roomId)", 12)
+            -- DoAfterSpecial("0.4", "Execute('mapper goto '.. where_trig_table[1].roomId)", 12)
             --Execute('mapper goto '.. where_trig_table[1].roomId)
-            local path , dist= findpath(currentRoom.roomid, where_trig_table[1].roomId)
+            local path, dist = findpath(currentRoom.roomid, where_trig_table[1].roomId)
             DebugNote(path)
             local speedwalk = ''
             if dist == nil then
                 Note('There was no usable path to the creature.')
                 return
             end
-            if dist >0 then
-                for i,p in pairs(path) do
+            if dist > 0 then
+                for i, p in pairs(path) do
                     DebugNote(string.len(p['dir']))
                     if string.len(p['dir']) > 1 then
                         if string.len(speedwalk) > 0 then
                             DebugNote('speedwalk '..speedwalk)
-                            Execute('run '.. speedwalk)
+                            Execute('run ' .. speedwalk)
                             speedwalk = ''
                         end
                         DebugNote('execute special')
@@ -1853,7 +1853,7 @@ DebugNote('study_output on')
                     end
                 end
                 DebugNote('speedwalk2 ' ..speedwalk)
-                Execute('run '.. speedwalk)
+                Execute('run ' .. speedwalk)
                 --Execute('echo {end speedwalk}')
             else
                 table.remove(where_trig_table, 1)
@@ -1865,19 +1865,19 @@ DebugNote('study_output on')
         end
         DebugNote(tostring(send_study))
         if send_study ~= 3 then
-            Send("study ".. mobname)
+            Send("study " .. mobname)
         end
     else
         DebugNote("Searching finished.")
-    end 
+    end
 end
 
 function istarget_study(name, line, wildcards, style)
     DebugNote("function: ISTARGET_STUDY")
     EnableTriggerGroup("study_output", 0)
-DebugNote('study_output off')
-EnableTrigger('get_all_output', false)
-        DebugNote('get_all_ouput off')
+    DebugNote('study_output off')
+    EnableTrigger('get_all_output', false)
+    DebugNote('get_all_ouput off')
     -- Disable get_all_output trigger if line is empty.
     if wildcards[0] == "" then
         IS_WM_ENABLED = true
@@ -1886,40 +1886,40 @@ EnableTrigger('get_all_output', false)
         DebugNote("--END OF STUDY--")
         return
     end
-
+    
     local name = string.sub(string.lower(wildcards[1]), 1, 30)
-
+    
     if has_value(cp_mobs, name) then
         DebugNote("MOB IS HERE!")
         IS_WM_ENABLED = false
-
+        
         -- Delete the timers from wm_study_continue()
         DeleteTemporaryTimers();
-
+        
         -- Calculate the time elapsed from the start of wm till now.
         -- Only for Debugging purposes.
         if tstart then
             tend = GetInfo (232)
             Note(string.format ("Time taken = %1.3f seconds", tend - tstart))
         end
-
+        
         -- Print target mob with colours.
         for a, s in ipairs(style) do
             local text = RGBColourToName(s.textcolour)
             local back = RGBColourToName(s.backcolour)
             text = "black" back = "yellow"
-            ColourTell(text, back, s.text .." [TARGET]")
-         end
-
+            ColourTell(text, back, s.text .. " [TARGET]")
+        end
+        
         EnableTriggerGroup("get_all_output", 0)
-DebugNote('get_all_output off')
+        DebugNote('get_all_output off')
         EnableTrigger('where_mob_trig', 0)
         kill_scan_run()
     end
 end
 
 function istarget(name, line, wildcards, style)
-  DebugNote("function: ISTARGET")
+    DebugNote("function: ISTARGET")
     local highlight = false
     local name = string.lower(wildcards[1])
     local target_mobs = {}
@@ -1944,7 +1944,7 @@ function istarget(name, line, wildcards, style)
         if string.match(string.lower(name), string.lower(target_mobs[a])) then
             highlight = true
             EnableTriggerGroup("get_all_output", 0)
-DebugNote('get_all_output off')
+            DebugNote('get_all_output off')
             break
         end
     end
