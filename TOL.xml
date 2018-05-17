@@ -660,6 +660,7 @@ Note:
   sequence='100'
   regexp="y"
   omit_from_output="n" >
+  <send>timeStart()</send>
   </trigger>
 
   <trigger
@@ -670,6 +671,7 @@ Note:
   sequence='1'
   regexp="y"
   omit_from_output="n" >
+  <send>timeStart()</send>
   </trigger>
 
   <trigger
@@ -700,6 +702,7 @@ Note:
   sequence='100'
   regexp="y"
   omit_from_output="n" >
+  <send>timeEnd()</send>
   </trigger>
 
   <trigger

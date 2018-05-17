@@ -1617,6 +1617,17 @@ function OnPluginBroadcast (msg, id, name, text)
     end
     
     if (id == '3e7dedbe37e44942dd46d264') then
+        if (text== "comm.quest") then
+            res, gmcparg = CallPlugin("3e7dedbe37e44942dd46d264", "gmcpval", "comm.quest")
+            luastmt = "gmcpdata = " .. gmcparg
+            assert (loadstring (luastmt or "")) ()
+            if (gmcpdata.action == "start") then
+                timeStart()
+            end
+            if (gmcpdata.action == "comp") then
+                timeEnd()
+            end
+        end
         if (text == "room.info") then
             res, gmcparg = CallPlugin("3e7dedbe37e44942dd46d264", "gmcpval", "room.info")
             luastmt = "gmcpdata = " .. gmcparg
