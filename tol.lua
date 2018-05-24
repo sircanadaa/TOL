@@ -1849,7 +1849,7 @@ function wm_study_continue(send_study)
                     wm_study_continue(3)
                     return
                 end
-                line, wildcards = wait.regexp("^\\{where restart\\}",nil)
+                line, wildcards = wait.regexp("^\\{where restart\\}",nil,trigger_flag.OmitFromOutput)
                 table.remove(where_trig_table, 1)
             end
             DebugNote(tostring(send_study))

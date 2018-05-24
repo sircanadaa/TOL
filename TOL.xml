@@ -747,7 +747,7 @@ Note:
   </trigger>
 
   <trigger
-    enabled="n"
+    enabled="y"
     script="scan_break"
     match="^(Magical wards around the door bounce you back\.|Alas, you cannot go that way\.)$"
     name="scan_break"
