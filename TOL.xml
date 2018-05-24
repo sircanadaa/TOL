@@ -659,6 +659,7 @@ Note:
   script="gq_check"
   sequence='100'
   regexp="y"
+  send_to="12"
   omit_from_output="n" >
   <send>timeStart()</send>
   </trigger>
@@ -670,6 +671,7 @@ Note:
   script="gq_check"
   sequence='1'
   regexp="y"
+  send_to="12"
   omit_from_output="n" >
   <send>timeStart()</send>
   </trigger>
@@ -701,7 +703,9 @@ Note:
   script="gq_end"
   sequence='100'
   regexp="y"
+  send_to="12"
   omit_from_output="n" >
+
   <send>timeEnd()</send>
   </trigger>
 
@@ -731,7 +735,6 @@ Note:
 
   <trigger
     enabled="y"
-    script="scan_table_handler"
     match="^{/scan}$"
     name="scan_off"
     omit_from_output="y"
@@ -745,8 +748,18 @@ Note:
 
   <trigger
     enabled="n"
+    script="scan_break"
+    match="^(Magical wards around the door bounce you back\.|Alas, you cannot go that way\.)$"
+    name="scan_break"
+    omit_from_output="n"
+    regexp="y"
+    sequence="100"
+    send_to="12" >
+  </trigger>
+  <trigger
+    enabled="n"
     script="istarget"
-    match="^(Nothing interesting in this room besides you\.|Nothing to see around here with that name\.)$"
+    match="^(|Nothing to see around here with that name\.)$"
     name="scan_nothing"
     group="scan_output"
     omit_from_output="y"
@@ -754,7 +767,6 @@ Note:
     sequence="100"
     send_to="12" >
   </trigger>
-
   <trigger
     enabled="y"
     script="wm_study_continue"

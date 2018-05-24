@@ -1090,7 +1090,8 @@ function getRoomIdRoomCP(name, nameHolder, tableNum)-- TODO some bug here where 
         if roomNumber ~= nil and areaName ~= nil then
             DebugNote("mob is  = "..name)
             DebugNote("timeskilled = "..timeskilled)
-            make1(roomNumber, name, cp_mobs[tableNum].mobdead, true, area_name, cp_mobs[tableNum].num)
+            make1(roomNumber, name, cp_mobs[tableNum].mobdead, true, areaName, cp_mobs[tableNum].num)
+
             DebugNote("Times killed table")
             DebugNote(test_timeskileed)
             DebugNote("Times killed table === end")
@@ -1127,6 +1128,10 @@ function getRoomIdRoomCP(name, nameHolder, tableNum)-- TODO some bug here where 
         DebugNote("mob is  = "..cp_mobs[tableNum].name)
         DebugNote("timeskilled = "..timeskilled)
         make1(roomNumber, cp_mobs[tableNum].name, cp_mobs[tableNum].mobdead, true, areaName, cp_mobs[tableNum].num)
+        DebugNote('roomNumber '..roomNumber)
+        DebugNote('cp_mobs[tableNum].name '.. cp_mobs[tableNum].name)
+        DebugNote('area_table[z].areaName '.. areaName)
+        DebugNote('cp_mobs[tableNum].num '.. (cp_mobs[tableNum].num or 'nil'))
         DebugNote("Times killed table")
         DebugNote(test_timeskileed)
         DebugNote("Times killed table === end")
@@ -1206,6 +1211,10 @@ function getRoomIdRoomCP(name, nameHolder, tableNum)-- TODO some bug here where 
             if not foundone_room_table then
                 table.insert(test_timeskileed, {area_table[z]})
                 make1(roomNumber, cp_mobs[tableNum].name, cp_mobs[tableNum].mobdead, true, area_table[z].areaName, cp_mobs[tableNum].num)
+                DebugNote('roomNumber '..roomNumber)
+                DebugNote('cp_mobs[tableNum].name '.. cp_mobs[tableNum].name)
+                DebugNote('area_table[z].areaName '.. area_table[z].areaName)
+                DebugNote('cp_mobs[tableNum].num '.. (cp_mobs[tableNum].num or 'nil'))
                 tableNumHolder = tonumber(tableNum)
                 mob_index = 1
             elseif not foundone_room_table2 then
@@ -1238,9 +1247,16 @@ function sortRoomCPByPath()
         if dep ~= nil then
             table.insert(dist_tbl, {i, dep, p[5]})
         else
-            if (p.dist ~= nil) then
-                table.insert(dist_tbl, {i, p.dist})
+            DebugNote('printing p')
+            DebugNote(p)
+            DebugNote('printing cp_mobs')
+            DebugNote(cp_mobs[i])
+            if (cp_mobs[i].dist ~= nil) then
+                table.insert(dist_tbl, {i, cp_mobs[i].dist, p[5]})
+                --DebugNote('i is '..i .. ' p.dist is '.. p.dist.. ' p[5] '.. p[5])
+                DebugNote("room_num_table " .. i .." = " .. cp_mobs[i].dist)
             else
+                DebugNote('i is '..i .. ' p.dist is 501 p[5] '.. p[5])
                 table.insert(dist_correction, {i, 501, p[5]})
             end
         end
@@ -1257,13 +1273,15 @@ function sortRoomCPByPath()
             end
         end
         if stop_correction == 0 then
-            table.insert(dist_tbl, {p[1], 501})
+            DebugNote('inserted '.. 501 .. ' from ' .. p[1])
+            table.insert(dist_tbl, {p[1], 501, p[3]})
         end
     end
-    
+    DebugNote(dist_tbl)
     table.sort(dist_tbl, function(a, b) return a[2] < b[2] end)
     for _, k in ipairs(dist_tbl) do
         cp_mobs[k[1]].dist = k[2]
+        DebugNote(cp_mobs[k[1]])
         table.insert(b, cp_mobs[k[1]])
         table.insert(q, room_num_table[k[1]])
     end
@@ -1282,6 +1300,10 @@ function do_Execute_no_echo(command)
 end
 
 function gotoNextMob()-- This will goto the next mob, use with tcp
+    if tonumber(char_status.state) == 8 then
+        Note('Cannot run, you are still fighting')
+        return
+    end
     if cp_mobs == nil then
         Note ('Nothing to go to!')
         return
@@ -1302,7 +1324,17 @@ function gotoNextMob()-- This will goto the next mob, use with tcp
             return
         end
         
-        Execute('xmapper1 move ' .. getTable(mob_index))
+        --Execute('xmapper1 move ' .. getTable(mob_index))
+        local num = getTable(mob_index)
+        if num > 0 then
+           if GOTO(num) ==0 then
+                Note('Running to area..')
+
+                Execute('xrunto1 '.. room_num_table[mob_index][5])
+            end 
+        else
+            Note('There was an issue finding this mob.. check pt and talk to a developer')
+        end
         DebugNote("Entry for mob_next_delete_value")
         DebugNote(mob_index)
         mob_next_delete_value = mob_index
@@ -1312,7 +1344,16 @@ function gotoNextMob()-- This will goto the next mob, use with tcp
         if hunt_type(0, 1) == 1 then
             return
         end
-        Execute('xmapper1 move ' .. getTable(mob_index + 1))
+        --Execute('xmapper1 move ' .. getTable(mob_index + 1))
+        local num = getTable(mob_index+1)
+        if num > 0 then
+            if GOTO(num) ==0 then
+                Note('Running to area..')
+                Execute('xrunto1 '.. room_num_table[mob_index+1][5])
+            end 
+        else
+            Note('There was an issue finding this mob.. check pt and talk to a developer')
+        end
         DebugNote("Entry for mob_next_delete_value")
         DebugNote(mob_index + 1)
         mob_next_delete_value = mob_index + 1
@@ -1321,6 +1362,10 @@ function gotoNextMob()-- This will goto the next mob, use with tcp
 end
 
 function gotoIndexMob(name, line, wildcards)-- This will goto the next mob, use with tcp
+    if tonumber(char_status.state) == 8 then
+        Note('Cannot run, you are still fighting')
+        return
+    end
     wild = tonumber(wildcards[1])
     if wild == nil then return end
     if cp_mobs == nil or #cp_mobs == 0 then
@@ -1345,12 +1390,22 @@ function gotoIndexMob(name, line, wildcards)-- This will goto the next mob, use 
     DebugNote("Entry for mob_next_delete_value")
     DebugNote(wild)
     mob_next_delete_value = wild
-    Execute('xmapper1 move ' .. getTable(tonumber(wild)))
-    
+    --Execute('xmapper1 move ' .. getTable(tonumber(wild)))
+    local num = getTable(tonumber(wild))
+    if num > 0 then
+        if GOTO(num) ==0 then
+            Note('Running to area..')
+            Execute('xrunto1 '.. room_num_table[wild][5])
+        end 
+    end
     SendNoEcho('scan ' .. mobname)
 end
 
 function tcpohandler(name, line, wildcards)
+    if  tonumber(char_status.state) == 8 then
+        Note('Cannot run, you are still fighting')
+        return
+    end
     if wildcards[1] ~= nil then
         if room_num_table2 == nil or #room_num_table2 == 0 then
             Note("nothing to print")
@@ -1370,7 +1425,16 @@ function tcpohandler(name, line, wildcards)
     end
     if #wildcards >= 1 then
         mobname = sanitizeName(room_num_table2[tonumber(wild)][2])
-        Execute ('xmapper1 move ' .. room_num_table2[tonumber(wild)][1])
+        --Execute ('xmapper1 move ' .. room_num_table2[tonumber(wild)][1])
+        local num = room_num_table2[tonumber(wild)][1]
+        if num > 0 then
+            if GOTO(num) ==0 then
+                Note('Running to area..')
+                Execute('xrunto1 '.. room_num_table2[wild][5])
+            end 
+        else
+            Note('There was an issue finding this mob.. check pt and talk to a developer')
+        end
         DebugNote("Entry for mob_next_delete_value")
         DebugNote(wild)
         mob_next_delete_value = wild
@@ -1378,7 +1442,16 @@ function tcpohandler(name, line, wildcards)
         SendNoEcho('scan ' .. mobname)
     else
         mobname = sanitizeName(room_num_table2[1][2])
-        Execute ('xmapper1 move ' .. room_num_table2[1][1])
+        --Execute ('xmapper1 move ' .. room_num_table2[1][1])
+        local num = room_num_table2[1][1]
+        if num > 0 then
+            if GOTO(num) ==0 then
+                Note('Running to area..')
+                Execute('xrunto1 '.. room_num_table2[1][5])
+            end 
+        else
+            Note('There was an issue finding this mob.. check pt and talk to a developer')
+        end
         mob_next_delete_value = 1
         --EnableTrigger('get_all_output', true)
         SendNoEcho('scan ' .. mobname)
@@ -1475,7 +1548,7 @@ function where_mob_trig(name, line, wildcards)
     end
     
     if bool == 1 then
-        if currentRoom == nil or table.getn(currentRoom) == 0 then
+        if currentRoom == nil or currentRoom == {} then
             res, gmcparg = CallPlugin("3e7dedbe37e44942dd46d264", "gmcpval", "room.info")
             luastmt = "gmcpdata = " .. gmcparg
             assert (loadstring (luastmt or "")) ()
@@ -1617,7 +1690,7 @@ function OnPluginBroadcast (msg, id, name, text)
     end
     
     if (id == '3e7dedbe37e44942dd46d264') then
-        if (text== "comm.quest") then
+        if (text == "comm.quest") then
             res, gmcparg = CallPlugin("3e7dedbe37e44942dd46d264", "gmcpval", "comm.quest")
             luastmt = "gmcpdata = " .. gmcparg
             assert (loadstring (luastmt or "")) ()
@@ -1707,84 +1780,23 @@ function kill_scan_run()
     where_trig_table = {}
     SCAN_TABLE = {}
 end
-
-function scan_table_handler()
-    DebugNote(where_trig_table)
-    DebugNote('where_trig_table ' .. #where_trig_table)
-    local found = false
-    if #where_trig_table == 0 then
-        return
-    end
-    query = string.format('select a.uid as areaid ' ..
-        ' from rooms r ' ..
-        ' join areas a ' ..
-        ' on a.uid = r.area ' ..
-        ' where r.uid = %i',
-    where_trig_table[1].roomId)
-    local areaid = db_query(dbA, query)
-    DebugNote(areaid)
-    DebugNote(currentRoom)
-    if areaid[1].areaid ~= currentRoom.areaid then
-        where_trig_table = {}
-        Note('looks like you are not in the same area, cancelling.')
-        return
-    end
-    for a = 1, #SCAN_TABLE do
-        for p = 1, #SCAN_TABLE[a] do
-            -- print('scan table : ' .. SCAN_TABLE[a][p])
-            -- print(WHERE_MOB)
-            local name = SCAN_TABLE[a][p]
-            if #name > 30 then
-                name = string.sub(name, 1, 30)
-            end
-            if string.lower(name) == string.lower(WHERE_MOB) then
-                found = true
-                EnableTrigger('scan_nothing', 0)
-                WHERE_MOB = ''
-                where_trig_table = {}
-                break
-            end
-        end
-    end
-    
-    SCAN_TABLE = {}
-    if not found and #where_trig_table > 0 then
-        EnableTrigger('scan_nothing', 1)
-        scan_continue()
-    else
-        Note('Killing scan run: Mob is here!')
-        kill_scan_run()
-    end
+function scan_break()
+    kill_scan_run()
+    EnableTriggerGroup("study_output", 0)
 end
-
-ensure_room_change = -1
-function scan_continue()
-    if ensure_room_change == currentRoom.roomid then
-        hunt_off()
-        Note("You didn't move rooms, check your cexits and make sure the mob isn't in a maze")
-    else
-        ensure_room_change = currentRoom.roomid
-    end
-    if #where_trig_table >= 1 then
-        Execute('xmapper1 move ' .. where_trig_table[1].roomId)
-        SendNoEcho('study')
-        table.remove(where_trig_table, 1)
-    end
-end
-
 function has_value(tab, val)
     DebugNote("Match value: " .. val)
     
     -- Check for custom wm attend.
-    if #where_trig_table >= 1 then
-        DebugNote('WHERE_MOB: ' .. WHERE_MOB)
-        if string.match(val, string.lower(WHERE_MOB)) then
-            DebugNote("Where_mob match.")
-            return true
-        else
-            return false
-        end
+    --if #where_trig_table >= 1 then
+    DebugNote('WHERE_MOB: ' .. WHERE_MOB)
+    if string.match(val, string.lower(WHERE_MOB)) then
+        DebugNote("Where_mob match.")
+        return true
+    else
+        return false
     end
+    --end
     
     -- Check quest mob
     if questHandler.mob ~= nil and string.match(val, string.lower(questHandler.mob)) then
@@ -1807,80 +1819,47 @@ function has_value(tab, val)
 end
 
 function wm_study_continue(send_study)
-    DebugNote("wm_study_continue")
-    local send_study = send_study or true
-    if #where_trig_table >= 1 then
-        DebugNote('Where_trig_table Size: ' .. #where_trig_table)
-        -- Not tested yet. I am not sure about that.
-        -- TODO: Test it.
-        if not currentRoom.roomid == where_trig_table[1].roomId then
-            mapper_goto(where_trig_table[1].roomId)
-            table.remove(where_trig_table, 1)
-        end
-        
-        EnableTriggerGroup("study_output", 1)
-        DebugNote('study_output on')
-        
-        res, gmcparg = CallPlugin("3e7dedbe37e44942dd46d264", "gmcpval", "char.status")
-        luastmt = "gmcpdata = " .. gmcparg
-        assert (loadstring (luastmt or "")) ()
-        runningFlag = tonumber(gmcpdata.state)
-        print(runningFlag)
-        if runningFlag == 8 then
-            where_trig_table = {}
-            return
-        end
-        if IS_WM_ENABLED then
-            DebugNote("From: " .. currentRoom.roomid)
-            DebugNote("Going to: " .. where_trig_table[1].roomId)
+    wait.make (function()
+        DebugNote("wm_study_continue")
+        local send_study = send_study or true
+        if #where_trig_table >= 1 then
+            DebugNote('Where_trig_table Size: ' .. #where_trig_table)
+            if not currentRoom.roomid == where_trig_table[1].roomId then
+                mapper_goto(where_trig_table[1].roomId)
+                table.remove(where_trig_table, 1)
+            end
             
-            -- Wait 0.4 seconds before execute mapper goto.
-            -- That is because the "mapper goto" command is running before "study".
-            -- TODO: Is 0.4 stable only in my client or in all clients?
-            -- TODO: Is there any other better approach?
-            --      Maybe the problem is that we call another plugin command?
-            -- DoAfterSpecial("0.4", "Execute('mapper goto '.. where_trig_table[1].roomId)", 12)
-            --Execute('mapper goto '.. where_trig_table[1].roomId)
-            local path, dist = findpath(currentRoom.roomid, where_trig_table[1].roomId)
-            DebugNote(path)
-            local speedwalk = ''
-            if dist == nil then
-                Note('There was no usable path to the creature.')
+            EnableTriggerGroup("study_output", 1)
+            DebugNote('study_output on')
+            
+            res, gmcparg = CallPlugin("3e7dedbe37e44942dd46d264", "gmcpval", "char.status")
+            luastmt = "gmcpdata = " .. gmcparg
+            assert (loadstring (luastmt or "")) ()
+            runningFlag = tonumber(gmcpdata.state)
+            if runningFlag == 8 then
+                kill_scan_run()
+                where_trig_table = {}
                 return
             end
-            if dist > 0 then
-                for i, p in pairs(path) do
-                    DebugNote(string.len(p['dir']))
-                    if string.len(p['dir']) > 1 then
-                        if string.len(speedwalk) > 0 then
-                            DebugNote('speedwalk '..speedwalk)
-                            Execute('run ' .. speedwalk)
-                            speedwalk = ''
-                        end
-                        DebugNote('execute special')
-                        Execute(p['dir'])
-                    else
-                        speedwalk = speedwalk .. p['dir']
-                    end
+            if IS_WM_ENABLED then
+                DebugNote("From: " .. currentRoom.roomid)
+                DebugNote("Going to: " .. where_trig_table[1].roomId)
+                if GOTO(where_trig_table[1].roomId) == 0 then
+                    table.remove(where_trig_table, 1)
+                    wm_study_continue(3)
+                    return
                 end
-                DebugNote('speedwalk2 ' ..speedwalk)
-                Execute('run ' .. speedwalk)
-                --Execute('echo {end speedwalk}')
-            else
+                line, wildcards = wait.regexp("^\\{where restart\\}",nil)
                 table.remove(where_trig_table, 1)
-                wm_study_continue(3)
             end
-            
-            DebugNote(dist)
-            table.remove(where_trig_table, 1)
+            DebugNote(tostring(send_study))
+            if send_study ~= 3 then
+                Send("study " .. mobname)
+            end
+        else
+            DebugNote("Searching finished.")
         end
-        DebugNote(tostring(send_study))
-        if send_study ~= 3 then
-            Send("study " .. mobname)
-        end
-    else
-        DebugNote("Searching finished.")
-    end
+    end)
 end
 
 function istarget_study(name, line, wildcards, style)
@@ -1943,7 +1922,6 @@ function istarget(name, line, wildcards, style)
     if #where_trig_table >= 1 then -- used for the wm and cpn commands
         DebugNote('WHERE_MOB: ' .. WHERE_MOB)
         table.insert(target_mobs, WHERE_MOB)-- the global mob name
-        table.insert(SCAN_TABLE, wildcards)
         DebugNote(wildcards)
     end
     for a = 1, #target_mobs do

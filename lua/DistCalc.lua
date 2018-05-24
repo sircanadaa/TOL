@@ -1,3 +1,4 @@
+require "wait"
 room_not_in_database = {}
 -- This section is almost a straight rip from Fiendish's aard_GMCP_mapper.xml all credit goes to him
 local bit = require("bit")
@@ -285,3 +286,65 @@ function findpath(src, dst, noportals, norecalls)
     return path, found_depth
 end -- function findpath
 -- end section of Fienish's work
+
+function GOTO(roomId)
+    if currentRoom == nil or currentRoom == {} then
+        res, gmcparg = CallPlugin("3e7dedbe37e44942dd46d264", "gmcpval", "room.info")
+        luastmt = "gmcpdata = " .. gmcparg
+        assert (loadstring (luastmt or "")) ()
+        currentRoom = {
+            name = gmcpdata.name,
+            roomid = gmcpdata.num,
+            areaid = gmcpdata.zone
+        }
+    end
+    local path, dist = findpath(currentRoom.roomid, roomId)
+    DebugNote(path)
+    local speedwalk = ''
+    if dist == nil then
+        Note('There was no usable path to the creature.')
+        return 0
+    end
+    wait.make (function()
+        for i, p in pairs(path) do
+            DebugNote(string.len(p['dir']))
+            if string.len(p['dir']) > 1 then
+                if string.len(speedwalk) > 0 then
+                    DebugNote('speedwalk '..speedwalk)
+                    Execute('run ' .. speedwalk)
+                    speedwalk = ''
+                end
+                DebugNote('execute special')
+                IS_WM_ENABLED = false
+                local partial_cexit_command = p['dir']
+                local strbegin, strend = string.find(partial_cexit_command, ";?wait%(%d*.?%d+%);?")
+                while strbegin do
+                    strbegin, strend = string.find(partial_cexit_command, ";?wait%(%d*.?%d+%);?")
+                    if strbegin ~= nil and strbegin ~= 1 then
+                        Execute(string.sub(partial_cexit_command, 1, strbegin - 1))
+                    end
+                    if strend then
+                        local wait_time = tonumber(string.match(string.sub(partial_cexit_command, strbegin, strend), "wait%((%d*.?%d+)%)"))
+                        SendNoEcho("echo {mapper_wait}wait("..wait_time..")")
+                        line, wildcards = wait.regexp("^\\{mapper_wait\\}wait\\(([0-9]*\\.?[0-9]+)\\)", nil)
+                        Note("CEXIT WAIT: waiting for "..wait_time.." seconds before continuing.")
+                        wait.time(wait_time)
+                        partial_cexit_command = string.sub(partial_cexit_command, strend + 1)
+                    end
+                end
+                Execute(partial_cexit_command)
+                IS_WM_ENABLED = true
+                --Execute(p['dir'])
+            else
+                speedwalk = speedwalk .. p['dir']
+            end
+        end
+        DebugNote('speedwalk2 ' ..speedwalk)
+        Execute('run ' .. speedwalk)
+        SendNoEcho("echo {where restart}")
+    end)
+    --DebugNote('speedwalk2 ' ..speedwalk)
+    --Execute('run ' .. speedwalk)
+    --Execute('echo {end speedwalk}')
+    return 1
+end
