@@ -1851,6 +1851,9 @@ function wm_study_continue(send_study)
                 end
                 line, wildcards = wait.regexp("^\\{where restart\\}",nil,trigger_flag.OmitFromOutput)
                 table.remove(where_trig_table, 1)
+            else
+                AddTrigger("catchwhererestart", "^\\{where restart\\}", "", trigger_flag.OmitFromOutput+trigger_flag.OneShot , "", 0, "", "")
+                DebugNote('added where restart catch')
             end
             DebugNote(tostring(send_study))
             if send_study ~= 3 then

@@ -340,7 +340,9 @@ function GOTO(roomId)
             end
         end
         DebugNote('speedwalk2 ' ..speedwalk)
-        Execute('run ' .. speedwalk)
+        if string.len(speedwalk)> 0 then
+            Execute('run ' .. speedwalk)
+        end
         SendNoEcho("echo {where restart}")
     end)
     --DebugNote('speedwalk2 ' ..speedwalk)
