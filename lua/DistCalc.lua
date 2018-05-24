@@ -326,7 +326,7 @@ function GOTO(roomId)
                     if strend then
                         local wait_time = tonumber(string.match(string.sub(partial_cexit_command, strbegin, strend), "wait%((%d*.?%d+)%)"))
                         SendNoEcho("echo {mapper_wait}wait("..wait_time..")")
-                        line, wildcards = wait.regexp("^\\{mapper_wait\\}wait\\(([0-9]*\\.?[0-9]+)\\)", nil)
+                        line, wildcards = wait.regexp("^\\{mapper_wait\\}wait\\(([0-9]*\\.?[0-9]+)\\)", nil,trigger_flag.OmitFromOutput)
                         Note("CEXIT WAIT: waiting for "..wait_time.." seconds before continuing.")
                         wait.time(wait_time)
                         partial_cexit_command = string.sub(partial_cexit_command, strend + 1)
