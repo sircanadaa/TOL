@@ -137,6 +137,11 @@ function findNearestJumpRoom(src, dst, target_type)
 end
 function findpath(src, dst, noportals, norecalls)
     local rooms = {}
+    res, gmcparg = CallPlugin("3e7dedbe37e44942dd46d264","gmcpval","char.status")
+         luastmt = "gmcpdata = " .. gmcparg
+         assert (loadstring (luastmt or "")) ()
+         local mylevel = tonumber(gmcpdata.level)
+         local myState = tonumber(gmcpdata.state) 
     --DebugNote('source room is : '..src)
     --DebugNote('source room type is : '..type(src))
     --DebugNote('destination room is : '..dst)
@@ -190,8 +195,10 @@ function findpath(src, dst, noportals, norecalls)
             ftd = room_sets[depth - 1] or {}
             rooms_list = {}
             for k, v in pairs(ftd) do
+                DebugNote(v)
                 table.insert(rooms_list, fixsql(v.fromuid))
             end -- for from, to, dir
+            DebugNote('=======')
         end -- if depth
         -- prune the search space
         if visited ~= "" then
@@ -211,10 +218,12 @@ function findpath(src, dst, noportals, norecalls)
         local dcount = 0
         --DebugNote(q)
         room_sets[depth] = {}
+        DebugNote(q)
+        DebugNote("printing rows from the query")
         for row in dbnrowsWRAPPER(q) do
             -- print('database was open')
             dcount = dcount + 1
-            --DebugNote(row)
+            DebugNote(row)
             --DebugNote('================'.. tostring(depth))
             -- ordering by length(dir) ensures that custom exits (always longer than 1 char) get
             -- used preferentially to normal ones (1 char)
@@ -227,9 +236,12 @@ function findpath(src, dst, noportals, norecalls)
                 found_depth = depth
             end -- if src
         end -- for select
-        --DebugNote(rooms_list)
-        --DebugNote(room_sets)
-        --DebugNote(found_depth)
+        DebugNote("rooms_list")
+        DebugNote(rooms_list)
+        DebugNote("room_sets")
+        DebugNote(room_sets)
+        DebugNote("found_depth")
+        DebugNote(found_depth)
         if dcount == 0 then
             return -- there is no path from here to there
         end -- if dcount

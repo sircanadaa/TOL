@@ -465,20 +465,8 @@ FirstRun_cp_var = true
 
 -- This function is just for testing. It should never actually be used.
 function printVars()
-    if where_trig_table ~= nil then
-        local count = 0
-        for i, p in pairs(where_trig_table) do
-            count = count + 1
-        end
-        print("where_trig_table: "..count)
-    end
-    if SCAN_TABLE ~= nil then
-        local count = 0
-        for i, p in pairs(SCAN_TABLE) do
-            count = count + 1
-        end
-        print('SCAN_TABLE'..count)
-    end
+    Debug = true
+    tprint(findpath(currentRoom.roomid, 29839))
     --   mobsleft = {}
     --   EnableTrigger('campaign_item',1)
     --   EnableTrigger('camp_item_start',1)
@@ -512,6 +500,7 @@ function printVars()
     -- Execute("echo You still have to kill 2 * a cavorting faerie (The Botanical Gardens)")
     -- Execute("echo Note: One or more target names in this gquest might be slightly scrambled.")
     --check_area_table()
+    Debug =false
 end
 -- end testing function
 kill_info = {}
@@ -620,7 +609,7 @@ function check_cur_mob(test_table)
     
     if #test_table == 3 then
         local line = test_table[1][1]
-        Note('printing test table: '..test_table[1][1])
+        DebugNote('printing test table: '..test_table[1][1])
         
         if string.find(line, "%!") ~= nil then
             temp = string.sub(line, 8, string.find(line, "%!") - 1)
