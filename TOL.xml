@@ -411,6 +411,17 @@ Note:
   </trigger>
 
   <trigger
+   name="reset_cp_win"
+   custom_colour="7"
+   match="^You are not currently on a campaign.$"
+   script="reset_cp_win"
+   enabled="y"
+   send_to="12"
+   regexp="y"
+   sequence="100" >
+   </trigger>
+
+  <trigger
    name="reset_cp_flag"
    custom_colour="7"
    match="CONGRATULATIONS! You have completed your campaign."
@@ -628,7 +639,9 @@ Note:
    match="^QUEST\: You have almost completed your QUEST\!$"
    regexp="y"
    send_to="10"
-   sequence="100" >
+   sequence="100"
+   script="qClear" >
+
   </trigger>
 
   <trigger

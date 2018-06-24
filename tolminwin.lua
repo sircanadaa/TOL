@@ -19,7 +19,8 @@ cpmobs = {}
 cptimer = {}
 level = nil
 curlevel = nil
-showcpwin = false
+showcpwin = true
+cur_action = ''
 function getmemoryusage()
     collectgarbage('collect')
     return collectgarbage('count')
@@ -32,13 +33,13 @@ function show_cp_text ()
     local header = {}
     local style = {}
     -- do nothing if no campaign
-    if #cpmobs == 0 then
-        cpwin:show(false)
-        return
-    end -- if
-    -- heading
+    -- if #cpmobs == 0 then
+    --     cpwin:show(false)
+    --     return
+    -- end -- if
+    -- heading nomap_Past the Northern Gate_amazonclan
     style = {}
-    style.text = string.format("Campaign mobs left: %s", #cpmobs)
+    style.text = string.format("Campaign mobs left: %-5s Action : %-49s", #cpmobs, cur_action)
     table.insert (header, {style})
     style = {}
     style.text = ("indx  Name                               #    Area                           Dist")
@@ -98,16 +99,16 @@ function OnPluginBroadcast (msg, id, name, text)
             
             show_cp_text()
         elseif msg == 2 then
-            local pvar = GetPluginVariable("8065ca1ba19b529aee53ee44", "timer")
+            --local pvar = GetPluginVariable("8065ca1ba19b529aee53ee44", "action")
             -- get the timer
-            loadstring(pvar)()
-            cptimer = timer
+            --loadstring(pvar)()
+            cur_action = text
             show_cp_text()
         elseif msg == 3 or msg == 4 then
             
             cptimer = {}
             cpmobs = {}
-            cpwin:disable()
+            -- cpwin:disable()
         end
         
     end
@@ -116,6 +117,8 @@ end
 function OnPluginInstall ()
     --OnPluginEnable is automatically called by pluginhelper
     phelper:OnPluginInstall()
+            show_cp_text()
+
 end -- OnPluginInstall
 function OnPluginClose()
     phelper:OnPluginClose()

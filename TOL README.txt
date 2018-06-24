@@ -1,20 +1,22 @@
 
 
-
+When unziping make sure that the whole folder sits inside of \plugins
+It will look like \worlds\plugis\TOL\files
+Make sure you have a working KillTable.db in this folder.
 
 order to install is:
 
 
 
-Tol1-17-1.xml
+Tol.xml
 
 Tolminwin.xml
 
 cp_mobTableFiller.xml
 
-scan_highlight.xml from bast folder
+Optional:
+WhereMinwin.xml
 
 
-make sure you have damage set to 2 "damage 2" in your client
 
-if it errors on install the Ardinfo.db file that is included needs to go into MushClient/Log/
+

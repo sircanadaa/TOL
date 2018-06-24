@@ -57,12 +57,19 @@ function ResetPageSize()
         SendNoEcho("pagesize " .. page_size)
     end
 end
-
+dir_map = {
+    south = "s",
+    north = "n",
+    east  = "e",
+    west  = "w",
+    up    = "u",
+    down  = "d"
+}
 function auto_hunt_start(name, line, wildcards)
     hunt_off()
     auto_hunt_stop()
     kill_scan_run()
-    Note("Starting autohunt")
+    BroadcastPlugin(2,"Starting autohunt")
     EnableTrigger('auto_hunt', 1)
     EnableTrigger('kill_auto_hunt', 1)
     auto_hunt_mob = wildcards[1]
@@ -74,27 +81,38 @@ function auto_hunt_continue(name, line, wildcards)
     local move = ""
     for i, p in pairs(wildcards) do
         DebugNote(p)
-        DebugNote(i)
+        DebugNote("i = "..i)
         if p ~= "" and i > 0 then
             move = wildcards[i + 1]
             DebugNote(move)
             break
         end
     end
-    if string.find(move, 'through') then
+    --if string.find(move, 'through') then
         if currentRoom ~= nil then
-            query = string.format("select dir, fromuid, touid from exits where fromuid = %s order by length(dir) desc",
-            currentRoom.roomid)
+            query = string.format("select dir, fromuid, touid from exits where fromuid = %s and dir = '%s' order by length(dir) desc",
+                currentRoom.roomid, dir_map[move])
+            move1 = db_query(dbA, query)
+            DebugNote(move1)
+            local to_room = move1[1].touid
+            DebugNote("to_room : ".. to_room)
+            query = string.format("select dir, fromuid, touid from exits where fromuid = %s and touid = %s order by length(dir) desc",
+            currentRoom.roomid, to_room)
             move1 = db_query(dbA, query)
             DebugNote('printing move table return:')
             DebugNote(move1)
-            if #move1 > 1 then
+            if #move1 > 0 then
                 move1 = move1[1]["dir"]
             end
         end
+    --end
+    if string.len(move1) == 1 and dir_map[move] ~= move1 then
+        DebugNote(move)
+        Execute(move)
+    else
+        DebugNote(move1)
+        Execute(move1)
     end
-    DebugNote(move)
-    SendNoEcho(move)
     SendNoEcho('hunt '..auto_hunt_mob)
 end
 
@@ -104,7 +122,7 @@ function auto_hunt_stop()
 end
 
 function hunt_off()
-    Note ("Shutting huntings scripts off.")
+    BroadcastPlugin(2,"Shutting huntings scripts off.")
     EnableTriggerGroup("HUNTING", false)
     kill_scan_run()
 end
@@ -217,26 +235,25 @@ function cpgq_quit(name, line, wildcards)
         DebugNote("GQ_flag set to "..tostring(GQ_flag))
     end
     DebugNote("cpgq_quit")
-    phelper:broadcast(4)
+    BroadcastPlugin(4)
     cp_mobs = {}
     clearTable()
 end
 
 function gq_end(name, line, wildcards)
     DebugNote(wildcards)
+    BroadcastPlugin(4)
     if GQ_flag == false then return end
     if wildcards[1] == GQ_num then
         DebugNote("if block")
         GQ_flag = false
         DebugNote("GQ_flag set to "..tostring(GQ_flag))
-        phelper:broadcast(4)
         cp_mobs = {}
         clearTable()
     elseif #wildcards < 1 then
         DebugNote("elseif block")
         GQ_flag = false
         DebugNote("GQ_flag set to "..tostring(GQ_flag))
-        phelper:broadcast(3)
     end
     DebugNote ("Gq is off now")
 end
@@ -364,7 +381,7 @@ function delete_mob_from_table()
     check_diff()
     sortRoomCPByPath()
     var.cp_mobs = serialize.save("cp_mobs", cp_mobs)
-    phelper:broadcast(1, var.cp_mobs)
+    BroadcastPlugin(1, var.cp_mobs)
     DebugNote(collectgarbage("count") * 1024)
     collectgarbage("collect")
     DebugNote(collectgarbage("count") * 1024)
@@ -717,12 +734,11 @@ function check_diff()
     end
     mob_index = 1
     var.cp_mobs = serialize.save("cp_mobs", cp_mobs)
-    phelper:broadcast(1, var.cp_mobs)
+    BroadcastPlugin(1, var.cp_mobs)
 end
 
 myThread = nil
 local level = 0
-local mylevel = 0
 local oldlevel = 0
 -- New initialization checks - Kobus
 got_room = false
@@ -888,7 +904,7 @@ function buildRoomTable()-- This sends the table to get room_ids
     DebugNote('==============================')
     sortRoomCPByPath()
     var.cp_mobs = serialize.save("cp_mobs", cp_mobs)
-    phelper:broadcast(1, var.cp_mobs)
+    BroadcastPlugin(1, var.cp_mobs)
 end
 
 local shortaname
@@ -1316,6 +1332,7 @@ function gotoNextMob()-- This will goto the next mob, use with tcp
         --Execute('xmapper1 move ' .. getTable(mob_index))
         local num = getTable(mob_index)
         if num > 0 then
+            BroadcastPlugin(2, "Moving to "..tostring(num))
            if GOTO(num) ==0 then
                 Note('Running to area..')
 
@@ -1336,6 +1353,7 @@ function gotoNextMob()-- This will goto the next mob, use with tcp
         --Execute('xmapper1 move ' .. getTable(mob_index + 1))
         local num = getTable(mob_index+1)
         if num > 0 then
+            BroadcastPlugin(2, "Moving to "..tostring(num))
             if GOTO(num) ==0 then
                 Note('Running to area..')
                 Execute('xrunto1 '.. room_num_table[mob_index+1][5])
@@ -1382,6 +1400,7 @@ function gotoIndexMob(name, line, wildcards)-- This will goto the next mob, use 
     --Execute('xmapper1 move ' .. getTable(tonumber(wild)))
     local num = getTable(tonumber(wild))
     if num > 0 then
+        BroadcastPlugin(2, "Moving to "..tostring(num))
         if GOTO(num) ==0 then
             Note('Running to area..')
             Execute('xrunto1 '.. room_num_table[wild][5])
@@ -1575,6 +1594,7 @@ end
 
 function killMob()
     if mobname ~= nil then
+        BroadcastPlugin(2,"Attacking ".. mobname)
         Execute("kill " .. mobname)
     else
         Note ("Need to use tcp first")
@@ -1679,16 +1699,35 @@ function OnPluginBroadcast (msg, id, name, text)
     end
     
     if (id == '3e7dedbe37e44942dd46d264') then
+        if (text == "comm.repop") then
+            res, gmcparg = CallPlugin("3e7dedbe37e44942dd46d264", "gmcpval", "comm.repop")
+            luastmt = "gmcpdata = " .. gmcparg
+            assert (loadstring (luastmt or "")) ()
+            BroadcastPlugin(2, gmcpdata.zone .. " has repoped.")
+        end
         if (text == "comm.quest") then
             res, gmcparg = CallPlugin("3e7dedbe37e44942dd46d264", "gmcpval", "comm.quest")
             luastmt = "gmcpdata = " .. gmcparg
             assert (loadstring (luastmt or "")) ()
             if (gmcpdata.action == "start") then
+                BroadcastPlugin(2,"You took a Quest. Go kill " .. gmcpdata.targ)
                 timeStart()
             end
             if (gmcpdata.action == "comp") then
+                BroadcastPlugin(2,"Quest Completed.")
                 timeEnd()
             end
+            if gmcpdata.action == "killed" then
+                BroadcastPlugin(2,"Quest Target Killed, Turn it in.")
+            elseif gmcpdata.action == "warning" then
+                BroadcastPlugin(2,"Running out of time, finish quest.")
+            elseif gmcpdata.action == "ready" then
+                BroadcastPlugin(2,"You can quest again.")
+            elseif gmcpdata.action == "fail" then
+                BroadcastPlugin(2,"You failed a quest.") 
+            elseif gmcpdata.action == "timeout" then
+                BroadcastPlugin(2,"You ran out of time for a quest.")  
+            end   
         end
         if (text == "room.info") then
             res, gmcparg = CallPlugin("3e7dedbe37e44942dd46d264", "gmcpval", "room.info")
@@ -1739,7 +1778,13 @@ function OnPluginClose ()
     
 end
 
+function reset_cp_win()
+    BroadcastPlugin(4)
+    FirstRun_cp_var = true
+end
+
 function reset_cp_flag()
+    BroadcastPlugin(4)
     timeEnd()
     FirstRun_cp_var = true
 end
@@ -1764,13 +1809,15 @@ end
 -- Scanning and highlighting
 -----------------------------------------------------------
 function kill_scan_run()
-    DebugNote("Shutting off scan related scripts.")
+    BroadcastPlugin(2,"Shutting off scan related scripts.")
     WHERE_MOB = ''
     where_trig_table = {}
     SCAN_TABLE = {}
 end
 function scan_break()
+    auto_hunt_stop()
     kill_scan_run()
+    hunt_off()
     EnableTriggerGroup("study_output", 0)
 end
 function has_value(tab, val)
@@ -1806,7 +1853,7 @@ function has_value(tab, val)
     DebugNote("No match found.")
     return false
 end
-
+action = ''
 function wm_study_continue(send_study)
     wait.make (function()
         DebugNote("wm_study_continue")
@@ -1833,6 +1880,7 @@ function wm_study_continue(send_study)
             if IS_WM_ENABLED then
                 DebugNote("From: " .. currentRoom.roomid)
                 DebugNote("Going to: " .. where_trig_table[1].roomId)
+                BroadcastPlugin(2, "Moving to "..tostring(where_trig_table[1].roomId))
                 if GOTO(where_trig_table[1].roomId) == 0 then
                     table.remove(where_trig_table, 1)
                     wm_study_continue(3)
@@ -1868,13 +1916,13 @@ function istarget_study(name, line, wildcards, style)
         DebugNote("--END OF STUDY--")
         return
     end
-    
+    local mob_here = false
     local name = string.sub(string.lower(wildcards[1]), 1, 30)
     
     if has_value(cp_mobs, name) then
         DebugNote("MOB IS HERE!")
         IS_WM_ENABLED = false
-        
+        mob_here = true
         -- Delete the timers from wm_study_continue()
         DeleteTemporaryTimers();
         
@@ -1897,6 +1945,9 @@ function istarget_study(name, line, wildcards, style)
         DebugNote('get_all_output off')
         EnableTrigger('where_mob_trig', 0)
         kill_scan_run()
+        if mob_here then
+            BroadcastPlugin(2,"Found Mob")
+        end
     end
 end
 
@@ -1965,6 +2016,7 @@ function questArea(name, line, wildcards)
 end
 
 function qGoto()
+    BroadcastPlugin(2, "Moving to quest mob")
     mobname = sanitizeName(questHandler.mob)
     questHandler:gotoFirst()
 end
@@ -1978,6 +2030,7 @@ function qGotoIndex(name, line, wildcards)
 end
 
 function qNext()
+    BroadcastPlugin(2, "Moving to next quest mob")
     mobname = sanitizeName(questHandler.mob)
     questHandler:gotoNext()
 end
@@ -1988,6 +2041,10 @@ end
 
 function qRoomsAll()
     questHandler:showRooms(true)
+end
+
+function qClear()
+    questHandler:clear()
 end
 
 function qTest()
