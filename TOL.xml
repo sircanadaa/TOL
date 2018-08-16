@@ -460,8 +460,7 @@ Note:
     script="cp_check"
     omit_from_output="n" >
       <send>
-        Send('cp check')
-        EnableTrigger('camp_item_start', 1)
+
         timeStart()
       </send>
   </trigger>
