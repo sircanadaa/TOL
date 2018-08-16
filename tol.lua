@@ -15,7 +15,7 @@ ThreadHolder = coroutine.running()
 counter = tonumber(1)
 counter1 = tonumber(1)
 
-local Debug = false
+local Debug = true
 currentRoom = {}
 local char_status
 local currentState
@@ -188,6 +188,11 @@ function Toggle_Debug(name, line, wildcards)
 end
 
 function cp_check(name, line, wildcards)
+    if not didonce then
+        Send('look')
+    end
+    Send('cp check')
+    EnableTrigger('camp_item_start', 1)
     EnableTrigger("campaign_item", true)
     mobsleft = {}
 end
@@ -1815,6 +1820,7 @@ function kill_scan_run()
     SCAN_TABLE = {}
 end
 function scan_break()
+    BroadcastPlugin(2,"Movement failed, check path.")
     auto_hunt_stop()
     kill_scan_run()
     hunt_off()

@@ -219,8 +219,7 @@ Note:
    sequence="100"
    send_to='12' >
     <send>
-      Send('cp check')
-      EnableTrigger('camp_item_start', 1)
+  
     </send>
   </alias>
 
@@ -763,7 +762,7 @@ Note:
   <trigger
     enabled="y"
     script="scan_break"
-    match="^(Magical wards around the door bounce you back\.|Alas, you cannot go that way\.)$"
+    match="^(Magical wards around the(.+)bounce you back\.|Alas, you cannot go that way\.)$"
     name="scan_break"
     omit_from_output="n"
     regexp="y"

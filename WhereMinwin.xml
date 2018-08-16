@@ -122,7 +122,7 @@
    regexp="y"
    send_to="12"
    sequence="2"
-   omit_from_output="y"
+   omit_from_output="n"
    script="stopGrabbing"
   >
   </trigger>
@@ -201,7 +201,7 @@ tonumber(level+10))</send>
 
 <!--  Timers  -->
 <timers>
-  <timer name="whtime" enabled="n" minute="0" second="15.00" offset_second="0.00"    send_to="12"
+  <timer name="whtime" enabled="n" minute="0" second="30.00" offset_second="0.00"    send_to="12"
 >
   <send>
   --print('timer whtime')

@@ -42,7 +42,6 @@ function sendWhere1()
     DebugNote(alflags)
     if alflags ~= 0 then
         do_Execute_no_echo('where1')
-        print("--> Pre-Tick <--")
     else
         EnableAlias("where1", 1)
     end
@@ -69,7 +68,7 @@ function CurAreaminwin(name, line, wildcards)
 end
 function whereGrabber(name, line, wildcards)
     wild1 = string.lower(wildcards[1])
-    -- DebugNote (wild1)
+    DebugNote (wild1)
     ---DebugNote(wildcards[2].." ".. #wildcards[2])
     if wild1 == "you" or wild1 == "your" or wild1 == "the" or wild1 == "name" then killScript() return end
     --if #wildcards[2] > 40 then killScript() return end
