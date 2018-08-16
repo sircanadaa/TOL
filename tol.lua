@@ -15,7 +15,7 @@ ThreadHolder = coroutine.running()
 counter = tonumber(1)
 counter1 = tonumber(1)
 
-local Debug = true
+local Debug = false
 currentRoom = {}
 local char_status
 local currentState
