@@ -58,8 +58,19 @@
 
   <trigger
    omit_from_output="y"
-   match="^Name                            Level  Exp  From$"
+   match="^Name                           Level Exp Exp  From$"
    name="cp_gag1"
+   enabled="n"
+   group="gag_lastkill"
+   regexp="y"
+   send_to="12"
+   sequence="1"
+  >
+  </trigger>
+  <trigger
+   omit_from_output="y"
+   match="^                                     Tot Base$"
+   name="cp_gag4"
    enabled="n"
    group="gag_lastkill"
    regexp="y"
@@ -71,7 +82,7 @@
   <trigger
    omit_from_output="y"
    enabled="n"
-   match="^------------------------------  -----  ---  -------------------------$"
+   match="^------------------------------ ----- --- ---- -------------------------$"
    name="cp_gag2"
    regexp="y"
    group="gag_lastkill"
