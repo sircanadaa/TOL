@@ -21,6 +21,7 @@ level = nil
 curlevel = nil
 showcpwin = true
 cur_action = ''
+level = 0
 function getmemoryusage()
     collectgarbage('collect')
     return collectgarbage('count')
@@ -28,6 +29,28 @@ end
 function set_show()
     showcpwin = true
 end
+
+function cp_info_handle()
+    Send('cp info')
+    EnableTrigger('catch_cp_info', 1)
+end
+function kill_catch_cp_info()
+    EnableTrigger('catch_cp_info', 0)
+end
+
+function catch_cp_info(name, line, wildcards)
+    str = wildcards[1]
+    if str == "Use 'cp check' to see only targets that you still need to kill." then
+        EnableTrigger('catch_cp_info', 0)
+    elseif str =="You are not currently on a campaign." then
+        EnableTrigger('catch_cp_info', 0)
+    end
+    if string.find(str, 'Level Taken') then 
+        level = tonumber(string.sub(str, string.find(str, '%d+')))
+    end
+    show_cp_text()
+end
+
 function show_cp_text ()
     local texttable = {}
     local header = {}
@@ -39,7 +62,7 @@ function show_cp_text ()
     -- end -- if
     -- heading nomap_Past the Northern Gate_amazonclan
     style = {}
-    style.text = string.format("Campaign mobs left: %-5s Action : %-49s", #cpmobs, cur_action)
+    style.text = string.format("LT: %-3s Campaign mobs left: %-5s Action : %-49s",level, #cpmobs, cur_action)
     table.insert (header, {style})
     style = {}
     style.text = ("indx  Name                               #    Area                           Dist")
@@ -96,13 +119,15 @@ function OnPluginBroadcast (msg, id, name, text)
             loadstring(pvar)()
             cpmobs = cp_mobs
             
-            
             show_cp_text()
         elseif msg == 2 then
             --local pvar = GetPluginVariable("8065ca1ba19b529aee53ee44", "action")
             -- get the timer
             --loadstring(pvar)()
             cur_action = text
+            if cur_action == 'update level' then
+                cp_info_handle()
+            end
             show_cp_text()
         elseif msg == 3 or msg == 4 then
             

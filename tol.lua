@@ -94,15 +94,23 @@ function auto_hunt_continue(name, line, wildcards)
                 currentRoom.roomid, dir_map[move])
             move1 = db_query(dbA, query)
             DebugNote(move1)
-            local to_room = move1[1].touid
-            DebugNote("to_room : ".. to_room)
-            query = string.format("select dir, fromuid, touid from exits where fromuid = %s and touid = %s order by length(dir) desc",
-            currentRoom.roomid, to_room)
-            move1 = db_query(dbA, query)
-            DebugNote('printing move table return:')
-            DebugNote(move1)
-            if #move1 > 0 then
-                move1 = move1[1]["dir"]
+            if #move1 > 0 and move1[1].touid ~= "-1" then
+                local to_room = move1[1].touid
+                DebugNote("to_room : ".. to_room)
+                query = string.format("select dir, fromuid, touid from exits where fromuid = %s and touid = %s order by length(dir) desc",
+                    currentRoom.roomid, to_room)
+                move1 = db_query(dbA, query)
+                DebugNote('printing move table return:')
+                DebugNote(move1)
+                if #move1 > 0 then
+                    move1 = move1[1]["dir"]
+                else
+                    Note(string.format('There was no link between $s and %s. Shutting Off', currentRoom.name, to_room))
+                    return
+                end
+            else
+                DebugNote(string.format('Looks like there is no mapper exit from %s heading %s. Falling back to direction', currentRoom.name, move))
+                move1 = move1[1]['dir']
             end
         end
     --end
@@ -195,6 +203,7 @@ function cp_check(name, line, wildcards)
     EnableTrigger('camp_item_start', 1)
     EnableTrigger("campaign_item", true)
     mobsleft = {}
+    BroadcastPlugin(2, 'update level')
 end
 
 function gq_check(name, line, wildcards)
@@ -393,6 +402,9 @@ function delete_mob_from_table()
 end
 
 function delete_mob_from_table_index(val)
+    if val > #room_num_table then
+        return
+    end 
     if AutoUpdate_var == false and last_Enemy ~= nil then
         for p, q in pairs (room_num_table2) do
             num = tonumber(q[6]) or 1
@@ -487,11 +499,25 @@ FirstRun_cp_var = true
 
 -- This function is just for testing. It should never actually be used.
 function printVars()
+   -- print(#area_table)
     Debug = true
-    tprint(findpath(currentRoom.roomid, 29839))
+    -- tprint(findpath(currentRoom.roomid, 29839))
     --   mobsleft = {}
     --   EnableTrigger('campaign_item',1)
     --   EnableTrigger('camp_item_start',1)
+    Execute("echo You still have to kill * a delightful oil painting (West wing)")
+Execute("echo You still have to kill * an armored warhorse (Horse pasture)")
+Execute("echo You still have to kill * a hurrying Illorian (On the way to the Tournament)")
+Execute("echo You still have to kill * an oil painting (West wing)")
+Execute("echo You still have to kill * The Djinn (Playground)")
+Execute("echo You still have to kill * an alchemist (The Grand Square)")
+Execute("echo You still have to kill * a tapestry (Grand staircase)")
+Execute("echo You still have to kill * an amazon female (Inside the dining room)")
+Execute("echo You still have to kill * an elven warrior (The Lightstone)")
+Execute("echo You still have to kill * Jurn the Barbarian (In the Alehouse)")
+Execute("echo You still have to kill * a maid (Dining room)")
+Execute("echo You still have to kill * an orc slave (Deeper in the Mine)")
+Execute("echo You still have to kill * Davven (Kitchen)")
     -- Execute("echo You still have to kill * some burning embers (Scorched earth)")
     -- Execute("echo You still have to kill * the stage manager (Rehearsal Room B)")
     -- Execute("echo You still have to kill * a servant (Western Tower)")
@@ -523,6 +549,19 @@ function printVars()
     -- Execute("echo Note: One or more target names in this gquest might be slightly scrambled.")
     --check_area_table()
     Debug =false
+    tprint(t_lookup_preloaded)
+    mobbuf = {}
+    if t_lookup_preloaded ~= nil and t_lookup_preloaded[1] ~= nil  then
+        Note('Try ah on one of these mobs as they are in the same room...')
+        if t_lookup_preloaded[2] ~= nil then
+            mobbuf = lookup('','',{'room ' .. t_lookup_preloaded[1] .. ' area '.. t_lookup_preloaded[2]})
+        else
+            mobbuf = lookup('','',{'room ' .. t_lookup_preloaded[1]})
+        end
+    else
+        Note('Nothing was loaded, try wm <mob> first.')
+    end
+    tprint(mobbuf)
 end
 -- end testing function
 kill_info = {}
@@ -659,7 +698,8 @@ function check_cur_mob(test_table)
     end
     
     for i, p in pairs(test_table) do
-        if i > 1 and p[2] == 'green' then
+        test_color = string.sub(p[1], -2, -2)
+        if i > 1 and p[2] == test_table[1][2] and (test_color == '!' or test_color == '.') then
             cur_mob = string.sub(p[1], 0, -3)
             if cur_mob ~= enemy and cur_mob ~= 'Someone' then
                 ret = cur_mob
@@ -776,8 +816,8 @@ function clearTable()
     room_num_table2 = {}
 end
 
-function makeTable(room_num, name, bool, isInTable, area, num)-- stores all names and room numbers into a global table
-    room_num_table[counter] = {room_num, name, bool, isInTable, area, tonumber(num)}
+function makeTable(room_num, name, bool, isInTable, area, num, roomName)-- stores all names and room numbers into a global table
+    room_num_table[counter] = {room_num, name, bool, isInTable, area, tonumber(num), roomName}
     counter = counter + 1
     -- tprint(room_num_table)
     -- print(counter)
@@ -822,7 +862,7 @@ function getTable(index) -- returns the first item in the table of room numbers,
     local num = room_num_table[tonumber(index)][1]
     curMob = room_num_table[tonumber(index)][2]
     getName(index, 1)
-    return num
+    return num, room_num_table[tonumber(index)]
 end
 -- Questioning why I am passing the num variable here... was this legacy?
 function getName(index, num)
@@ -939,7 +979,7 @@ function getRoomId(name, tableNum)-- Gets a roomId from campaign
     if #hld == 0 then
         print(loc)
         print('this cp will be weird because of unmapped rooms.. all entries are subject TOL has broken')
-        makeTable(-1, cp_mobs[tableNum].name, cp_mobs[tableNum].mobdead, false, cp_mobs[tableNum].location, cp_mobs[tableNum].num)
+        makeTable(-1, cp_mobs[tableNum].name, cp_mobs[tableNum].mobdead, false, cp_mobs[tableNum].location, cp_mobs[tableNum].num, '')
         return
     end
     for g, rows in pairs(hld) do
@@ -1335,8 +1375,9 @@ function gotoNextMob()-- This will goto the next mob, use with tcp
         end
         
         --Execute('xmapper1 move ' .. getTable(mob_index))
-        local num = getTable(mob_index)
+        local num, tbl_mob = getTable(mob_index)
         if num > 0 then
+            tprint(tbl_mob)
             BroadcastPlugin(2, "Moving to "..tostring(num))
            if GOTO(num) ==0 then
                 Note('Running to area..')
@@ -1509,6 +1550,15 @@ function hunt_type (num, mob_id)
 end
 
 where_mob = ''
+t_lookup_preloaded = {}
+
+function load_tlookup(room, area)
+    if area == nil then
+        t_lookup_preloaded = {room, nil}
+    else
+        t_lookup_preloaded = {room, area}
+    end
+end
 
 function whereMob(name, line, wildcards)
     tstart = GetInfo (232)
@@ -1591,7 +1641,7 @@ function where_mob_trig(name, line, wildcards)
         end
         
         EnableTrigger('where_mob_trig', false)
-        
+        load_tlookup(wildcards[2], currentRoom.area)
         IS_WM_ENABLED = true
         wm_study_continue()
     end

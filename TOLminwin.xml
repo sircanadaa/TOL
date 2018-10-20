@@ -24,8 +24,31 @@ TODO:
 ]]>
     </description>
   </plugin>
+<triggers>
+  <trigger
+   group="level_for_cp"
+   match="^(.+)$"
+   name="catch_cp_info"
+   omit_from_output="y"
+   regexp="y"
+   send_to="12"
+   sequence="100"
+   script="catch_cp_info"
+  >
+  </trigger>
+  <trigger
+   group="level_for_cp"
+   enabled="y"
+   match="^You are not currently on a campaign\.$"
+   name="kill_catch_cp_info"
+   omit_from_output="n"
+   regexp="y"
+   send_to="12"
+   sequence="100"
+   script="kill_catch_cp_info"
+  >
+  </trigger>
 
-  <triggers>
     <trigger
    enabled="y"
    match="Commander Barcett tells you 'Type 'campaign info' to see what you must kill.'"
@@ -34,6 +57,7 @@ TODO:
    script="set_show"
     ></trigger>
   </triggers>
+  
 
   <!--  Script  -->
   <script>

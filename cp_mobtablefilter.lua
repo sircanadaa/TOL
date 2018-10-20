@@ -156,6 +156,7 @@ function concat_name(name, line, wildcards, styles)
     -- tprint(test_table)
 end
 function check_cur_mob(test_table)
+    -- tprint(test_table)
     if not enemy then
         enemy = ""
     end
@@ -173,7 +174,7 @@ function check_cur_mob(test_table)
             o, p = string.find(temp, v)
             if p ~= nil then
                 temp = string.sub(temp, p + 1, #temp)
-                
+                -- print('returned temp first loop')
                 return temp
             end--i
         end--for
@@ -183,16 +184,15 @@ function check_cur_mob(test_table)
             i = string.find(temp, "[%A][%s]")
         end -- while
         temp = string.sub(temp, 2, #temp)
-        print('returning temp: ' .. temp)
+        -- print('returning temp: ' .. temp)
         return temp
     end
     for i, p in pairs(test_table) do
-        --tprint(p)
+        -- tprint(p)
         --print(enemy)
-        if i > 1 and p[2] == 'green' then
+        if i > 1 and p[2] == test_table[1][2] then
             cur_mob = string.sub(p[1], 0, -3)
             --print(enemy)
-            -- print(cur_mob)
             if cur_mob ~= enemy and cur_mob ~= 'Someone' then
                 -- tprint(p)
                 -- print(string.find(p[1],enemy))

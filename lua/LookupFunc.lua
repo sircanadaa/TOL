@@ -61,7 +61,11 @@ function lookup(name1, line, wildcards)--Looks up mobs from the CPmobs database 
     end
     
     DebugNote("tlookup query: " .. query)
-    mobbuff = db_query(dbkt, query)
+    if #query > 30 then
+        mobbuff = db_query(dbkt, query)
+    else
+        Note("You forgot to add in name, level, area, or room")
+    end
     if #mobbuff < 1 and modanddata[1] ~= "" and modanddata[2] == "" and modanddata[3] == "" and modanddata[4] == "" then
         DebugNote("No mobs found! Checking mobkills table...")
         q = "SELECT * FROM mobkills where name like " .. fixsql(modanddata[1]) .. " group by room_id"
@@ -72,7 +76,8 @@ function lookup(name1, line, wildcards)--Looks up mobs from the CPmobs database 
     if #mobbuff < 1 then
         Note("OKYDOKY BOSS NOTHING TO SEE HERE")
         Note("seriously though we found nothing")
-        return
+        return {}
     end
     tprint(mobbuff)
+    return mobbuff
 end
