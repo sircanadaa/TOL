@@ -1994,9 +1994,10 @@ function istarget_study(name, line, wildcards, style)
             local text = RGBColourToName(s.textcolour)
             local back = RGBColourToName(s.backcolour)
             text = "black" back = "yellow"
-            ColourTell(text, back, s.text .. " [TARGET]")
+            ColourTell(text, back, s.text )
         end
-        
+        if highlight then ColourTell("black", "yellow", " [TARGET]") end
+    Note()
         EnableTriggerGroup("get_all_output", 0)
         DebugNote('get_all_output off')
         EnableTrigger('where_mob_trig', 0)
@@ -2041,6 +2042,7 @@ function istarget(name, line, wildcards, style)
         local back = RGBColourToName(s.backcolour)
         if highlight then text = "black" back = "yellow" end
         ColourTell(text, back, s.text)
+        DebugNote({text, back, s.text})
     end
     if highlight then ColourTell("black", "yellow", " [TARGET]") end
     Note()

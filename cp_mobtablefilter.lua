@@ -27,7 +27,10 @@ function last_kill()
         lockedRoom[i] = p
     end
     if current_enemy_gbl ~= nil then
+        Note("Locking enemy")
         locked_enemy = current_enemy_gbl
+        Note(current_enemy_gbl)
+        Note("locked")
     end
     --EnableTrigger("capture_name", 0)
 end
@@ -156,8 +159,7 @@ function concat_name(name, line, wildcards, styles)
     -- tprint(test_table)
 end
 function check_cur_mob(test_table)
-    -- tprint(test_table)
-    if not enemy then
+    if not enemy then 
         enemy = ""
     end
     cur_mob = nil
@@ -166,57 +168,39 @@ function check_cur_mob(test_table)
     if #test_table == 3 then
         local line = test_table[1][1]
         if string.find(line, "%!") ~= nil then
-            temp = string.sub(line, 8, string.find(line, "%!") - 1)
+            temp= string.sub(line, 8, string.find(line, "%!")-1 )
         elseif string.find(line, "%.") then
-            temp = string.sub(line, 8, string.find(line, "%.") - 1)
+            temp= string.sub(line, 8, string.find(line, "%.")-1 )
         end--if
-        for i, v in pairs(damage_verbs) do
-            o, p = string.find(temp, v)
+        for i,v in pairs(damage_verbs) do
+            o, p =string.find(temp, v)
             if p ~= nil then
-                temp = string.sub(temp, p + 1, #temp)
-                -- print('returned temp first loop')
+                temp = string.sub(temp, p+1, #temp)
                 return temp
             end--i
         end--for
         i = string.find(temp, "%A")
-        while i do
-            temp = string.sub(temp, i + 1, #temp)
-            i = string.find(temp, "[%A][%s]")
+        while i  do
+            temp= string.sub(temp, i+1, #temp )
+            i=string.find(temp, "[%A][%s]")
         end -- while
-        temp = string.sub(temp, 2, #temp)
-        -- print('returning temp: ' .. temp)
+        temp= string.sub(temp, 2, #temp )
         return temp
     end
     for i, p in pairs(test_table) do
-        -- tprint(p)
-        --print(enemy)
-        if i > 1 and p[2] == test_table[1][2] then
+        test_color = string.sub(p[1], -2, -2)
+        if i>1 and p[2] == test_table[1][2] and (test_color == '!' or test_color == '.') then
             cur_mob = string.sub(p[1], 0, -3)
-            --print(enemy)
             if cur_mob ~= enemy and cur_mob ~= 'Someone' then
-                -- tprint(p)
-                -- print(string.find(p[1],enemy))
-                -- print("===========")
-                -- print(p[1])
-                -- print(cur_mob)
-                -- print(enemy)
-                -- print("===========")
-                --print("I have been set", cur_mob)
                 ret = cur_mob
             elseif enemy ~= current_enemy_gbl then
-                --print("I have been reset", enemy)
                 ret = enemy
-                -- else
-                --     Note(current_enemy_gbl)
-                --     Note(enemy)
             end
         end
     end
     if cur_mob == nil and enemy ~= nil then
-        --print('cur_mob was nil setting to enemy')
         ret = enemy
     end
-    --print('returning ret: '.. ret)
     return ret
 end
 -- TODO: this function needs to be updated..
