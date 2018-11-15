@@ -110,7 +110,8 @@ function auto_hunt_continue(name, line, wildcards)
                 end
             else
                 DebugNote(string.format('Looks like there is no mapper exit from %s heading %s. Falling back to direction', currentRoom.name, move))
-                move1 = move1[1]['dir']
+                DebugNote(move)
+                move1 = move
             end
         end
     --end
@@ -1882,7 +1883,7 @@ function has_value(tab, val)
     -- Check for custom wm attend.
     --if #where_trig_table >= 1 then
     DebugNote('WHERE_MOB: ' .. WHERE_MOB)
-    if string.match(val, string.lower(WHERE_MOB)) then
+    if string.match(replace(val), string.lower(replace(WHERE_MOB))) then
         DebugNote("Where_mob match.")
         return true
     else
@@ -1891,7 +1892,7 @@ function has_value(tab, val)
     --end
     
     -- Check quest mob
-    if questHandler.mob ~= nil and string.match(val, string.lower(questHandler.mob)) then
+    if questHandler.mob ~= nil and string.match(replace(val), string.lower(replace(questHandler.mob))) then
         DebugNote("Quest match.")
         return true
     end
@@ -1900,7 +1901,7 @@ function has_value(tab, val)
     for index, value in pairs(tab) do
         if value == nil then return end
         
-        if string.match(val, string.lower(value.name)) then
+        if string.match(replace(val), string.lower(replace(value.name))) then
             DebugNote("Cp match.")
             return true
         end
@@ -2007,7 +2008,10 @@ function istarget_study(name, line, wildcards, style)
         end
     end
 end
-
+function replace (data)
+    changed = string.gsub(data,"%(%)%.%+%-%*%?%[%]%^%$%%]", "%%%1")
+    return changed
+end
 function istarget(name, line, wildcards, style)
     DebugNote("function: ISTARGET")
     local highlight = false
@@ -2030,7 +2034,10 @@ function istarget(name, line, wildcards, style)
             name = string.sub(name, 1, 30)
             DebugNote('name after: ' .. name)
         end
-        if string.match(string.lower(name), string.lower(target_mobs[a])) then
+        DebugNote(string.lower(name))
+        DebugNote(string.lower(target_mobs[a]))
+        
+        if string.lower(replace(name)) == string.lower(replace(target_mobs[a])) then
             highlight = true
             EnableTriggerGroup("get_all_output", 0)
             DebugNote('get_all_output off')
