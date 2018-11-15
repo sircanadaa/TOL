@@ -38,25 +38,22 @@ function myHandler(udata, retries)
     return true
 end
 function Add_To_Table(name, line, wildcards)
-    local name = wildcards[1]
-    local Level
+    local name = Trim(wildcards[1])
+    local level = wildcards[2]
     local area
     local roomid
     local roomName
-    local key = "%s%s+"
     dbA = sqlite3.open(GetInfo (66) .. 'Aardwolf.db')
     dbkt = sqlite3.open(GetPluginInfo (GetPluginID (), 20) .. 'KillTable.db')
     dbkt:busy_handler(myHandler)
     dbkt:busy_timeout(500)
     EnableTriggerGroup("gag_lastkill", false)
-    i, p = string.find(name, key)
-    name = locked_enemy or string.sub(name, 1, i - 1)
+    name = locked_enemy or name
     area = lockedRoom.areaid
     query = string.format("SELECT name from areas where uid = %s", fixsql(area))
     for rows in dbA:nrows(query) do
         area = rows.name
     end --for
-    level = wildcards[3]
     if name == '' then
         print('Something has gone wrong, not inserting anything')
         name = nil
