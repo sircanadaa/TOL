@@ -39,7 +39,7 @@ function myHandler(udata, retries)
 end
 function Add_To_Table(name, line, wildcards)
     local name = Trim(wildcards[1])
-    local level = wildcards[2]
+    local level = wildcards[3]
     local area
     local roomid
     local roomName
