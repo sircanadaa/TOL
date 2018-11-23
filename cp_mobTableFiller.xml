@@ -94,7 +94,7 @@
   <trigger
    omit_from_output="y"
    enabled="n"
-   match="^(.+)(\s+)([0-9]+)(\s+)([0-9]+)(\s+)([0-9]+)(\s+)(.+)$"
+   match="^([^:]{30})\s{3,5}(\d+)\s+?(\d+)\s+?(\d+)\s(\w.+\w).*$"
    name="cp_gag3"
    regexp="y"
    group="gag_lastkill"
